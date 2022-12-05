@@ -1,0 +1,1891 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Programación Dinámica}
+\label{cha:programacion-dinamica}
+
+  Hay situaciones que naturalmente se enfrentarían por búsquedas recursivas,
+  pero en las cuales la búsqueda obvia termina resolviendo una y otra vez
+  los mismos subproblemas.
+  Hay dos opciones:
+  la más fácil es registrar los subproblemas resueltos con sus soluciones,
+  y revisar si un subproblema ya se resolvió antes de emprender su solución.
+  Esta idea,
+  atribuida a Michie,
+  se conoce como \emph{memoización}~%
+    \cite{michie68:_memoization}.
+  La otra es \emph{programación dinámica},
+  que consiste en calcular sistemáticamente las soluciones a subproblemas,
+  de manera que cuando una de ellas se requiera ya esté calculada de antemano.
+  La ventaja de programación dinámica
+  es que no requiere una compleja estructura extra,
+  nos ahorramos su administración y las búsquedas en ella.
+  La exposición siguiente se organiza en parte
+  siguiendo las sugerencias de Forišek~%
+    \cite{forisek15:_towards_better_way_teach_dynam_progr}
+  y usa la estructura dada por Erickson~%
+    \cite{erickson19:_algorithms}
+  para desarrollar algoritmos.
+
+  Requisitos para la aplicabilidad de programación dinámica
+  son similares a las de algoritmos voraces
+  (ver el capítulo~\ref{cha:greedy-algorithm}).
+  Suponemos un problema \(P\),
+  que se resuelve en etapas,
+  eligiendo parte de la solución \(p\) en cada una de ellas.
+  \begin{description}
+  \item[Estructura Inductiva:]
+    Dada la elección \(\widehat{p}\),
+    queda un subproblema menor \(P'\)
+    tal que si \(\Pi'\) es solución viable de \(P'\),
+    \(\{\widehat{p}\} \cup \Pi'\) es solución viable de \(P\)
+    (\(P'\) no tiene \textquote{restricciones externas}).
+  \item[Subestructura Óptima:]
+    Si \(P'\) queda de \(P\) al sacar \(\hat p\),
+    y  \(\Pi'\) es óptima para \(P'\),
+    \(\Pi' \cup \{ \widehat{p} \}\) es óptima para \(P\).
+  \item[Elección Completa:]
+    Elegimos aquel \(\widehat{p}\) que da el mejor resultado
+    combinado con \(\Pi'\),
+    una solución óptima para el problema resultante
+    de \(P \smallsetminus \{ \widehat{p} \}\).
+  \end{description}
+  A diferencia de un algoritmo voraz,
+  no conocemos un criterio \textquote{local}
+  que nos permita elegir \(\widehat{p}\),
+  debemos considerar varias opciones.
+  Esto lleva naturalmente a una recursión:
+  resuelva los subproblemas recursivamente,
+  y elija aquella combinación que da la solución global.
+
+  Lo anterior está planteado en términos de buscar un óptimo,
+  pero puede adaptarse para determinar si hay o no soluciones.
+
+\section{Un primer ejemplo}
+\label{sec:primer-ejemplo-programacion-dinamica}
+
+  Consideremos los números de Fibonacci,
+  definidos por la recurrencia:
+  \begin{equation}
+    \label{eq:Fibonacci-recurrence}
+    F_{n + 2}
+      = F_{n + 1} + F_n
+      \qquad F_0 = 0, F_1 = 1
+  \end{equation}
+  Esto lleva a la obvia función recursiva
+  del listado~\ref{lst:Fibonacci-straight}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Cálculo de número de Fibonacci,
+			      recursión obvia},
+		   label = lst:Fibonacci-straight,
+		   firstline = 3, lastline = 7]
+		  {code/fibonacci-straight}
+  Si consideramos como medida de costo el número de llamadas,
+  llamando \(C_n\) al número de llamadas para calcular \(F_n\)
+  resulta la recurrencia:
+  \begin{equation}
+    \label{eq:Fibonacci-straight-cost-recurrence}
+    C_{n + 2}
+      = 1 + C_{n + 1} + C_n
+      \qquad C_0 = C_1 = 1
+  \end{equation}
+  Técnicas tradicionales de solución de recurrencias
+  (o simplemente verificando la solución)
+  dan:
+  \begin{equation}
+    \label{eq:Fibonacci-straight-cost}
+    C_n
+      = 2 F_{n + 1} - 1
+  \end{equation}
+  Sabemos que \(F_n \sim \tau^n / \sqrt{5}\),
+  donde \(\tau = (1 + \sqrt{5}) / 2\).
+  Esto crece en forma exponencial.
+
+  Aplicar memoización es simple en Python,
+  usamos un diccionario para registrar los valores ya calculados.
+  Ver el listado~\ref{lst:Fibonacci-memoized}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Cálculo de número de Fibonacci,
+			      memoizado},
+		   label = lst:Fibonacci-memoized,
+		   firstline = 3, lastline = 8]
+		   {code/fibonacci-memoized}
+  Esto incluso puede automatizarse,
+  dado que Python tiene funciones como objetos de primera clase
+  y es un lenguaje dinámico.
+  El listado~\ref{lst:Fibonacci-memoized-Klein}
+  (tomado del curso de Klein~%
+     \cite{klein20:_python_course})
+  muestra una forma simple de hacerlo.
+  La decoración \lstinline[language = Python]!@memoize!
+  aplica la función \lstinline[language = Python]!memoize!
+  a la función \lstinline[language = Python]!fibonacci!
+  que se define a continuación.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Cálculo de número de Fibonacci,
+			      memoizado automático},
+		   label = lst:Fibonacci-memoized-Klein,
+		   firstline = 3]
+		   {code/fibonacci-memoized-auto}
+  Resultan \(2 n - 1\) llamadas.
+
+  La idea de programación dinámica
+  es calcular sistemáticamente los valores,
+  de forma de tenerlos disponibles cuando se requieren.
+  Esto lleva directamente al listado~\ref{lst:Fibonacci-array}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Cálculo de número de Fibonacci,
+			      programación dinámica},
+		   label = lst:Fibonacci-array,
+		   firstline = 3, lastline = 7]
+		  {code/fibonacci-array}
+  Si reconocemos además que solo se necesitan los dos últimos valores,
+  no requerimos almacenar los valores anteriores,
+  llegamos al listado~\ref{lst:Fibonacci-last}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Cálculo de número de Fibonacci,
+			      guardando solo los últimos dos valores},
+		   label = lst:Fibonacci-last,
+		   firstline = 3, lastline = 9]
+		  {code/fibonacci-last}
+  Aún mejor,
+  podemos simplificar si partimos la iteración con el valor \(F_{-1} = 1\)
+  (perfectamente consistente con la recurrencia),
+  dando el programa~\ref{lst:Fibonacci-short}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Cálculo simplificado de número de Fibonacci},
+		   label = lst:Fibonacci-short,
+		   firstline = 3, lastline = 7]
+		  {code/fibonacci-short}
+
+  Es claro que todas las formulaciones alternativas toman tiempo lineal.
+
+  Este ejemplo muestra las características salientes
+  de la programación dinámica:
+  tenemos un problema con solución recursiva obvia;
+  tenemos las opciones de memoizar
+  o usar programación dinámica;
+  de usar programación dinámica
+  puede ser suficiente retener solo parte de los valores calculados.
+
+\section{Tome lo que más pueda}
+\label{sec:tomar-maximo}
+
+  Hay \(n\) botellas en línea,
+  numeradas de \num{0} a~\(n - 1\)
+  (¡somos computines!),
+  la botella \(i\) contiene \(v_i\)~de cerveza eslovaca.
+  Después de un difícil semestre,
+  queremos beber el máximo posible,
+  pero nos ponen la restricción que no podemos beber dos botellas vecinas.
+
+  Este problema tiene una sencilla solución recursiva:
+  debemos decidir si bebemos la última botella
+  (en cuyo caso debemos omitir la penúltima,
+   es claro que beberemos el máximo de las botellas \num{0} a~\(n - 3\))
+  o dejamos la última botella
+  (en cuyo caso bebemos el máximo de las botellas \num{0} a~\(n - 2\)).
+  Obtenemos la recurrencia para \(M_n\),
+  el máximo posible de beber si hay \(n\) botellas:
+  \begin{align*}
+    M_0
+      &= 0 \\
+    M_1
+      &= v_0 \\
+    M_{n + 2}
+      &= \max \{ M_{n + 1}, M_n + v_{n - 1} \}
+  \end{align*}
+  Esto nos lleva al programa~\ref{lst:beer-recursive}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Beber cerveza recursivamente},
+		   label = lst:beer-recursive,
+		   firstline = 3, lastline = 11]
+		  {code/beer-recursive}
+  Es fácil ver que el costo de este algoritmo
+  (número de llamadas a \lstinline[language = Python]!solve!)
+  para \(n\) es \(2 F_{n + 1} - 1\)
+  (igual que el cálculo ingenuo de números de Fibonacci),
+  que sabemos es exponencial en \(n\).
+
+  Usar explícitamente un arreglo \lstinline[language = Python]!M!
+  lleva al programa~\ref{lst:beer-dp}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Beber cerveza por programación dinámica},
+		   label = lst:beer-dp,
+		   firstline = 3, lastline = 9]
+		  {code/beer-dp}
+  Notamos que solo se usan los últimos dos valores
+  de \lstinline[language = Python]!M!,
+  no se requiere el arreglo completo.
+  Esto lleva al programa final~\ref{lst:beer-dp-final}.
+  \lstinputlisting[float,
+		   language = Python,
+		   caption = {Beber cerveza por programación dinámica,
+			      versión final},
+		   label = lst:beer-dp-final,
+		   firstline = 3, lastline = 9]
+		  {code/beer-dp-final}
+
+\section{Proyectos de plantas}
+\label{sec:proyectos-plantas}
+
+  Una corporación tiene US\$\,5~millones a invertir este año,
+  y planea expandir tres de sus plantas.
+  Cada planta ha entregado a lo más tres propuestas,
+  con sus costos y retornos estimados.
+  Las diferentes propuestas de cada planta son excluyentes,
+  vale decir,
+  de las tres se puede ejecutar solo una.
+  Además,
+  los proyectos o se hacen
+  (gastando el presupuesto completo)
+  o no se hacen,
+  no se pueden efectuar parcialmente.
+  El cuadro~\ref{tab:proyectos}
+  resume los costos de las propuestas y sus retornos.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{|>{\(}c<{\)}||*{3}{>{\(}r<{\)}>{\(}r<{\)}|}}
+      \hline
+	& \multicolumn{2}{c|}{\textbf{Planta 1}}
+	& \multicolumn{2}{c|}{\textbf{Planta 2}}
+	& \multicolumn{2}{c|}{\textbf{Planta 3}} \\
+      \multicolumn{1}{|c||}{\textbf{Propuesta}}
+	& \multicolumn{1}{c}{\boldmath\(c_1\)\unboldmath}
+	& \multicolumn{1}{c|}{\boldmath\(r_1\)\unboldmath}
+	& \multicolumn{1}{c}{\boldmath\(c_2\)\unboldmath}
+	& \multicolumn{1}{c|}{\boldmath\(r_2\)\unboldmath}
+	& \multicolumn{1}{c}{\boldmath\(c_3\)\unboldmath}
+	& \multicolumn{1}{c|}{\boldmath\(r_3\)\unboldmath} \\
+      \hline\hline
+	0 & 0 &	 0 & 0 &  0 & 0 &  0 \\
+	1 & 1 &	 5 & 2 &  8 & 1 &  4 \\
+	2 & 2 &	 6 & 3 &  9 &	&    \\
+	3 &   &	   & 4 & 12 &	&    \\
+      \hline
+    \end{tabular}
+    \caption{Propuestas, sus costos y retornos}
+    \label{tab:proyectos}
+  \end{table}
+  Algunas plantas no completaron las tres propuestas,
+  y en todos los casos se agrega la propuesta de \textquote{no hacer nada}.
+  El objetivo es maximizar los retornos asignando los \num{5}~millones.
+  Se asume que si no se invierten todos,
+  el resto se \textquote{pierde}
+  (no genera retornos).
+  Un ejercicio interesante es considerar opciones más realistas.
+
+  Una forma directa de resolver esto
+  es considerar las \(3 \cdot 4 \cdot 2 = 24\)~posibilidades,
+  y elegir la mejor.
+  Claro que con más plantas y más proyectos,
+  esto rápidamente se hace inmanejable.
+
+  Una manera de obtener la solución es la siguiente:
+  dividamos el problema en tres \emph{etapas}
+  (cada etapa representa la asignación a una planta).
+  Imponemos un orden artificial a las etapas,
+  considerando las plantas en orden de número.
+  Cada etapa la dividimos en \emph{estados},
+  que recogen la información para ir a la etapa siguiente.
+  En nuestro caso,
+  los estados de la etapa~\num{1} son \(\{0, 1, 2, 3, 4, 5\}\),
+  correspondientes a invertir esas cantidades en la planta~1
+
+  Cada estado tiene un retorno asociado.
+  Note que para decidir cuánto conviene asignar a la planta~3
+  (cual de los proyectos financiar)
+  basta saber cuánto queda por asignar
+  luego de financiar los proyectos de las plantas~1 y~2.
+  Los proyectos aprobados no interesan para esto.
+  Note que nos interesa que \(x = 5\)
+  (queremos invertir todo,
+   o la mayor parte posible).
+
+  Calculemos los retornos asociados a cada estado.
+  Esto es simple en la etapa~\num{1}.
+  El cuadro~\ref{tab:proyecto-etapa-1} resume los resultados.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{|>{\(}c<{\)}||*{2}{>{\(}c<{\)}}|}
+      \hline
+      \multicolumn{1}{|c||}{\textbf{Capital}}
+	& \multicolumn{1}{c}{\textbf{Propuesta}}
+	& \multicolumn{1}{c|}{\textbf{Retorno}} \\
+      \multicolumn{1}{|c||}{\boldmath\(x\)\unboldmath}
+	& \multicolumn{1}{c}{\textbf{óptima}}
+	& \multicolumn{1}{c|}{\textbf{\boldmath\num{1}\unboldmath}} \\
+      \hline
+       0 &  0 &	 0 \\
+       1 &  1 &	 5 \\
+       2 &  2 &	 6 \\
+       3 &  2 &	 6 \\
+       4 &  2 &	 6 \\
+       5 &  2 &	 6 \\
+      \hline
+    \end{tabular}
+    \caption{Cómputo de la etapa~\num{1}}
+    \label{tab:proyecto-etapa-1}
+  \end{table}
+  Estamos en condiciones de atacar la etapa~\num{2},
+  la mejor combinación para las plantas~1 y~2.
+  Dada cierta cantidad total \(x\) a invertir,
+  consideramos cada propuesta para la planta~2 en turno,
+  y sumamos su retorno con lo que rendiría lo que reste
+  al invertir de la mejor manera en la planta~1
+  (como da el cuadro~\ref{tab:proyecto-etapa-1}).
+  Por ejemplo,
+  con el capital total de~\num{5}
+  si en la planta~2 elegimos la propuesta~3,
+  tenemos un retorno de \num{9}
+  y nos queda \num{2} para la planta~1,
+  que da retorno~\num{6},
+  para un total de~\num{15}.
+  El cuadro
+  resume esto para las distintas opciones.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{|>{\(}c<{\)}||*{2}{>{\(}c<{\)}}|}
+      \hline
+      \multicolumn{1}{|c||}{\textbf{Capital}}
+	& \multicolumn{1}{c}{\textbf{Propuesta}}
+	& \multicolumn{1}{c|}{\textbf{Retorno}} \\
+      \multicolumn{1}{|c||}{\boldmath\(x\)\unboldmath}
+	& \multicolumn{1}{c}{\textbf{óptima}}
+	& \multicolumn{1}{c|}{\textbf{\boldmath\num{1} y \num{2}\unboldmath}} \\
+      \hline
+       0 &  0 &	 0 \\
+       1 &  1 &	 5 \\
+       2 &  1 &	 8 \\
+       3 &  1 & 13 \\
+       4 &  1 & 14 \\
+       5 &  3 & 17 \\
+      \hline
+    \end{tabular}
+    \caption{Cómputo de la etapa~\num{2}}
+    \label{tab:proyecto-etapa-2}
+  \end{table}
+  Vamos por la etapa~\num{3},
+  con la misma idea tenemos el cuadro~\ref{tab:proyecto-etapa-3}.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{|>{\(}c<{\)}||*{2}{>{\(}c<{\)}}|}
+      \hline
+      \multicolumn{1}{|c||}{\textbf{Capital}}
+	& \multicolumn{1}{c}{\textbf{Propuesta}}
+	& \multicolumn{1}{c|}{\textbf{Retorno}} \\
+      \multicolumn{1}{|c||}{\boldmath\(x\)\unboldmath}
+	& \multicolumn{1}{c}{\textbf{óptima}}
+	& \multicolumn{1}{c|}
+	     {\textbf{\boldmath\num{1}, \num{2} y \num{3}\unboldmath}} \\
+      \hline
+       0 &  0 &	 0 \\
+       1 &  0 &	 5 \\
+       2 &  1 &	 9 \\
+       3 &  0 & 13 \\
+       4 &  1 & 17 \\
+       5 &  1 & 18 \\
+      \hline
+    \end{tabular}
+    \caption{Cómputo de la etapa~\num{3}}
+    \label{tab:proyecto-etapa-3}
+  \end{table}
+  La entrada para \(x = 5\)
+  dice que el mejor retorno posible es~\num{18}.
+  Nos indica que la mejor opción para la planta~3
+  es su proyecto~\num{1},
+  lo que deja~\(5 - 1 = 4\) para las otras;
+  del cuadro~\ref{tab:proyecto-etapa-2}
+  vemos que la mejor opción para la planta~2 es la~\num{1};
+  queda~\(4 - 2 = 2\),
+  con lo que del cuadro~\ref{tab:proyecto-etapa-1}
+  vemos que la mejor opción para la planta~1 es la~\num{2}.
+
+  Podemos generalizar lo anterior.
+  Sea \(r_{j k}\) el retorno para la propuesta \(k\) en la etapa \(j\),
+  y sea \(c_{j k}\) el costo de esa propuesta.
+  Sea \(f_j(x)\) la ganancia total en la etapa \(j\)
+  si el capital disponible en ella es \(x\).
+  Entonces,
+  incluyendo siempre la opción
+  \textquote{no haga nada y no gaste en esta planta}:
+  \begin{align*}
+    f_1(x)
+      &= \max_{k \colon c_{1 k} \le x} \{ r_{1 k} \} \\
+    f_j(x)
+      &= \max_{k \colon c_{j k} \le x} \{ r_{j k} + f_{j - 1}(x - c_{j k}) \}
+  \end{align*}
+  y si son \(n\) etapas y tenemos \(x\) capital disponible
+  nos interesa \(f_n(x)\).
+  Lo que hicimos arriba es evaluar esta recursión.
+
+  Estamos desarrollando nuestra recurrencia \textquote{mirando hacia atrás},
+  consideramos la etapa \(j\) suponiendo
+  que tenemos resuelto el problema hasta \(j - 1\),
+  el cálculo resultante \textquote{camina hacia adelante},
+  aumentando \(j\).
+  Claramente es igualmente válido \textquote{mirar hacia adelante}
+  resultando una recurrencia \textquote{marcha atrás},
+  las soluciones serán equivalentes.
+  Cuál de las opciones es más natural depende del problema
+  (y de las inclinaciones del programador).
+
+\section{Estructura general}
+\label{sec:dp-estructura-general}
+
+  El desarrollo de los ejemplos anteriores
+  sigue el siguiente esquema:
+  \begin{enumerate}[font = \textbf, label = {(\alph*)}]
+  \item \textbf{Plantear la recurrencia:}
+    Esta es la parte crítica,
+    depende íntimamente del problema.
+    Debemos identificar los subproblemas relevantes,
+    cómo se combinan para una solución,
+    identificar todas las alternativas relevantes
+    y cómo elegir la mejor de las alternativas.
+  \item \textbf{Escribir un programa recursivo:}
+    Generalmente es una traducción mecánica de la recurrencia.
+  \item \textbf{Identificar subproblemas:}
+    \label{step:dp:identify}
+    Vea todas las formas en las que el programa recursivo se llama a sí mismo.
+    Determine el conjunto de posibles argumentos.
+  \item \textbf{Defina una estructura de datos:}
+    Requerimos almacenar resultados para todas las combinaciones posibles
+    de argumentos.
+    Esto generalmente lleva a alguna clase de tabla,
+    pero perfectamente puede ser apropiada una estructura diferente.
+  \item \textbf{Identifique dependencias:}
+    Debemos organizar los cálculos de forma que valores requeridos
+    ya se hayan calculado antes.
+    Por ejemplo,
+    considere un valor genérico,
+    y dibuje los valores de los que depende.
+    Formalice esto.
+  \item \textbf{Determine un buen orden de cálculo:}
+    El orden en que se obtienen los resultados
+    en el programa recursivo es una guía,
+    pero no es necesario seguirlo estrictamente.
+    Interesa definir un orden que sea simple de programar.
+    Las dependencias descubiertas en el paso anterior
+    definen un orden parcial entre subproblemas,
+    buscamos una extensión lineal.
+    Esto es crítico,
+    tenga cuidado.
+  \item \textbf{Analice requerimientos de tiempo y espacio:}
+    Depende fundamentalmente del número de subproblemas
+    y lo que se debe hacer para cada uno de ellos.
+    Incluso es posible de obtener directamente
+    luego del paso~\ref{step:dp:identify}.
+  \item \textbf{Escriba el algoritmo:}
+    Esto es inmediato si se desarrollaron cuidadosamente los pasos anteriores.
+  \end{enumerate}
+
+\subsection{Un ejemplo detallado}
+\label{sec:dp-example}
+
+  Para el entero no negativo \(n\) se define su valor recursivo
+  como el máximo entre \(n\)
+  y la suma de los valores recursivos
+  de \(\lfloor n / 2 \rfloor\),
+  \(\lfloor n / 3 \rfloor\) y \(\lfloor n / 4 \rfloor\).
+  Es claro que habrán muchos cálculos repetidos al efectuar esto recursivamente,
+  y éstos son independientes entre sí.
+  Es la situación ideal para considerar programación dinámica.
+  Aplicando nuestra estrategia,
+  llamando \(m(n)\) al valor buscado:
+  \begin{enumerate}[label = {(\alph*)}]
+  \item \textbf{Plantear la recurrencia:}
+    \label{item:dp-example-recurrence}
+    La recurrencia está básicamente dada por el enunciado:
+    \begin{equation*}
+      m(n)
+	= \max \{
+		   n,
+		   m(\lfloor n / 2 \rfloor)
+		     + m(\lfloor n / 3 \rfloor)
+		     + m(\lfloor n / 4 \rfloor)
+	       \}
+    \end{equation*}
+    Es claro que \(m(0) = 0, m(1) = 1\).
+  \item \textbf{Escribir un programa recursivo:}
+    \label{item:dp-example-recursive-program}
+    El programa recursivo es bastante obvio,
+    es una traducción inmediata
+    de la recurrencia de~\ref{item:dp-example-recurrence}.
+    Vea el listado~\ref{lst:dp-example-recursive}
+    \lstinputlisting[language = Python,
+		     linerange = {3-8},
+		     caption = {Programa recursivo},
+		     label = lst:dp-example-recursive]
+		    {code/max_sum_rec.py}
+  \item \textbf{Identificar subproblemas:}
+    \label{item:dp-example-subproblems}
+    De la recurrencia es obvio que subproblemas inmediatos para \(n\)
+    son los para \(\lfloor n / 2 \rfloor\),
+     \(\lfloor n / 3 \rfloor\) y \(\lfloor n / 4 \rfloor\).
+  \item \textbf{Defina una estructura de datos:}
+    \label{item:dp-example-data-structure}
+    Se requiere únicamente el valor de \(m\) para valores selectos de \(n\),
+    un arreglo
+    (lista en Python)
+    es suficiente.
+    Bastan \(\lfloor n / 2 \rfloor\) elementos,
+    elementos posteriores no se usan.
+  \item \textbf{Identifique dependencias:}
+    \label{item:dp-example-dependencies}
+    Ya lo vimos, \(m(n)\)
+    depende de los valores para \(\lfloor n / 2 \rfloor\),
+     \(\lfloor n / 3 \rfloor\) y \(\lfloor n / 4 \rfloor\).
+  \item \textbf{Determine un buen orden de cálculo:}
+    \label{item:dp-example-order}
+    Como \(m(n)\)
+    depende únicamente de valores de \(m\) para argumentos menores,
+    un orden de cálculo obvio es llenar el arreglo secuencialmente.
+  \item \textbf{Analice requerimientos de tiempo y espacio:}
+    \label{item:dp-example-analysis}
+    Es claro que la memoria extra usada
+    es el arreglo para guardar valores de \(m\)
+    (espacio \(\Theta(n)\))
+    y el cálculo de cada elemento hace referencia a tres elementos adicionales,
+    es fijo
+    (tiempo \(\Theta(n)\)).
+  \item \textbf{Escriba el algoritmo:}
+    Escribir el programa final
+    es juntar lo discutido en los puntos~\ref{item:dp-example-data-structure}
+    a~\ref{item:dp-example-order},
+    vea el listado~\ref{lst:dp-example-dp}.
+    \label{item:dp-example-algorithm}
+    \lstinputlisting[language = Python,
+		     linerange = {3-10},
+		     caption = {Programación dinámica},
+		     label = lst:dp-example-dp]
+		    {code/max_sum_dp.py}
+    Es útil tener a la mano
+    el programa recursivo~\ref{lst:dp-example-recursive}
+    para contrastar resultados.
+  \end{enumerate}
+  Los ejemplos siguientes no serán desarrollados en forma tan detallada.
+
+\section{Subset Sum}
+\label{sec:SubsetSum}
+
+  La idea de programación dinámica
+  puede emplearse siempre que en una propuesta recursiva de solución
+  hayan subproblemas que se repiten.
+  Comúnmente se usa para problemas de optimización,
+  pero no es el único uso.
+
+  Dado un conjunto de enteros positivos
+  \(\mathscr{A} = \{ a_1, a_2, \dotsc, a_n \}\),
+  se pide determinar si hay un subconjunto de \(\mathscr{A}\) que suma \(s\).
+
+  Definimos \(p[i, t]\) como verdadero
+  si entre \(\{a_1, \dotsc, a_i\}\) hay un subconjunto que suma \(t\).
+
+  La recurrencia sobre \(i\) es bastante obvia.
+  Al agregar \(a_{i + 1}\) a los elementos considerados,
+  podemos simplemente no usarlo
+  (es posible obtener \(t\) con \(\{a_1, \dotsc, a_i\}\))
+  o lo incluimos
+  (debemos obtener \(t - a_{i + 1}\) con \(\{a_1, \dotsc, a_i\}\)).
+  O sea:
+  \begin{equation*}
+    p[i + 1, t]
+      = p[i, t] \vee p[i, t - a_{i + 1}]
+  \end{equation*}
+  Tenemos condiciones iniciales:
+  \begin{equation*}
+    p[i, t]
+      = \begin{cases}
+	  F & \text{si \(t > 0\) y \(i = 0\)} \\
+	  T & \text{si \(t = 0\)}
+	\end{cases}
+  \end{equation*}
+  Es simple llevar esto al algoritmo~\ref{alg:SubsetSum-r} recursivo,
+  donde hemos aprovechado cálculo en corto circuito de la expresión.
+  Debemos tener cuidado de no considerar incluir \(a_i\) si \(a_i > t\),
+  como se muestra.
+  Obtenemos el resultado como \(\mathrm{\textsc{SubsetSum}}(n, S)\).
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{\textsc{SubsetSum}}(i, S)\)}{
+      \If{\(S = 0\)}{
+	\Return \(T\) \;
+      }
+      \If{\(i = 0\)}{
+	\Return \(F\) \;
+      }
+      \If{\(\mathrm{\textsc{SubsetSum}}(i - 1, S)\)}{
+	  \Return \(T\) \;
+      }
+      \eIf{\(S \ge a_i\)}{
+	\Return \(\mathrm{\textsc{SubsetSum}}(i - 1, S - a_i)\) \;
+      }
+      {
+	\Return \(F\) \;
+      }
+    }
+    \caption{Hay subconjunto de \(\{a_1, \dotsc, a_i\}\)
+	     con la suma \(S\) dada}
+    \label{alg:SubsetSum-r}
+  \end{algorithm}
+  En el peor caso,
+  este algoritmo considera los \(2^n\) subconjuntos de los \(a_i\).
+
+  Una solución por programación dinámica llena el arreglo
+  desde \(t = 0\),
+  para cada \(t = 0, 1, \dotsc\) calculamos \(p[i, t]\)
+  sistemáticamente,
+  con lo que los valores requeridos los habremos calculado antes.
+  Ver el algoritmo~\ref{alg:SubsetSum-pd}.
+  \begin{algorithm}[htb]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{\textsc{SubsetSum}}(\mathbf{a}, S)\)}{
+      \For{\(t \gets 1\) \KwTo \(S\)}{
+	\(p[0, t] = F\) \;
+      }
+      \For{\(i \gets 0\) \KwTo \(\mathrm{len}(a)\)}{
+	\(p[i, 0] \gets T\) \;
+      }
+      \For{\(t \gets 1\) \KwTo \(S\)}{
+	\For{\(i \gets 1\) \KwTo \(\mathrm{len}(a)\)}{
+	  \eIf{\(a_i > t\)}{
+	    \(p[i, t] \gets p[i - 1, t]\) \;
+	  }
+	  {
+	    \(p[i, t]
+		\gets p[i - 1, t] \vee p[i - 1, t - a_i] \)\;
+	  }
+	}
+      }
+      \Return \(p[\mathrm{len}(a), S]\) \;
+    }
+    \caption{Subconjunto de \(\{a_1, \dotsc, a_n\}\)
+	     que suma \(S\),
+	     programación dinámica}
+    \label{alg:SubsetSum-pd}
+  \end{algorithm}
+  Luego de ejecutar este algoritmo,
+  \(p[n, S]\) nos dice si es posible o no la suma dada.
+  Si quisiéramos además obtener un subconjunto que logra la suma pedida,
+  habría que registrar con los \(p[t, i]\) verdaderos
+  cuál fue la opción que dio verdadero,
+  y revisar hacia atrás desde el resultado final.
+
+  La complejidad de este algoritmo es \(O(n s \log s)\),
+  estamos calculando esencialmente \(n s\) elementos,
+  cada uno de los cuales significa algunas operaciones
+  entre palabras de \(\log_2 s\) bits.
+  Note que si \(s\) es substancialmente mayor a \(2^n\),
+  el algoritmo recursivo es menos costoso.
+  Vimos en \emph{Informática Teórica} (INF-155) que este problema
+  (\textsc{SubsetSum})
+  es \NP\nobreakdash-completo.
+  En términos del largo de la representación en binario de los datos
+  (los \(n\) elementos \(a_i\) y \(s\);
+   si los \(a_i\) son de la misma magnitud que \(s\)
+   los datos de entrada tienen tamaño \(O(n \log s)\))
+  este algoritmo no es polinomial,
+  pero sí lo es en términos de los valores de los datos de entrada
+  A tales algoritmos se les llama \emph{pseudopolinomiales}.
+
+\section{Subsecuencia creciente más larga}
+\label{sec:LIS}
+
+  Dado una secuencia de \(n\) elementos,
+  nos interesa determinar el largo de la subsecuencia creciente más larga.
+  Por ejemplo,
+  una subsecuencia creciente más larga está marcada con negrilla
+  en la siguiente secuencia:
+  \begin{equation*}
+    80, \mathbf{10}, \mathbf{22}, 9, \mathbf{33}, 21, \mathbf{50},
+    41, \mathbf{60}, 23, 7
+  \end{equation*}
+
+  Sea \(a_i\) el \(i\)\nobreakdash-ésimo elemento de la secuencia
+  (\(0 \le i < n\)),
+  y sea \(L_i\) el largo de la secuencia creciente más larga
+  \emph{que termina en \(a_i\)}.
+  Nos interesa el valor máximo de \(L_i\).
+
+  Note que nuestros subproblemas no son del mismo tipo que el problema inicial,
+  estamos poniendo la condición de que el último elemento de la secuencia
+  sea parte de la secuencia creciente,
+  y el resultado no es simplemente el valor registrado en una posición fija.
+
+  Pensando en la composición de la subsecuencia creciente más larga
+  que termina con \(a_i\),
+  antes de \(a_i\) hay una subsecuencia creciente más larga
+  que termina en \(a_j\),
+  con \(a_j < a_i\).
+  Si no hay un \(a_j \le a_i\) con \(j < i\),
+  la subsecuencia más larga que incluye \(a_i\) es simplemente este elemento.
+  Esto hace plantear la recurrencia:
+  \begin{align}
+    L_i
+      = \begin{cases}
+	   1 + \max_{\substack{ 0 < j < i \\
+				a_j \le a_i }} \{ L_j \}
+		& \text{si tal \(j\) existe} \\
+	   1
+		& \text{caso contrario}
+	\end{cases}
+  \end{align}
+  Como mencionamos,
+  el valor buscado es \(\max_{0 \le i < n} \{ L_i \}\).
+
+  Hay subproblemas repetidos,
+  vale la pena pensar en programación dinámica.
+  En nuestro caso,
+  calcular los \(L_i\) sistemáticamente.
+  El programa Python del listado~\ref{lst:LIS} da detalles.
+  \lstinputlisting[float,
+		   language = Python,
+		   firstline = 7, lastline = 23,
+		   caption = {Subsecuencia creciente más larga},
+		   label = lst:LIS]
+		  {code/lis}
+  Esto entrega el largo de la subsecuencia más larga,
+  obtener una subsecuencia más larga queda de ejercicio.
+
+\section{Producto de matrices}
+\label{sec:producto-de-matrices}
+
+  Queremos calcular el producto de \(n\) matrices,
+  \(\mathbf{A}_1 \cdot \mathbf{A}_2 \dotsm \mathbf{A}_n\),
+  donde \(\mathbf{A}_i\) es \(n_i \times n_{i + 1}\)
+  (para que sea posible el producto \(\mathbf{A}_i \cdot \mathbf{A}_{i + 1}\)).
+
+  La técnica tradicional
+  de multiplicar una matriz de \(r \times s\) por otra \(s \times t\)
+  toma \(r s t\) multiplicaciones,
+  y usaremos esto como medida de costo.
+  Nuestro resultado no depende realmente del detalle de esto.
+
+  Sabemos que la multiplicación de matrices es asociativa:
+  \begin{equation*}
+    \mathbf{A} \cdot (\mathbf{B} \cdot \mathbf{C})
+      = (\mathbf{A} \cdot \mathbf{B}) \cdot \mathbf{C}
+  \end{equation*}
+  El trabajo total depende del orden.
+  Por ejemplo,
+  si tenemos matrices:
+  \begin{align*}
+    \mathbf{A} &\colon \phantom{0}2 \times 12 \\
+    \mathbf{B} &\colon 12 \times 3  \\
+    \mathbf{C} &\colon \phantom{0}3 \times 4
+  \end{align*}
+  Entonces,
+  el costo de calcular \((\mathbf{A} \cdot \mathbf{B}) \cdot \mathbf{C}\) es:
+  \begin{equation*}
+    2 \cdot 12 \cdot 3 + 2 \cdot 3 \cdot 4
+      = 96
+  \end{equation*}
+  El primer término corresponde al producto \(\mathbf{A} \cdot \mathbf{B}\),
+  el segundo a multiplicar esto por \(\mathbf{C}\).
+  Continuamos con el cálculo del costo
+  de obtener \(\mathbf{A} \cdot (\mathbf{B} \cdot \mathbf{C})\):
+  \begin{equation*}
+    2 \cdot 12 \cdot 4 + 12 \cdot 3 \cdot 4
+      = 240
+  \end{equation*}
+  Vemos que hasta en este caso mínimo el orden hace una gran diferencia.
+
+  Para obtener el óptimo en el caso general,
+  consideremos \textquote{de afuera adentro}.
+  Si el último producto es:
+  \begin{equation}
+    \label{11::ExplicacionOptimo}
+    \underbrace{
+      (\mathbf{A}_1 \cdot \mathbf{A}_2 \dotsm \mathbf{A}_i)
+    }_{\text{óptimo}}
+       \underbrace{(\mathbf{A}_{i + 1} \dotsm \mathbf{A}_n)}_{\text{óptimo}}
+  \end{equation}
+  Note que \((\mathbf{A}_1 \cdot \mathbf{A}_2 \dotsm \mathbf{A}_i)\)
+  y \((\mathbf{A}_{i + 1} \dotsm \mathbf{A}_n)\)
+  también deben calcularse de forma óptima,
+  de lo contrario el cuento no sirve.
+  En consecuencia,
+  tendremos que dividir nuevamente lo que está entre paréntesis
+  sucesivamente hasta obtener un producto de dos matrices.
+  Es importante destacar que no conocemos \(i\),
+  que tendremos que probar todas las opciones.
+  Ojo,
+  muchos subproblemas se repiten.
+
+  Idea de programación no recursiva:
+  \begin{itemize}
+  \item \(T[i, j]\):
+    costo de calcular el producto
+      \(\mathbf{A}_i\cdot \ldots \cdot \mathbf{A}_j\).
+  \end{itemize}
+  Inicialmente:
+  \begin{equation*}
+    T[i, i] = 0
+  \end{equation*}
+  Sabemos que:
+  \begin{equation}
+    \label{11::MinimoIteracion}
+    T[i, j]
+      = \min_{i \le k < j}
+	  \{ T[i, k] + T[k+1, j]
+	      + \underbrace{
+		  n_i \cdot n_{k + 1} \cdot n_{j + 1}
+		}_{\text{costo del producto}}\hspace{-0.2mm}
+	  \}
+  \end{equation}
+  Acá \(k\) corresponde a dónde dividimos con los paréntesis
+  (en~\eqref{11::ExplicacionOptimo}
+   es \(k = i\))
+  que dio el valor mínimo de~\eqref{11::MinimoIteracion}.
+  Además,
+  \(n\) corresponde al valor izquierdo de la dimensión de la matriz.
+  Por ejemplo,
+  si nuestra \(\mathbf{A}_i\) tiene dimensión \(a \times b\),
+  \(\mathbf{A}_{k + 1}: c \times d\) y \(\mathbf{A}_{j + 1}: e \times f\),
+  se tiene que \(n_i = a\),
+  \(n_{k + 1} = c\) y \(n_{j+1} = e\) respectivamente.
+
+  Nos interesa: \(T[1, n]\).
+  Calculamos:
+  \begin{align*}
+    &T[i, i] \\
+    &T[i, i+1] \\
+    &\quad\vdots
+  \end{align*}
+  Esta da sólo el costo.
+  Hay que registrar con cada \(T[i, j]\) cuál fue el \(k\)
+  que dio el mínimo.
+  Siguiendo esos desde \(T[1, n]\) da el orden óptimo.
+  \begin{ejemplo}
+    Supongamos que queremos calcular el producto de matrices:
+    \begin{equation*}
+      \mathbf{A}
+	\cdot \mathbf{B}
+	\cdot \mathbf{C}
+	\cdot \mathbf{D}
+	\cdot \mathbf{E}
+	\cdot \mathbf{F}
+	\cdot \mathbf{G}
+	\cdot \mathbf{H}
+    \end{equation*}
+    donde las dimensiones son:
+    % Given in dimensiones.txt
+    \begin{itemize}
+    \item \(\mathbf{A} = \mathbf{A}_1 \colon 2 \times 3\)
+    \item \(\mathbf{B} = \mathbf{A}_2 \colon 3 \times 4\)
+    \item \(\mathbf{C} = \mathbf{A}_3 \colon 4 \times 1\)
+    \item \(\mathbf{D} = \mathbf{A}_4 \colon 1 \times 9\)
+    \item \(\mathbf{E} = \mathbf{A}_5 \colon 9 \times 3\)
+    \item \(\mathbf{F} = \mathbf{A}_6 \colon 3 \times 7\)
+    \item \(\mathbf{G} = \mathbf{A}_7 \colon 7 \times 2\)
+    \item \(\mathbf{H} = \mathbf{A}_8 \colon 2 \times 8\)
+    \end{itemize}
+    Para la primera iteración,
+    es decir,
+    \(T[i, i]\)
+    es claro que intentamos calcular la cantidad de productos
+    que son necesarios para hacer la multiplicación \(\mathbf{A}_i\).
+    Como no lo estamos multiplicando con nada más,
+    se tiene que la cantidad de multiplicaciones necesarias
+    es \(T[i, i] = 0\) para cualquier \(i\).
+    Agregamos esta información al cuadro~\ref{11::Iteracion1}.
+    \newcolumntype{M}{>{\(}r<{\)}}
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{*{8}{M|}M|}
+	 & \multicolumn{1}{c|}{1}
+	     & \multicolumn{1}{c|}{2}
+	     & \multicolumn{1}{c|}{3}
+	     & \multicolumn{1}{c|}{4}
+	     & \multicolumn{1}{c|}{5}
+	     & \multicolumn{1}{c|}{6}
+	     & \multicolumn{1}{c|}{7}
+	     & \multicolumn{1}{c|}{8} \\
+	\hline
+	\multirow{2}{*}{1} & 0 &   &   &   &   &   &   & \phantom{000} \\
+			   & 1 &   &   &   &   &   &   &   \\
+	\hline
+	\multirow{2}{*}{2} &   & 0 &   &   &   &   &   &   \\
+			   &   & 2 &   &   &   &   &   &   \\
+	\hline
+	\multirow{2}{*}{3} &   &   & 0 &   &   &   &   &   \\
+			   &   &   & 3 &   &   &   &   &   \\
+	\hline
+	\multirow{2}{*}{4} &   &   &   & 0 &   &   &   &   \\
+			   &   &   &   & 4 &   &   &   &   \\
+	\hline
+	\multirow{2}{*}{5} &   &   &   &   & 0 &   &   &   \\
+			   &   &   &   &   & 5 &   &   &   \\
+	\hline
+	\multirow{2}{*}{6} &   &   &   &   &   & 0 &   &   \\
+			   &   &   &   &   &   & 6 &   &   \\
+	\hline
+	\multirow{2}{*}{7} &   &   &   &   &   &   & 0 &   \\
+			   &   &   &   &   &   &   & 7 &   \\
+	\hline
+	\multirow{2}{*}{8} & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & 0 \\
+			   &   &    &	 &    &	   &	 &    &	  8 \\
+	\hline
+      \end{tabular}
+      \caption{Para la primera iteración
+	       no necesitamos realizar multiplicaciones.}
+      \label{11::Iteracion1}
+    \end{table}
+    Note que cada casilla del cuadro~\ref{11::Iteracion1}
+    contiene \(T[i, j]\) y el \(k\) que dio el mínimo.
+    Para la segunda iteración,
+    tenemos que calcular todos los \(T[i, i + 1]\),
+    es decir,
+    la mínima cantidad de multiplicaciones
+    para obtener \(\mathbf{A}_i \cdot \mathbf{A}_{i + 1}\).
+    Como solo tenemos dos matrices involucradas,
+    es bastante fácil realizar este cálculo:
+    \begin{itemize}
+    \item \(T[1, 2] = 2 \cdot 3 \cdot 4 = \phantom{0}24\)
+    \item \(T[2, 3] = 3 \cdot 4 \cdot 1 = \phantom{0}12\)
+    \item \(T[3, 4] = 4 \cdot 1 \cdot 9 = \phantom{0}36\)
+    \item \(T[4, 5] = 1 \cdot 9 \cdot 3 = \phantom{0}27\)
+    \item \(T[5, 6] = 9 \cdot 3 \cdot 7 = 189\)
+    \item \(T[6, 7] = 3 \cdot 7 \cdot 2 = \phantom{0}42\)
+    \item \(T[7, 8] = 7 \cdot 2 \cdot 8 = 112\)
+    \end{itemize}
+    Luego,
+    agregamos estos valores al cuadro~\ref{11::Iteracion1}.
+    Los cambios se pueden apreciar en el cuadro~\ref{11::Iteracion2}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{*{8}{M|}M|}
+	 & \multicolumn{1}{c|}{1}
+	     & \multicolumn{1}{c|}{2}
+	     & \multicolumn{1}{c|}{3}
+	     & \multicolumn{1}{c|}{4}
+	     & \multicolumn{1}{c|}{5}
+	     & \multicolumn{1}{c|}{6}
+	     & \multicolumn{1}{c|}{7}
+	     & \multicolumn{1}{c|}{8} \\
+	\hline
+	\multirow{2}{*}{1} & 0 & 24 &	 &    &	   &	 &    &	    \\
+			   & 1 &  1 &	 &    &	   &	 &    &	    \\
+	\hline
+	\multirow{2}{*}{2} &   &  0 & 12 &    &	   &	 &    &	    \\
+			   &   &  2 &  2 &    &	   &	 &    &	    \\
+	\hline
+	\multirow{2}{*}{3} &   &    &  0 & 36 &	   &	 &    &	    \\
+			   &   &    &  3 &  3 &	   &	 &    &	    \\
+	\hline
+	\multirow{2}{*}{4} &   &    &	 &  0 & 27 &	 &    &	    \\
+			   &   &    &	 &  4 &	 4 &	 &    &	    \\
+	\hline
+	\multirow{2}{*}{5} &   &    &	 &    &	 0 & 189 &    &	    \\
+			   &   &    &	 &    &	 5 &   5 &    &	    \\
+	\hline
+	\multirow{2}{*}{6} &   &    &	 &    &	   &   0 & 42 &	    \\
+			   &   &    &	 &    &	   &   6 &  6 &	    \\
+	\hline
+	\multirow{2}{*}{7} &   &    &	 &    &	   &	 &  0 & 112 \\
+			   &   &    &	 &    &	   &	 &  7 &	  7 \\
+	\hline
+	\multirow{2}{*}{8} & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & 0 \\
+			   &   &    &	 &    &	   &	 &    &	  8 \\
+	\hline
+      \end{tabular}
+      \caption{Segunda iteración.}
+      \label{11::Iteracion2}
+    \end{table}
+    Seguimos con la tercera iteración,
+    completando la diagonal siguiente.
+    En esta ocasión,
+    tendremos que calcular los \(T[i, i + 2]\),
+    es decir,
+    la cantidad de multiplicaciones mínima
+    para obtener
+      \(\mathbf{A}_i \cdot \mathbf{A}_{i + 1} \cdot \mathbf{A}_{i + 2}\).
+    Para ello,
+    comenzamos calculando \(T[1, 3]\),
+    es decir:
+    \begin{equation}
+      \label{11::PrimerMinimo}
+      T[1, 3]
+	= \min_{1 \le k < 3} \{ T[1, k] + T[k + 1, 3]
+				 + n_1 \cdot n_{k + 1} \cdot n_4 \}
+    \end{equation}
+    Vamos por partes:
+    \begin{itemize}
+    \item
+      Para \(k = 1\):
+      \begin{equation*}
+	T[1, 1] + T[2, 3] + n_1 \cdot n_2 \cdot n_4
+	  = 0 + 12 + 2 \cdot 3 \cdot 1
+	  = 18
+      \end{equation*}
+    \item
+      Para \(k = 2\):
+      \begin{equation*}
+	T[1, 2] + T[3, 3]
+	       + n_1 \cdot n_3 \cdot n_4
+	  = 24 + 0 + 2 \cdot 4 \cdot 1
+	  = 32
+      \end{equation*}
+    \end{itemize}
+    Por lo tanto,
+    de acuerdo a lo anterior la ecuación~\eqref{11::PrimerMinimo}
+    obtiene el mínimo \num{18} cuando hacemos el corte en \(k = 1\).
+    Es decir,
+    obtenemos el mínimo de productos
+    para \(\mathbf{A}_1 \cdot \mathbf{A}_2 \cdot \mathbf{A}_3\)
+    si hacemos un corte
+    \begin{equation}
+      \mathbf{A}_1 \cdot (\mathbf{A}_2\cdot \mathbf{A}_3)
+	= \mathbf{A} \cdot (\mathbf{B} \cdot \mathbf{C})
+    \end{equation}
+    Agregamos estos datos a la tabla.
+
+    Para dejar más en claro cómo calcular~\eqref{11::MinimoIteracion}
+    repetiremos los pasos anteriores,
+    pero para calcular \(T[4, 7]\),
+    el que se puede obtener a través de:
+    \begin{equation*}
+      T[4, 7]
+	= \min_{4 \le k < 7} \{ T[4, k] + T[k + 1, 7]
+		      + n_4 \cdot n_{k + 1} \cdot n_7 \}
+    \end{equation*}
+    Vamos viendo:
+    \begin{align*}
+      k = 4 &\colon
+	T[4, 4] + T[5, 7] + 1 \cdot 9 \cdot 2
+	      = \phantom{0}0 + 96 + 18
+	      = 114 \\
+      k = 5 &\colon
+	T[4, 5] + T[6, 7] + 1 \cdot 3 \cdot 2
+	      = 27 + 42 + \phantom{0}6
+	      = \phantom{0}75 \\
+      k = 6 &\colon
+	T[4, 6] + T[7, 7] + 1 \cdot 7 \cdot 2
+	      = 48 + \phantom{0}0 + 14
+	      = \phantom{0}62
+    \end{align*}
+    El mínimo se obtiene para \(k = 6\),
+    de costo \num{62},
+    es decir:
+    \begin{equation}
+      (\mathbf{A}_4 \cdot \mathbf{A}_5 \cdot \mathbf{A}_6) \cdot \mathbf{A}_7
+	= (\mathbf{D} \cdot \mathbf{E} \cdot \mathbf{F}) \cdot \mathbf{G}
+    \end{equation}
+    Note que calculando sistemáticamente las diagonales,
+    cuando se requieran valores ya estarán calculados de antes.
+
+    El objetivo de este ejemplo
+    es mostrar cómo funciona el algoritmo,
+    por lo que no es necesario explicar paso a paso
+    cómo obtener el resto de las casillas de la tabla.
+    El resultado final es el dado en el cuadro~\ref{tab:matriz-final}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{*{8}{M|}M|}
+	 & \multicolumn{1}{c|}{1}
+	     & \multicolumn{1}{c|}{2}
+	     & \multicolumn{1}{c|}{3}
+	     & \multicolumn{1}{c|}{4}
+	     & \multicolumn{1}{c|}{5}
+	     & \multicolumn{1}{c|}{6}
+	     & \multicolumn{1}{c|}{7}
+	     & \multicolumn{1}{c|}{8} \\
+	\hline
+	\multirow{2}{*}{1}
+	   & 0 & 24 & 18 & 36 & 51 &  80 & 84 & 112 \\
+	   & 1 &  1 &  1 &  3 &	 3 &   3 &  3 &	  3 \\
+	\hline
+	\multirow{2}{*}{2}
+	   &   &  0 & 12 & 39 & 48 &  81 & 80 & 114 \\
+	   &   &  2 &  2 &  3 &	 3 &   3 &  3 &	  3 \\
+	\hline
+	\multirow{2}{*}{3}
+	   &   &    &  0 & 36 & 39 &  76 & 70 & 110 \\
+	   &   &    &  3 &  3 &	 3 &   3 &  3 &	  3 \\
+	\hline
+	\multirow{2}{*}{4}
+	   &   &    &	 &  0 & 27 &  48 & 62 &	 78 \\
+	   &   &    &	 &  4 &	 4 &   5 &  6 &	  7 \\
+	\hline
+	\multirow{2}{*}{5}
+	   &   &    &	 &    &	 0 & 189 & 96 & 240 \\
+	   &   &    &	 &    &	 5 &   5 &  5 &	  7 \\
+	\hline
+	\multirow{2}{*}{6}
+	   &   &    &	 &    &	   &   0 & 42 &	 90 \\
+	   &   &    &	 &    &	   &   6 &  6 &	  7 \\
+	\hline
+	\multirow{2}{*}{7}
+	   &   &    &	 &    &	   &	 &  0 & 112 \\
+	   &   &    &	 &    &	   &	 &  7 &	  7 \\
+	\hline
+	\multirow{2}{*}{8} & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & \phantom{000}
+			   & 0 \\
+			   &   &    &	 &    &	   &	 &    &	  8 \\
+	\hline
+      \end{tabular}
+      \caption{Tabla final}
+      \label{tab:matriz-final}
+    \end{table}
+  \end{ejemplo}
+  \begin{proof}
+    Como siempre,
+    demostramos que cumple con:
+    \begin{description}
+    \item[Estructura inductiva:]
+      Dada la selección \(k\) (última) se subdivide en problemas,
+      cuyas soluciones viables junto con \(k\)
+      dan una solución viable para todo.
+    \item[Subestructura óptima:]
+      Con soluciones óptimas
+      para \(1 \cdots k\) y \(k + 1 \cdots n\)
+      obtenemos la solución óptima para \(1 \cdots n\),
+      \emph{suponiendo \(k\)}.
+    \item[Elección completa:]
+      Elegimos aquel \(k\) que da el mejor \textquote{último paso},
+      revisando todas las posibilidades.
+    \end{description}
+  \end{proof}
+  Por el momento solo nos interesaba obtener el valor del costo mínimo.
+  Con los valores de \(k\) registrados en la tabla
+  podemos calcular el orden óptimo.
+  La entrada \((1, 8)\) nos dice que el mejor corte final
+  está luego de \(\mathbf{A}_3 = C\),
+  o sea:
+  \begin{equation*}
+    (\mathbf{A} \cdot \mathbf{B} \cdot \mathbf{C})
+      \cdot (\mathbf{D} \cdot \mathbf{E}
+		\cdot \mathbf{F} \cdot \mathbf{G} \cdot \mathbf{H})
+  \end{equation*}
+  Seguimos viendo la subdivisión óptima
+  para \(\mathbf{A} \cdot \mathbf{B} \cdot \mathbf{C}\) en \num{1, 3},
+  que resulta ser:
+  \begin{equation*}
+    \mathbf{A} \cdot (\mathbf{B} \cdot \mathbf{C})
+  \end{equation*}
+  Similarmente,
+  \num{4, 8} nos indica:
+  \begin{equation*}
+    (\mathbf{D} \cdot \mathbf{E}
+		\cdot \mathbf{F} \cdot \mathbf{G}) \cdot \mathbf{H}
+  \end{equation*}
+  Continuamos de la misma forma,
+  obteniendo finalmente:
+  \begin{equation*}
+    (\mathbf{A} \cdot (\mathbf{B} \cdot \mathbf{C}))
+       \cdot ((((\mathbf{D} \cdot \mathbf{E}) \cdot \mathbf{F})
+		   \cdot \mathbf{G}) \cdot \mathbf{H})
+  \end{equation*}
+  Es sencillo escribir un programa recursivo que recorra la tabla
+  para extraer la subdivisión óptima.
+
+\section{Subsecuencia común más larga}
+\label{sec:LCS}
+
+  En inglés conocido
+  como \emph{\foreignlanguage{english}{Longest Common Subsequence}},
+  LCS.
+  Dadas dos palabras \(X\) e \(Y\),
+  de símbolos \(x_1, x_2, \dotsc, x_m\)
+  e \(y_1, y_2, \dotsc, y_n\) respectivamente,
+  buscamos la secuencia más larga de símbolos \(x_{i_k} = y_{j_k}\)
+  tales que \(i_k\) y \(j_k\) son ambas crecientes.
+
+  Esta es la base del comando Unix \texttt{diff(1)},
+  que compara dos archivos \(X\) e \(Y\)
+  (se consideran las líneas como \textquote{símbolos}),
+  y entrega las líneas eliminadas e insertadas para cambiar \(X\) a \(Y\):
+  \begin{itemize}
+  \item
+    Hallar la subsecuencia común más larga (LCS) entre ellos.
+  \item
+    Marcar líneas agregadas/borradas
+  \end{itemize}
+  Supongamos que tenemos dos archivos:
+  \(X\) e \(Y\),
+  cuyo contenido se muestra en el cuadro~\ref{12::ContenidoArchivos}.
+  \newcolumntype{T}{>{\ttfamily}l}
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{T|T}
+      \multicolumn{1}{c|}{\(X\)}&\multicolumn{1}{c}{\(Y\)}\\
+      \hline
+      foo	& bar \\
+      bar	& xyzzy \\
+      baz	& plugh \\
+      quux	& baz \\
+      windows & foo \\
+	      & quux \\
+	      & linux
+    \end{tabular}
+    \caption{Los archivos \(X\) e \(Y\).
+	     Cada fila de la tabla
+	     es una línea del archivo.}
+    \label{12::ContenidoArchivos}
+  \end{table}
+  En consecuencia,
+  si ejecutamos \lstinline[language = sh]!diff X Y!
+  obtenemos como resultado,
+  la columna \textquote{Resultado} del cuadro~\ref{12::DiffXY}.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{c|T|T|TT}
+      Línea & \multicolumn{1}{c|}{\(X\)}
+	    & \multicolumn{1}{c|}{\(Y\)}
+	    & \multicolumn{2}{c}{\textrm{Resultado}} \\
+      \hline
+      1 & foo	    & bar   & - & foo \\
+      2 & bar	    & xyzzy &	& bar \\
+      3 & baz	    & plugh & + & xyzzy \\
+      4 & quux	  & baz	  & + & plugh \\
+      5 & windows & foo	  &	& baz \\
+      6 &	    & quux  & + & foo \\
+      7 &	    & linux &	& quux \\
+      8 &	    &	    & - & windows \\
+      9 &	    &	    & + & linux
+    \end{tabular}
+    \caption{La columna \textquote{Resultado}
+	     resume las operaciones.}
+    \label{12::DiffXY}
+  \end{table}
+  Esta operación es crítica en sistemas de control de versiones
+  (para ahorrar espacio almacenan solo las diferencias,
+   que suelen ser pequeñas entre versiones sucesivas),
+  y es fundamental para mostrar diferencias entre versiones.
+  Mucho de la biología molecular
+  es determinar diferencias
+  entre secuencias de aminoácidos de proteínas
+  o de genes similares
+
+\section{Aspectos formales}
+
+  Nos dan arreglos \(X[1, \ldots, n]\), \(Y[1, \ldots, m]\),
+  palabras sobre un alfabeto (\textquote{símbolo} es una línea).
+  Hallar la secuencia de pares de índices
+  (números de línea)
+  \((x_1, y_1)\), \((x_2, y_2)\), \ldots, \((x_q, y_q)\) tales que:
+  \begin{align*}
+    x_1	   &< x_2 < \dotsb < x_q \qquad	 \forall x_i \in \mathbb{N} \\
+    y_1	   &< y_2 < \dotsb < y_q \qquad	 \forall y_i \in \mathbb{N} \\
+    X[x_i] &= Y[y_i] \qquad \text{para \(1 \le i \le q\)}
+  \end{align*}
+  Interesa la secuencia más larga
+  (máximo \(q\),
+   correspondiente a la cantidad de coincidencias).
+  Para ello,
+  consideremos \(X[n]\), \(Y[m]\).
+  Tres opciones:
+  \begin{enumerate}
+  \item
+    \(X[n]\) queda fuera de la subsecuencia.
+    En consecuencia, lo marcamos con \texttt{(-)}
+  \item
+    \(Y[m]\) queda fuera de la subsecuencia.
+    Para efectos de \texttt{diff} marcamos con \texttt{(+)}
+  \item
+    Si \(X[n] = Y[m]\), hacer \(x_q = n\), \(y_q = m\).
+  \end{enumerate}
+  Pueden quedar fuera ambos,
+  pero eso resulta automáticamente de eliminar uno y luego el otro.
+  Notar que si \(X[n] \ne Y[m]\) no pueden pertenecer ambos a la LCS.
+
+  En resumen,
+  hay tres opciones
+  que dan lugar a los siguientes subproblemas:
+  \begin{enumerate}
+  \item
+    \(X[1, \dotsc, n - 1]\), \(Y[1, \dotsc, m]\)
+  \item
+    \(X[1, \dotsc, n]\), \(Y[1, \dotsc, m - 1]\)
+  \item
+    Solo si \(X[n] = Y[m]\)
+    considerar \(X[1, \dotsc, n - 1]\), \(Y[1, \dotsc, m - 1]\)
+    (y contabilizar una coincidencia)
+  \end{enumerate}
+
+  Sea \(\mathrm{LCS}(A, B)\)
+  la subsecuencia común más larga entre \(A\) y \(B\).
+  Entonces
+  (hasta el momento solo nos interesa el largo de la subsecuencia óptima,
+   después veremos como encontrar la secuencia):
+  \begin{align*}
+    \lvert \mathrm{LCS}(X, Y) \rvert
+      = \max\{\lvert \mathrm{LCS}(X[1, \dotsc, n - 1), Y \rvert] + 0,
+	      \lvert \mathrm{LCS}(X, Y[1, \dotsc, m - 1) \rvert] + 0, \\
+	      \lvert \mathrm{LCS}(X[1, \dotsc, n - 1],
+					Y[1, \dotsc, m - 1]) \rvert
+			  + 1 \}
+  \end{align*}
+  Esto sugiere un arreglo \(L[i, j]\):
+  \begin{equation}
+    L[i, j]
+      = \lvert \mathrm{LCS}(X[1, \ldots, i), Y[1, \ldots, j \rvert]
+  \end{equation}
+  Sabemos \(L[0, j] = L[i, 0] = 0\).
+  Para calcular \(L[i, j]\)
+  necesitamos \(L[i-1, j]\), \(L[i, j-1]\), \(L[i-1, j-1]\) (posiblemente).
+  Llenar el arreglo,
+  calculando \(L[i, k]\) para \(i\) de \num{1} a \(n\),
+  llenando los \(j\) de \num{1} a \(m\).
+  Vemos que el costo total es \(O(n\cdot m)\).
+
+\section{Árboles binarios óptimos}
+\label{sec:optimal-BST}
+
+  Nos dan un arreglo ordenado de claves \(A[1, \dotsc, n]\)
+  con sus respectivas frecuencias de búsqueda \(f[1, \dotsc, n]\).
+  Buscamos crear un árbol binario
+  para el cual el costo total de las búsquedas sea mínimo.
+
+  Requerimos una forma de plantear la cantidad a optimizar.
+  Fijemos un árbol binario de búsqueda \(T\) de las claves \(A\),
+  con la clave \(A[i]\) en el nodo \(v_i\),
+  el costo total de las búsquedas en \(T\) es proporcional a:
+  \begin{equation*}
+    C(T, f)
+      = \sum_i f[i] \cdot \text{número de ancestros de \(v_i\) en \(T\)}
+  \end{equation*}
+  Podemos particionar \(C\) según subárboles del vértice raíz \(v_r\):
+  \begin{equation*}
+    C(T, f)
+      = \sum_i f[i]
+	  + \sum_{1 \le i < r}
+	      f[i] \cdot \text{\# ancestros de \(v_i\)
+		 en \(\mathrm{left}(T)\)}
+	  + \sum_{r < i \le n}
+	      f[i] \cdot \text{\# ancestros de \(v_i\)
+		 en \(\mathrm{right}(T)\)}
+  \end{equation*}
+  Las dos sumas son de la misma forma de nuestro original,
+  obtenemos la recursión:
+  \begin{equation*}
+    C(T, f)
+      = \sum_i f[i] + C(\operatorname{left}(T)) + C(\operatorname{right}(T))
+  \end{equation*}
+  El caso base es para \(n = 0\),
+  buscar en el árbol vacío tiene costo cero.
+
+  Es claro que las claves no inciden,
+  dada la raíz \(A[r]\)
+  el subárbol derecho y el izquierdo deben ser óptimos para las claves
+  en sus respectivos rangos.
+  Fijemos el arreglo de frecuencias,
+  y sea \(\mathrm{Opt}(i, k)\) el costo total
+  de buscar en el árbol óptimo para las claves \(A[i, \dotsc, k]\).
+  Nuestra recurrencia se transforma en:
+  \begin{equation*}
+    \mathrm{Opt}(i, k)
+      = \begin{cases}
+	   0  & i > k \\
+	   \sum_{i \le j \le k} f[j]
+	      + \min_{i \le r \le k} \{ \mathrm{Opt}(i, r - 1)
+					   + \mathrm{Opt}(r + 1, k) \}
+	      & \text{caso contrario}
+	 \end{cases}
+  \end{equation*}
+  El programa resulta más simple
+  (y más eficiente)
+  si precalculamos el primer término:
+  \begin{equation*}
+    F[i, k]
+      = \sum_{i \le j \le k} f[j]
+  \end{equation*}
+  Podemos calcular los valores requeridos en tiempo \(O(n^2)\) mediante
+  (¡sorpresa!)
+  programación dinámica,
+  algoritmo~\ref{alg:F[i,k]}.
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{InitF}(f)\)}{
+      \For{\(i \gets 1\) \KwTo \(n\)}{
+	\(F[i, i - 1] \gets 0\) \;
+	\For{\(k \gets i\) \KwTo \(n\)}{
+	  \(F[i, k] \gets F[i, k - 1] + f[k]\) \;
+	}
+      }
+    }
+    \caption{Calcular \(F[i, k]\)}
+    \label{alg:F[i,k]}
+  \end{algorithm}
+  (Basta calcular \(\tilde{F}[k] = \sum_{1 \le j \le k} f[j]\),
+   y obtener \(F[i, k] = \tilde{F}(k) - \tilde{F}[i - 1]\),
+   ahorrando espacio en el proceso;
+   pero esto es irrelevante en este caso.
+   Por lo demás,
+   no es el momento de preocuparse de optimizaciones.)
+   Nuestra recurrencia se simplifica a:
+  \begin{equation*}
+    \mathrm{Opt}(i, k)
+      = \begin{cases}
+	   0  & i > k \\
+	   F[i, k]
+	      + \min_{i \le r \le k} \{ \mathrm{Opt}(i, r - 1)
+					   + \mathrm{Opt}(r + 1, k) \}
+	      & \text{caso contrario}
+	 \end{cases}
+  \end{equation*}
+  Estamos listos para seguir nuestra estrategia.
+  \begin{description}
+  \item[Subproblemas:]
+    Cada subproblema queda descrito por dos enteros,
+    \(1 \le i \le n + 1\) y \(0 \le k \le n\).
+  \item[Estructura de datos:]
+    Se requiere un arreglo \(\mathrm{Opt}[1 .. n + 1, 0 .. n]\)
+    para registrar los valores
+    (solo se usan las entradas \(\mathrm{Opt}[i, j]\)
+     con \(j \ge i - 1\),
+     pero da lo mismo;
+     si realmente se requiriera ahorrar espacio
+     se puede almacenar solo la mitad usada del arreglo).
+   \item[Dependencias:]
+     Cada entrada \(\mathrm{Opt}[i, k]\)
+     depende de las entradas \(\mathrm{Opt}[i, j - 1]\)
+     y \(\mathrm{Opt}[j + 1, k]\)
+     para \(j\) tales que \(i \le j \le k\).
+     Vale decir,
+     las que están directamente a la izquierda o debajo.
+     El algoritmo~\ref{alg:compute-OPT} calcula \(\mathrm{Opt}[i, k]\).
+     \begin{algorithm}
+       \DontPrintSemicolon\Indp
+
+       \Procedure{\(\mathrm{ComputeOpt}(i, k)\)}{
+	 \(\mathrm{Opt}[i, k] \gets \infty\) \;
+	 \For{\(r \gets i\) \KwTo \(n\)}{
+	   \(\mathrm{tmp}
+	       \gets \mathrm{Opt}[i, r - 1]
+			     + \mathrm{Opt}[r + 1, k]\) \;
+	   \If{\(\mathrm{Opt}[i, k] > \mathrm{tmp}\)}{
+	     \(\mathrm{Opt}[i, k] \gets \mathrm{tmp}\) \;
+	   }
+	 }
+	 \(\mathrm{Opt}[i, k]
+	     \gets \mathrm{Opt}[i, k] + F[i, k]\) \;
+       }
+       \caption{Cómputo de \(\mathrm{Opt}[i, k]\)}
+       \label{alg:compute-OPT}
+     \end{algorithm}
+   \item[Orden de evaluación:]
+     Hay varias opciones.
+     Una es llenar el arreglo una diagonal a la vez,
+     partiendo con los valores triviales \(\mathrm{Opt}[i, i - 1]\)
+     y llegando a \(\mathrm{Opt}[1, n]\),
+     algoritmo~\ref{alg:opt-BST-1}.
+     \begin{algorithm}
+       \DontPrintSemicolon\Indp
+
+       \Function{\(\mathrm{OptimalBST}(f)\)}{
+	 \(\mathrm{InitF}(f)\) \;
+	 \For{\(i \gets 1\) \KwTo \(n + 1\)}{
+	   \(\mathrm{Opt}[i, i - 1] \gets 0\) \;
+	 }
+	 \For{\(d \gets 0\) \KwTo \(n - 1\)}{
+	   \For{\(i \gets 1\) \KwTo \(n - d\)}{
+	     \(\mathrm{ComputeOpt}(i, i + d)\) \;
+	   }
+	 }
+	 \Return \(\mathrm{Opt}[1, n]\) \;
+       }
+
+       \caption{Llenar en diagonal}
+       \label{alg:opt-BST-1}
+     \end{algorithm}
+     Otras opciones son llenar por filas de abajo arriba,
+     algoritmo~\ref{alg:opt-BST-2};
+     o llenar por columnas de izquierda a derecha,
+     llenando cada columna de abajo arriba,
+     algoritmo~\ref{alg:opt-BST-2}.
+     \begin{algorithm}
+       \DontPrintSemicolon\Indp
+
+       \Function{\(\mathrm{OptimalBST}(f)\)}{
+	 \(\mathrm{InitF}(f)\) \;
+	 \For{\(i \gets n + 1\) \Downto \num{1}}{
+	   \(\mathrm{Opt}[i, i - 1] \gets 0\) \;
+	   \For{\(j \gets i\) \KwTo \(n\)}{
+	     \(\mathrm{ComputeOpt}(i, j)\) \;
+	   }
+	 }
+	 \Return \(\mathrm{Opt}[1, n]\) \;
+       }
+
+       \caption{Llenar por filas}
+       \label{alg:opt-BST-2}
+     \end{algorithm}
+     \begin{algorithm}
+       \DontPrintSemicolon\Indp
+
+       \Function{\(\mathrm{OptimalBST}(f)\)}{
+	 \(\mathrm{InitF}(f)\) \;
+	 \For{\(j \gets 0\) \KwTo \(n + 1\)}{
+	   \(\mathrm{Opt}[j + 1, j] \gets 0\) \;
+	   \For{\(i \gets j\) \Downto \num{1}}{
+	     \(\mathrm{ComputeOpt}(i, j)\) \;
+	   }
+	 }
+	 \Return \(\mathrm{Opt}[1, n]\) \;
+       }
+
+       \caption{Llenar por columnas}
+       \label{alg:opt-BST-3}
+     \end{algorithm}
+   \end{description}
+   Es claro que el algoritmo resultante toma tiempo \(O(n^3)\)
+   y usa espacio \(O(n^2)\).
+
+\section{Insertar caracteres para palíndromo}
+\label{sec:insert-palindrome}
+
+  Dado un \emph{\foreignlanguage{english}{string}}
+  \(x_{1 \ldots n}\),
+  hallar el mínimo número de caracteres a insertar para obtener un palíndromo
+  (se lee igual de adelante hacia atrás que de atrás hacia adelante).
+  Por ejemplo,
+  para \texttt{Ab3bd} son \num{2}
+  (obtenemos \texttt{dAb3bAd} o \texttt{Adb3dbA}
+   insertando '\texttt{d}' y '\texttt{A}').
+
+  Una forma de obtener la respuesta es obtener \(x^{\mathrm{R}}\),
+  el reverso de \(x\),
+  y calcular
+    \(\lvert x \rvert - \mathrm{\operatorname{LCS}}(x, x^{\mathrm{R}})\).
+
+  Otra forma de resolverlo es planteando directamente
+  programación dinámica.
+  Siguiendo nuestra estrategia:
+
+\subsection{Definir subproblemas}
+\label{sec:definir-subproblemas}
+
+  Sea \(D_{i,j}\) el mínimo número de caracteres a insertar
+  para transformar \(x_{i \ldots j}\) en un palíndromo.
+
+\subsection{Hallar la recurrencia}
+\label{sec:hallar-recurrencia}
+
+  Consideremos el palíndromo más corto \(y_{1 \ldots k}\)
+  que contiene \(x_{i \ldots j}\).
+  Entonces debe ser \(y_1 = x_i\) o \(y_k = x_j\)
+  (¿porqué?).
+  Esto significa que \(y_{2 \ldots k}\)
+  es óptimo para \(x_{i + 1 \ldots j}\)
+  o para \(x_{i \ldots j - 1}\)
+  o para \(x_{i + 1 \ldots j - 1}\)
+  (este caso solo es posible si \(y_1 = y_k = x_i = x_j\)).
+
+  Casos base son \(D_{i, i} = D_{i, i - 1} = 0\) para todo \(i\).
+
+  La recurrencia es:
+  \begin{equation*}
+    D_{i, j}
+      = \begin{cases}
+	  1 + \min\{ D_{i + 1, j}, D_{i, j - 1}\} & x_i \ne x_j \\
+	  D_{i + 1, j - 1}			  & x_i = x_j
+	\end{cases}
+  \end{equation*}
+
+\subsection{Programa}
+\label{sec:programa}
+
+  Los \(D_{i, j}\) deben calcularse en orden de \(j - i\) creciente.
+  El esqueleto del programa en C es el listado~\ref{lst:palindrome-skel}.
+  \lstinputlisting[float,
+		   caption = {Esqueleto de obtener palíndromo},
+		   label = lst:palindrome-skel]
+		  {dynamic-programming/palindrome-skeleton.c}
+  El detalle queda de ejercicio.
+
+\section{Máximo conjunto independiente de un árbol}
+\label{sec:IndependentSet-tree}
+
+  Definimos \emph{conjunto independiente} en un grafo
+  como un conjunto de vértices que no están conectados entre sí,
+  y vimos que determinar si un grafo cualquiera
+  tiene un conjunto independiente de tamaño \(k\)
+  (el problema \textsc{Independent~Set})
+  es \NP\nobreakdash-completo.
+  Sin embargo,
+  en el caso de árboles hay una solución eficiente al problema de búsqueda.
+
+  Sin pérdida de generalidad,
+  supongamos un árbol \(T\) con raíz \(r\).
+  Observamos que el tamaño del máximo conjunto independiente de \(T\)
+  puede incluir la raíz \(r\)
+  (en cuyo caso no incluye a ninguno de sus hijos)
+  o la excluye
+  (en cuyo caso los hijos de \(r\) pueden ser miembros.
+  Esto lleva a considerar como subproblemas
+  determinar el máximo conjunto independiente de árboles,
+  incluyendo y excluyendo a la raíz.
+  Si llamamos \(I(T)\) al tamaño del máximo conjunto independiente
+  que incluye la raíz de \(T\),
+  y \(E(T)\) al tamaño del máximo conjunto independiente
+  que no incluye la raíz de \(T\),
+  tenemos que el tamaño del máximo conjunto independiente de \(T\)
+  es \(\max \{ I(T), E(T) \}\),
+  y podemos escribir las recurrencias:
+  \begin{align*}
+    I(T)
+      & = \begin{cases}
+	    0	 & \text{si \(T\) es vacío} \\
+	    1 + \sum_{T' \mathop{\text{subárbol de}} T} \, E(T')
+		\phantom{\max \{, E \}}	 % Works by trial and error...
+		 & \text{caso contrario}
+	  \end{cases} \\
+    E(T)
+      & = \begin{cases}
+	    0	 & \text{si \(T\) es vacío} \\
+	    \sum_{T' \mathop{\text{subárbol de}} T} \,
+		     \max \{ I(T'), E(T') \}
+		 & \text{caso contrario}
+	  \end{cases}
+  \end{align*}
+  En este caso,
+  para cada vértice debemos almacenar dos valores
+  (\(I(T)\) y \(E(T)\)),
+  la estructura natural para hacerlo es el mismo árbol.
+  Un orden de cálculo obvio de los valores según las recurrencias
+  es en postorden.
+  El tiempo claramente es lineal en el número de vértices del árbol.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-programacion-dinamica}
+
+  \begin{enumerate}
+  \item
+    Derive la complejidad del algoritmo
+    para determinar el orden óptimo de multiplicación de matrices,
+    suponiendo que le dan a multiplicar \(n\) matrices.
+    Compare con evaluar todos los órdenes posibles.
+  \item
+    Considere los valores \(\langle a_n \rangle\) y \(\langle b_n \rangle\)
+    definidos mediante:
+    \begin{align*}
+      a_0 &= a_1 = 1 \\
+      b_0 &= b_1 = 2 \\
+      a_n
+	&= a_{n - 2} + b_{n - 1} \\
+      b_n
+	&= a_{n - 1} + b_{n - 2}
+    \end{align*}
+    Podemos calcularlos mediante las funciones recursivas
+    dadas en el algoritmo~\ref{alg:seq-ab}.
+    \begin{algorithm}
+      \DontPrintSemicolon\Indp
+
+      \Function{\(\mathrm{CalculeA}(n)\)}{
+	\eIf{\(n < 2\)}{
+	  \Return \num{1} \;
+	}{
+	  \Return \(\mathrm{CalculeA}(n - 2)
+		      + \mathrm{CalculeB}(n - 1)\) \;
+	}
+      }
+
+      \Function{\(\mathrm{CalculeB}(n)\)}{
+	\eIf{\(n < 2\)}{
+	  \Return \num{2} \;
+	}{
+	  \Return \(\mathrm{CalculeA}(n - 1)
+		      + \mathrm{CalculeB}(n - 2)\) \;
+	}
+      }
+      \caption{Cálculo obvio de \(a_n\) y \(b_n\)}
+      \label{alg:seq-ab}
+    \end{algorithm}
+    \begin{enumerate}
+    \item
+      Demuestre que el tiempo que demanda~\ref{alg:seq-ab}
+      para calcular \(a_n\) es exponencial.
+    \item
+      Describa un algoritmo más eficiente para calcular \(a_n\),
+      y derive su complejidad.
+    \item
+      Escriba una versión memoizada del algoritmo.
+    \item
+      Escriba una versión basada en programación dinámica.
+      ¿Qué datos deben retenerse?
+    \end{enumerate}
+  \item
+    Escriba un programa que resuelva
+    el caso general de asignación de proyectos a plantas,
+    para un número arbitrario de plantas y proyectos.
+    Entregue no solo el mejor retorno,
+    sino también los proyectos a ser realizados.
+    ¿Qué modificaciones deben hacerse a las recurrencias
+    para acomodar el caso en que la opción de no hacer nada
+    no se muestre explícitamente?
+  \item
+    ¿Cuál es la complejidad del algoritmo
+    para resolver el problema de subsecuencia creciente más larga,
+    programa~\ref{lst:LIS}?
+  \item
+    Extienda el programa~\ref{lst:LIS}
+    para entregar una secuencia creciente más larga.
+  \item
+    Escriba un programa que construya el árbol binario de búsqueda óptimo.
+  \item
+    Decida una representación como estructura de datos de árboles con raíz,
+    y dada esa estructura escriba un programa que dé un conjunto independiente
+    de tamaño máximo para su árbol.
+    ¿Cuál es la complejidad de su algoritmo?
+  \item
+    Un \emph{palíndromo} es una palabra
+    que se lee igual de adelante o de atrás,
+    como \emph{arenera} o \emph{reconocer}.
+    Cualquier palabra puede verse como una secuencia de palíndromos,
+    considerando una única letra como un palíndromo de largo \num{1}.
+    Interesa obtener la división de una palabra
+    en el mínimo número de palíndromos,
+    \(\mathrm{MinPal}(\sigma)\).
+    \begin{enumerate}
+    \item
+      Describa la recurrencia para \(\mathrm{MinPal}(\sigma)\)
+      en términos de subpalabras de \(\sigma\).
+    \item
+      Describa un algoritmo que toma tiempo \(O(\lvert \sigma \rvert^3)\)
+      para hallar \(\mathrm{MinPal}(\sigma)\).
+    \end{enumerate}
+  \item
+    Considere una hoja rectangular de papel cuadriculado,
+    algunos de cuyos cuadritos están marcados con X.
+    Nos interesa determinar para cada cuadradito
+    el largo de la secuencia de X de largo máximo que pasa por él,
+    en vertical, horizontal o diagonal.
+  \item
+    Nos encargan escribir frases
+    usando un conjunto de azulejos predefinidos
+    \(\{A_0, \dotsc, A_{m - 1}\}\) con secuencias de letras
+    (y espacios).
+    Debemos determinar si se puede escribir la frase \(S\)
+    con los azulejos dados,
+    o sea si:
+    \begin{equation*}
+      S
+	= A_{i_1} A_{i_2} \ldots A_{i_n}
+    \end{equation*}
+    para alguna secuencia \(\langle i_1, i_2, \dotsc, i_n \rangle\).
+    Los azulejos pueden repetirse,
+    suponemos que hay suficientes de cada uno de ellos.
+  \item
+    Sean \(x = x_1 x_2 \ldots x_m\),
+    \(y = y_1 y_2 \ldots y_n\),
+    \(z = z_1 z_2 \ldots z_{m + n}\)
+    dos palabras
+    (los \(x_i\), \(y_i\) y \(z_i\) son símbolos individuales).
+    Un \emph{barajamiento} de \(x\) e \(y\)
+    es una palabra de largo \(\lvert x \rvert + \lvert y \rvert\)
+    en la cual aparecen \(x\) e \(y\) como subsecuencias no traslapantes.
+    La pregunta es si \(z\) es un barajamiento de \(x\) e \(y\),
+    y dar una posible división de \(z\) en subsecuencias
+    (note que pueden haber varias posibilidades).
+  \item
+    Considere una gramática de contexto libre \(G\)
+    en forma normal de Chomsky
+    (ver por ejemplo Hopcroft, Motwani y Ullman~%
+      \cite[capítulo~7]{hopcroft07:_introd_autom_theor_languag_comput})
+    y una palabra \(\sigma = a_1 a_2 \ldots a_n\),
+    donde queremos determinar si \(\sigma \in \mathscr{L}(G)\).
+    Esto puede hacerse mediante programación dinámica,
+    registrando para el rango \(a_i .. a_j\) el conjunto de no-terminales
+    que generan esa palabra,
+    si el símbolo de partida pertenece al conjunto de no-terminales
+    que generan \(a_1 .. a_n = \sigma\),
+    la respuesta es si
+    (y podemos extraer una derivación).
+    \begin{enumerate}
+    \item
+      Detalle este algoritmo
+      (se le conoce como Cocke-Younger-Kasami,
+       o CYK,
+       por sus inventores,
+       que independientemente plantearon esencialmente la misma idea~%
+       \cite{cocke70:_prog_lang_compilers,
+	     kasami65:_effic_recog_syntax_analy_algor,
+	     younger67:_recognizing_context_free_language}).
+    \item
+      ¿Cuál es la complejidad de su algoritmo?
+    \end{enumerate}
+  \item
+    Considere el problema de asignación de tareas,
+    pero ahora cada tarea tiene un valor,
+    y nos interesa la colección de tareas de máximo valor.
+    Formalmente,
+    la tarea \(i\) comienza en el instante \(s_i\) y tiene duración \(\ell_i\)
+    (está activa en el intervalo abierto \([s_i, s_i + \ell_i)\)),
+    y tiene valor \(v_i\).
+    Buscamos una colección de tareas que no traslapan
+    tal que la suma de los valores es máxima.
+  \item
+    Convénzase que la técnica basada en LCS
+    para el número de caracteres a insertar para lograr un palíndromo
+    (sección~\ref{sec:insert-palindrome})
+    es correcta.
+  \item
+    Complete el programa C
+    que calcula el número de caracteres a insertar para lograr un palíndromo
+    (sección~\ref{sec:programa}).
+    ¿Qué datos adicionales debe almacenar
+    para poder construir la secuencia de inserciones que da el palíndromo?
+  \end{enumerate}
+
+% To do:
+% - Many exercises/problems at
+% prismoskills.appspot.com/lessons/Dynamic_Programming/Chapter_01_Introduction.jsp
+% www.geeksforgeeks.org/category/dynamic-programming
+% https://courses.engr.illinois.edu/cs374/sp2018/A/notes/03-dynprog.pdf,
+%  https://courses.engr.illinois.edu/cs374/sp2018/A/labs/lab7bis.pdf,
+%  https://courses.engr.illinois.edu/cs374/sp2018/A/labs/lab8.pdf,
+%  https://courses.engr.illinois.edu/cs374/sp2018/A/labs/lab8bis.pdf
+% Google CodeJam
+% web.stanford.edu/class/cs97si/04-dynamic-programming.pdf
+% https://www.topcoder.com/community/competitive-programming/tutorials/dynamic-programming-from-novice-to-advanced/
+% https://www.hackerearth.com/practice/algorithms/dynamic-programming/introduction-to-dynamic-programming-1/tutorial/
+% https://www.sanfoundry.com/dynamic-programming-problems-solutions/
+% https://brilliant.org/wiki/problem-solving-dynamic-programming/?subtopic=algorithms&chapter=dynamic-programming
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  memoización memoizar computines US Subset Sum INF LCS
+% LocalWords:  SubsetSum pseudopolinomiales Subsecuencia subsecuencia
+% LocalWords:  ésimo english Longest Common Subsequence diff foo baz
+% LocalWords:  xyzzy plugh quux windows linux TT particionar left Opt
+% LocalWords:  right string Ab bd dAb bAd Adb dbA Independent Set CYK
+% LocalWords:  postorden memoizada subpalabras cuadritos cuadradito
+% LocalWords:  barajamiento subsecuencias traslapantes

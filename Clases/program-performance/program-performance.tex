@@ -1,0 +1,307 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Rendimiento de programas}
+\label{cha:rendimiento}
+
+  Requerimos estimar el uso de recursos de los programas que escribimos.
+  La forma clásica de obtener el tiempo de ejecución,
+  cuyo pionero es Knuth~%
+    \cite{knuth97:_fundam_algor,
+          knuth97:_semin_algor,
+          knuth98:_sortin_searc},
+  es contar en detalle las operaciones que ejecuta un programa.
+  El problema es que esto es mucho trabajo,
+  y el resultado depende del programa exacto
+  y de los detalles del ambiente de ejecución.
+  Para programas muy importantes,
+  esto tiene sentido.
+  Modificar programas para hacerlos más eficientes
+  es el tema del libro de Bentley~%
+    \cite{bentley82:_writing_efficient_programs},
+  que lamentablemente hace tiempo no se imprime.
+  Una de las conclusiones centrales es que elegir la arquitectura del sistema
+  y los algoritmos con cuidado es vital.
+
+  En general,
+  bastan estimaciones bastante burdas
+  para elegir entre algoritmos alternativos.
+  Suele ser suficiente elegir alguna \emph{operación clave},
+  tal que signifique el mayor costo del algoritmo,
+  y contabilizar éstas como medida de rendimiento.
+  Por ejemplo,
+  al analizar ejemplos de algoritmos discretos
+  en el capítulo~\ref{cha:discrete-algorithms}
+  nos fijamos únicamente en el número de comparaciones efectuadas.
+  La justificación es que esa operación es mucho más costosa que las demás,
+  o que las demás operaciones
+  tienen un costo aproximadamente proporcional
+  al de las operaciones contabilizadas.
+  Obtenemos entonces el costo del algoritmo en forma de \(\Theta(f(n))\),
+  ojalá para una función \(f\) simple.
+  Una ventaja de este proceder
+  es que no requiere detalles del programa ni de su ambiente,
+  en muchos casos es posible obtener estimaciones útiles
+  de descripciones de alto nivel del algoritmo.
+
+\section{Algunas reglas}
+\label{sec:rules-performance}
+
+  Un análisis más detallado del tema
+  se halla en el apéndice~\ref{apx:rendimiento-programas}.
+  Acá nos remitiremos a dar algunas reglas básicas.
+  En ocasiones solo podremos dar cotas asintóticas,
+  en cuyo caso en las reglas deberán considerarse las manipulaciones del caso,
+  como detalladas en el apéndice~\ref{apx:asymptotics}.
+  \begin{description}
+  \item[Secuencia de acciones:]
+    El costo de la secuencia
+    es simplemente la suma de los costos de cada acción.
+  \item[Alternancia:]
+    En caso de varias opciones,
+    habrá que analizar las alternativas por separado.
+    Finalmente,
+    habrá que determinar cuántas veces se efectúa cada alternativa.
+    Si esto no resulta practicable,
+    podemos dar una cota superior mediante el costo máximo.
+  \item[Ciclos:]
+    Se debe evaluar el costo de cada iteración,
+    y sumar.
+    El caso más simple es el de iteraciones definidas,
+    en cuyo caso el costo generalmente
+    será el número de iteraciones por el costo de su cuerpo.
+    En iteraciones indefinidas deberá estimarse el número de iteraciones,
+    o al menos acotarlo.
+  \item[Llamadas a procedimientos:]
+    Se considera el costo del cuerpo respectivo.
+    Generalmente este costo dependerá de algún argumento
+    (por ejemplo,
+     el costo de ordenar un arreglo dependerá de su número de elementos).
+    Claramente llamadas recursivas naturalmente llevarán a recurrencias,
+    discutiremos algunos casos comunes más adelante
+    (capítulo~\ref{cha:dividir-conquistar}
+     y apéndice~\ref{apx:recurrencias}).
+  \end{description}
+
+\section{Máximo común divisor}
+\label{sec:GCD}
+
+  El algoritmo clásico para obtener el máximo común divisor
+  es el de Euclides,
+  algoritmo~\ref{alg:Euclides}.
+  El algoritmo de Euclides de interés histórico también,
+  es el algoritmo más antiguo que involucra ciclos,
+  y fue el primer algoritmo cuyo rendimiento se analizó matemáticamente
+  (por Gabriel Lamé~%
+    \cite{lame44:_gcd}
+   en 1844).
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{gcd}(a, b)\)}{
+      \While{\(b > 0\)}{
+        \((a, \; b) \gets (b, \; a \bmod b)\) \;
+      }
+      \Return \(a\) \;
+    }
+    \caption{Algoritmo de Euclides para calcular \(\gcd(a, b)\)}
+    \label{alg:Euclides}
+  \end{algorithm}
+  Este algoritmo es aplicable a números enteros,
+  pero también por ejemplo a polinomios.
+  Analizaremos ambos casos.
+
+\subsection{Algoritmo de Euclides en enteros}
+\label{sec:GCD-integer}
+
+  Tomando como medida de costo el número de veces que se calcula un residuo
+  (probablemente sea la operación más costosa;
+   si se efectúan cálculos a mano o con números muy grandes,
+   habrá que considerar el número de dígitos en el costo),
+  vemos que cada iteración tiene costo uno.
+  Falta estimar el número de iteraciones.
+  El cálculo preciso es fascinante,
+  ver por ejemplo Knuth~%
+    \cite[sección~4.5.3]{knuth97:_semin_algor}.
+  Acá nos conformaremos con una cota superior,
+  suponiendo que las operaciones tienen costo fijo.
+
+  Sean \(r_i\) los restos en cada paso del algoritmo,
+  con el entendido que \(r_0 = a\) y \(r_1 = b\),
+  y que \(a > b\)
+  (en caso contrario,
+   lo único que hace la primera iteración es intercambiarlos).
+  Estamos calculando:
+  \begin{equation*}
+    r_{i + 2} = r_i \bmod r_{i + 1}
+  \end{equation*}
+  O sea,
+  para una secuencia de \(q_i\)
+  tenemos las relaciones:
+  \begin{equation*}
+    r_{i + 2} = r_i - q_i r_{i + 1}
+  \end{equation*}
+  donde \(r_k \ne 0\) y \(r_{k + 1} = 0\)
+  si hay \(k\) iteraciones.
+  El peor caso se da cuando \(q_i = 1\) siempre,
+  ya que en tal caso
+  los \(r_i\) disminuyen lo más lentamente posible.
+  Además,
+  el caso en que \(\gcd(a, b) = 1\)
+  es el en el cual más terreno se debe recorrer.
+  Podemos dar vuelta esto,
+  y preguntarnos qué tan lejos del final estamos,
+  y calcular desde allí:
+  \begin{equation*}
+    r_{i + 2}
+      = r_{i + 1} + r_i
+      \qquad r_0 = 0, r_1 = 1
+  \end{equation*}
+  Reconocemos la recurrencia de los números de Fibonacci,
+  \(F_n\):
+  \begin{equation}
+    \label{eq:Fibonacci}
+    F_{k + 2} = F_{k + 1} + F_k \qquad F_0 = 0, F_1 = 1
+  \end{equation}
+  La secuencia comienza:
+  \begin{equation*}
+    0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, \dotsc
+  \end{equation*}
+  El resultado es entonces
+  que si el algoritmo efectúa \(k\) iteraciones
+  entonces \(b \ge F_k\).
+  Sabemos que:
+  \begin{align*}
+    F_n
+      &=       \frac{(1 + \sqrt{5})^n - (1 - \sqrt{5})^n}{2^n \sqrt{5}} \\
+      &\approx \frac{\tau^n}{\sqrt{5}}
+  \end{align*}
+  donde:
+  \begin{equation*}
+    \tau
+      = \frac{1 + \sqrt{5}}{2}
+  \end{equation*}
+  Concluimos que el número de iteraciones
+  está acotado por \(\log_\tau b\),
+  que es aproximadamente cinco veces el número de dígitos decimales de \(b\).
+
+\subsection{Algoritmo de Euclides en polinomios}
+\label{sec:gcd-polynomial}
+
+  Este caso es más simple por un lado
+  (al calcular \(r = a \bmod b\) obtenemos que \(\deg(r) < \deg(b)\);
+   como no hay una cota mejor,
+   el número de iteraciones está acotado simplemente por \(\deg(b)\)),
+  pero más complejo por el otro
+  (es natural considerar como operaciones elementales
+   las operaciones entre coeficientes de los polinomios,
+   el costo de una iteración ya no es fijo).
+
+  Suponiendo \(\deg(a) = \deg(b) + 1\)
+  (en general llegaremos a este caso a la primera iteración),
+  calcular \(r = a \bmod b\)
+  es restar un múltiplo constante de \(x b\) de \(a\),
+  esto corresponde a \(2 \deg(b) + 1\) operaciones
+  (considera el cálculo de la constante,
+   multiplicar cada coeficiente de \(b\) por la constante
+   y la resta).
+  Vale decir,
+  el costo será:
+  \begin{equation*}
+    \sum_{1 \le k \le \deg(b)} (2 k + 1)
+      = \deg^2(b) + 2 \deg(b)
+  \end{equation*}
+
+\section{Resolver sistemas lineales}
+\label{sec:Gauss-elimination}
+
+  Consideremos el problema de resolver un sistema lineal de \(n\)~ecuaciones
+  con \(n\)~incógnitas.
+  No tomamos en cuenta el efecto de errores de redondeo,
+  son un tema delicado en esta aplicación.
+  Una forma de hacerlo es despejar una incógnita de una de las ecuaciones,
+  y usarla para eliminar esa incógnita de las demás ecuaciones.
+  Esto nos deja con un sistema de \(n - 1\)~ecuaciones
+  en \(n - 1\)~incógnitas.
+  Aplicando esto repetidas veces queda una ecuación en una incógnita,
+  que podemos resolver directamente.
+  Con el valor de esta incógnita,
+  de la ecuación en dos incógnitas obtenemos una segunda incógnita,
+  y así sucesivamente hasta completar el trabajo.
+
+  Si expresamos el sistema como:
+  \begin{equation*}
+    \sum_{1 \le k \le n} a_{i k} x_k
+      = b_i
+  \end{equation*}
+  Resulta cómodo trabajar con la \emph{matriz extendida},
+  la matriz de coeficientes a la que se adosa el vector \(\mathbf{b}\)
+  como una columna adicional.
+  Suponiendo que usamos la ecuación número~\num{1}
+  para eliminar \(x_1\) de las demás ecuaciones,
+  esto se expresa para la ecuación~\(j\) como:
+  \begin{equation*}
+    a'_{i j}
+      = a_{i j} - \frac{a_{i 1}}{a_1 1} \cdot a_{1 j}
+  \end{equation*}
+  Estas son \(3 n (n - 1)\)~operaciones
+  (una división, una multiplicación y una resta
+   para cada uno de \(n\)~coeficientes de una ecuación,
+   son \(n - 1\)~ecuaciones).
+  Falta el costo de despejar la incógnita \(x_j\),
+  para la cual conocemos las demás:
+  \begin{equation*}
+    x_j
+      = b_j - \sum_{j + 1 \le k \le n} a_j k x_k
+  \end{equation*}
+  Esto cuesta \(n - (j + 1) + 1 + 1 = n - j + 1\)~operaciones.
+  Sumando todas las contribuciones,
+  el costo de resolver el sistema de ecuaciones
+  en número de operaciones entre coeficientes es:
+  \begin{align*}
+    \sum_{1 \le k \le n} 3 k (k - 1)
+      + \sum_{1 \le k \le n} (n - k + 1)
+      &=    n (n^2 - n + 3) \\
+      &\sim n^3
+  \end{align*}
+
+\section*{Ejercicios}
+\label{sec:ejercicios-07-post-previa}
+
+  \begin{enumerate}
+  \item
+    Plantee un algoritmo similar al de eliminación gaussiana
+    para invertir matrices
+    (esto corresponde aproximadamente a resolver un sistema de~\(n \times n\)
+     para cada una de las \(n\) columnas).
+    Evalúe el costo de resolver
+    el sistema \(\mathbf{A} \cdot \mathbf{x} = \mathbf{b}\) de \(n \times n\)
+    mediante la ecuación \(\mathbf{x} = \mathbf{A}^{-1} \cdot \mathbf{b}\).
+  \item
+    La técnica descrita como eliminación gaussiana no es satisfactoria,
+    no considera el caso que algún coeficiente sea cero.
+    Más en general,
+    al calcular \(a'_{i j}\) conviene que lo que se resta sea lo menor posible
+    en valor absoluto
+    (el error absoluto del redondeo de las restas es básicamente fijo,
+     convienen resultados grandes para disminuir el error relativo).
+    Esto sugiere elegir el máximo coeficiente de la columna
+    como ecuación a utilizar.
+    Pero nada obliga a considerar las incógnitas en orden,
+    conviene usar el coeficiente máximo en valor absoluto
+    para seleccionar el \emph{pivote}.
+    Analice el número de operaciones entre coeficientes
+    de este algoritmo
+    (\emph{eliminación de Gauß con pivote completo}).
+    Considere que comparar dos coeficientes en valor absoluto
+    tiene el mismo costo que las otras operaciones entre coeficientes.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  gaussiana

@@ -1,0 +1,161 @@
+\documentclass[english, spanish, fleqn, 10pt]{article}
+\usepackage[top = 2.5cm, bottom = 2cm, left = 2.5cm, right = 2.5cm]{geometry}
+\usepackage[es-noindentfirst]{babel}
+\usepackage{amsthm, amsmath, amssymb, amsfonts, environ}
+\usepackage{caption}
+\usepackage{subcaption} % para las subfigures
+\usepackage{mathrsfs}
+\usepackage[colorlinks, urlcolor=blue,
+pdfauthor={Aldo Berrios Valenzuela}]{hyperref}
+\usepackage{fourier}
+\usepackage{colortbl}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{enumitem}
+%\renewcommand{\familydefault}{\sfdefault}
+%\setlength{\parindent}{0pt}					%Espacio de sangria
+\setlength{\parskip}{0.5mm}						%Interlinado entre párrafos
+\usepackage{fancyhdr, blindtext}		%Paquete de encabezado
+\usepackage{listings}
+\usepackage[framemethod=tikz]{mdframed}
+
+\definecolor{webred}{rgb}{0.75,0,0}
+\definecolor{mblue}{rgb}{0.0705,0.345,0.7529}
+\definecolor{newmblue}{HTML}{004D99}
+\usepackage{longtable, colortbl, array}
+
+\definecolor{superGreenNew}{HTML}{169F01}
+\hypersetup{
+        colorlinks   = true,
+        citecolor    = superGreenNew
+}
+
+
+%==============================
+%Modificador de Titulos de secciones, subsecciones, etc
+\usepackage[explicit, noindentafter]{titlesec}
+
+\titlespacing\subsubsection{0pt}{8pt plus 4pt minus 2pt}{4pt plus 2pt minus 2pt}
+
+
+%==================================
+%Diseno para insertar codigos de programacion
+\definecolor{newGray}{HTML}{F8F8F8}
+\definecolor{anotherGray}{HTML}{DDDFFF}
+\lstdefinestyle{customc}{
+        belowcaptionskip=1\baselineskip,
+        breaklines=true,
+        backgroundcolor=\color{newGray},
+        frame=single,
+        rulecolor=\color{anotherGray},
+        xleftmargin=\parindent,
+        language=bash,
+        showstringspaces=false,
+        basicstyle=\small\ttfamily,
+        keywordstyle=\bfseries\color{green!40!black},
+        commentstyle=\itshape\color{purple!40!black},
+        identifierstyle=\color{black},
+        stringstyle=\color{mblue},
+        tabsize=2,
+        literate={\ \ }{{\ }}1
+}
+\lstset{style=customc}
+
+%==================================
+%Macros útiles
+\newcommand{\comillas}[1]{``#1''}
+\newcommand{\comentarioc}[1]{\texttt{\textcolor{webred}{/* #1 */}}}
+
+\numberwithin{equation}{section}
+
+%=================================
+%comandos matemáticos personalizados de rápido acceso
+\newcommand{\nparentesis}[1]{\left( #1 \right)}
+\newcommand{\llaves}[1]{\left \{ #1 \right \}}
+\newcommand{\nabsoluto}[1]{\left| #1 \right|}
+\newcommand{\ncorchetes}[1]{\left[ #1 \right]}
+%=================================
+
+%cambia el espaciado entre el parrafo y antes del itemize
+\setlist[itemize]{itemsep=1mm, topsep=1.5mm}
+\setlist[enumerate]{itemsep=1mm, topsep=1.5mm}
+%===========================
+
+\theoremstyle{definition}
+\newtheorem{teorema}{Teorema}[section]
+\newtheorem{definition}{Definición}[section]
+\newtheorem{beforeExample}{Ejemplo}[section]
+\newtheorem{preposicion}{Preposición}[section]
+\newtheorem{corolario}{Corolario}[teorema]
+
+\captionsetup{justification=centering, margin=2.3cm}
+
+\newenvironment{ejemplo}[1][]{\begin{beforeExample}[#1]\renewcommand{\qedsymbol}{$\blacksquare$}}{\qed\end{beforeExample}}
+
+\captionsetup{justification=centering, margin=2.3cm}
+
+% Para poder hacer "quote" con estilo github
+
+\newenvironment{newquote}{\begin{mdframed}[topline=false,
+                rightline=false, bottomline=false, linewidth=.3em,backgroundcolor=black!5, linecolor=black!60]\color{black!70}}{\end{mdframed}}
+%================================
+
+\renewcommand*{\arraystretch}{1.2}
+
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\lhead{<inserte nombre del ramo>}
+\rhead{<inserte contenido>}
+
+\title{INF221 -- Algoritmos y Complejidad\\[.4\baselineskip]Ayudantía 6\\Programación dinámica}
+\author{Aldo Berrios Valenzuela}
+\date{Jueves 22 de septiembre de 2016}
+
+\begin{document}
+\maketitle
+\section{Ayudantía}
+\begin{center}
+        \comentarioc{Dibujo de un grafo}
+\end{center}
+Demostración de algoritmo de programación dinámica:
+\begin{itemize}
+        \item \textbf{Complex choice:} Sea $\hat p_i$ $\forall i$ con $i=1, \ldots, n$, las posibles primeras elecciones del algoritmo para el problema $P$, entonces la solución de $P$ incluye a algún elemento de $\hat p_i$. Para el ejemplo del grafo, se tiene que $\hat p_i=\llaves{1, 5, 100}$.
+
+        \item \textbf{Inductive substructure:} Sea $\Pi_i'$ la solución del problema $P_i'$ que se genera al escoger $\hat p_i$. Se debe cumplir que $\hat p_i\cup \Pi'_i$ es solución factible de $P$.
+
+        \item \textbf{Optima substructure:} Sean $\Pi'_i$ las soluciones óptimas de los problemas $P_i'$ al escoger $\hat p_i$ dado, entonces algún $\Pi_i'\cup\hat p_i$ es óptima de $P$.
+\end{itemize}
+
+\begin{ejemplo}
+        \comentarioc{Descripcion de algoritmo}
+        \begin{center}
+                \comentarioc{Dibujo parecido al grafo de pierola}
+        \end{center}
+        Demuestre que es algoritmo de programación dinámica.
+\end{ejemplo}
+\begin{proof}
+        Demostramos las cosas:
+        \begin{itemize}
+                \item Complex choice: Sea $C$ el conjunto de los $\hat p _i$ para el problema. Sea $n_i$ el nodo inicial. Entonces $n_i$ y todo $n_j$  conecta $n_i\in C$.
+
+                Por contradicción: supongamos que existe una solución $\Pi^*$ tal que
+                \begin{equation*}
+                C\cap \Pi^* = \emptyset
+                \end{equation*}
+                Entonces $\nexists n_k \in \Pi ^* $ que esté conectado a $n$. Entonces $n_i\cup \Pi ^*$ es solución factible de $P$. Luego
+                \begin{equation*}
+                \nabsoluto{n_i\cup \Pi^*} > \nabsoluto{\Pi ^*}
+                \end{equation*}
+                por lo tanto, $\Pi ^*$ no es óptimo. $\Rightarrow\Leftarrow$. Por lo tanto, algún $n_j\in C$ forma parte de la solución óptima.
+
+                \item \emph{Subestructura inductiva:} Sea $\Pi_i$ una solución de $p_i'$ que es el subproblema de $P$ que se genera al escoger $\hat p_i$. Como $\hat p_i$ es un nodo escogido para la solución y el algoritmo quita todos los nodos conectados a $\hat p_i$, entonces el problema $P'_i$  es un grafo no conectado a $\hat p_i$, por lo tanto ningún nodo $n_k\in \Pi'_i$ está conectado a $\hat p_i$, por lo que siempre es posible unir $\hat p_i$ con $\Pi'_i$ para generar una solución para $P$. Entonces cumple para todo $\hat p_i$.
+
+                \item Optimal substructure: Sea $\Pi_i'$ la solución óptima para el subproblema $P_i'$ que se genera al escoger un $\hat p_i$. Como $\Pi_i'$ es la mejor solución y al unirla a $\hat p_i$ genera una solución aún mejor, entonces, algún $\Pi_i'\cup \hat p_i$ debe ser la mejor solución para $P$, dado que los $\Pi_i'\cup \hat p_i$ representa las mejores soluciones para $\hat p_i$ dado.
+        \end{itemize}
+\end{proof}
+
+
+\end{document}
+% LocalWords:  Complex choice Inductive substructure Optima pierola
+% LocalWords:  Descripcion Optimal

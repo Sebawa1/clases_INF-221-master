@@ -1,0 +1,912 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Algoritmos voraces}
+\label{cha:greedy-algorithm}
+
+  Muchos problemas involucran optimización combinatoria:
+  buscamos una configuración óptima de algún objeto discreto.
+  En este capítulo plantearemos una técnica general simple y muy atractiva,
+  elegir \textquote{la mejor opción local}
+  y nunca reconsiderar elecciones previas.
+  Esto se conoce como \emph{algoritmos voraces}
+  (en inglés,
+   \emph{\foreignlanguage{english}{greedy algorithms}};
+   una traducción más precisa sería \emph{algoritmos ávidos}
+   o \emph{algoritmos codiciosos},
+   pero no suena tan bien;
+   posiblemente una mejor descripción sería \emph{algoritmos oportunistas}).
+
+  Un ejemplo es un problema de programación de tareas
+  (\emph{\foreignlanguage{english}{scheduling}} en inglés).
+  \begin{example}
+    \label{07::EjemploAlma}
+    Supongamos que usted está a cargo de programar observaciones en ALMA.
+    Para justificar el gasto de este enorme recurso,
+    su misión es programar el máximo número de observaciones.
+    Las observaciones tienen instante de inicio y duración,
+    y no pueden traslapar.
+
+    Formalmente,
+    tenemos un conjunto \(P = \{p_1, p_2, \ldots, p_n\}\)
+    de observaciones propuestas,
+    la observación \(i\) tiene duración
+    el intervalo abierto \(\left[ s_i, s_i+\ell _i \right)\).
+    Se pide elegir el subconjunto \(\Pi \subseteq P\)
+    tales que los elementos de \(\Pi\) sean disjuntos
+    y el número de elementos de \(\Pi\) sea máximo
+    (figura~\ref{07::Tareas1}).
+    \newcommand{\lineaTarea}[4]{ % (x, y, l, label)
+                  \draw (#1, 0.15+#2) -- (#1, -0.15+#2) -- (#1, #2)
+                          -- (#1+#3, #2) -- (#1+#3, 0.15+#2)
+                          -- (#1+#3, -0.15+#2);
+                  \node at (#1 - 0.3, #2) () {\(#4\)};
+               }
+    \begin{figure}[ht]
+      \centering
+      \begin{tikzpicture}
+        \lineaTarea{0}{0}{2}{p_1};
+        \lineaTarea{1.8}{-0.5}{0.9}{p_2};
+        \lineaTarea{2.6}{-1}{2}{p_3};
+      \end{tikzpicture}
+      \caption{Intervalos de tiempo que dura cada proyecto/tarea.}
+      \label{07::Tareas1}
+    \end{figure}
+    Básicamente,
+    estamos suponiendo que el observatorio
+    se arrienda por observación y no por tiempo.
+    ¿Cómo hacerlo?
+    Algunas posibilidades:
+    \begin{description}
+    \item[Sugerencia 1:]
+      Repetidamente elegir la tarea más corta
+      que no entra en conflicto con las ya programadas.
+      La figura~\ref{07::Tareas2}
+      \begin{figure}[ht]
+        \centering
+        \begin{tikzpicture}
+          \lineaTarea{0}{0}{2}{p_1};
+          \lineaTarea{1.9}{-0.5}{0.8}{p_2};
+          \lineaTarea{2.6}{-1}{2}{p_3};
+        \end{tikzpicture}
+        \caption{Empezando con \(p_2\),
+                 efectuamos \num{1} tarea.
+                 Con \(p_1\) completamos \num{2}.}
+        \label{07::Tareas2}
+      \end{figure}
+      muestra un contra-ejemplo.
+      Hay tres tareas,
+      la segunda,
+      corta,
+      comienza luego de comenzada la primera y antes que ésta termine,
+      y a su vez comienza la tercera antes que termine la segunda,
+      pero luego del fin de la primera.
+      Usando este criterio
+      elegiríamos la tarea \(p_2\),
+      dejando fuera
+      (por conflictos)
+      a \(p_1\) y \(p_3\).
+      La solución óptima es elegir \(p_1, p_3\).
+      Por lo tanto,
+      esta sugerencia no siempre da un óptimo.
+    \item[Sugerencia 2:]
+      Elegir la tarea con inicio más temprano
+      que no crea conflicto con las ya programadas.
+      La figura~\ref{07::Tareas3}
+      \begin{figure}[ht]
+        \centering
+        \begin{tikzpicture}
+          \lineaTarea{0}{0}{5}{p_1};
+          \lineaTarea{1}{-0.5}{1}{p_2};
+          \lineaTarea{3}{-0.5}{1}{p_3};
+        \end{tikzpicture}
+        \caption{Empezando con \(p_1\), completa \num{1} tarea.
+                 Con \(p_2\) y \(p_3\) hacemos \num{2}.}
+        \label{07::Tareas3}
+      \end{figure}
+      muestra un contra-ejemplo,
+      con una tarea larga que comienza temprano
+      que traslapa con varias tareas cortas independientes.
+      elegiríamos la tarea \(p_1\),
+      sin embargo,
+      el óptimo es \(p_2, p_3\).
+      Nuevamente,
+      esta sugerencia no siempre da un óptimo.
+    \item[Sugerencia 3:]
+      Marcar cada proyecto con el número de proyectos
+      con que entra en conflicto,
+      programar en orden creciente de conflictos.
+      La figura~\ref{07::Tareas4}
+      \begin{figure}[ht]
+        \centering
+        \begin{tikzpicture}
+          \lineaTarea{0}{0}{1.7}{p_1};
+          \lineaTarea{2.5}{0}{1.7}{p_2};
+          \lineaTarea{5}{0}{1.7}{p_3};
+          \lineaTarea{7.5}{0}{1.7}{p_4};
+          \lineaTarea{1.5}{-0.5}{1.5}{p_5};
+          \lineaTarea{1.5}{-2*0.5}{1.5}{p_6};
+          \lineaTarea{1.5}{-3*0.5}{1.5}{p_7};
+          \lineaTarea{4}{-0.5}{1.5}{p_8};
+          \lineaTarea{6.5}{-0.5}{1.5}{p_9};
+          \lineaTarea{6.5}{-2*0.5}{1.5}{p_{10}};
+          \lineaTarea{6.5}{-3*0.5}{1.5}{p_{11}};
+        \end{tikzpicture}
+        \caption{Elije en orden \(p_8\), \(p_1\)
+                 y \(p_4\), un total de \num{3} tareas;
+                 pero \(p_1, p_2, p_3, p_4\) son \num{4}.
+                 Me echaron a perder el día.}
+        \label{07::Tareas4}
+      \end{figure}
+      muestra un contra-ejemplo,
+      con cuatro tareas que se pueden ejecutar en secuencia,
+      pero que traslapan con muchas otras tareas menores
+      (\(p_1\) y \(p_2\) traslapan con \(p_5\) a \(p_7\),
+       \(p_2\) y \(p_3\) traslapan con \(p_8\),
+       \(p_3\) y \(p_4\) traslapan con \(p_9\) a \(p_{11}\)).
+      El óptimo es cuatro tareas,
+      \(p_1, p_2, p_3, p_4\);
+      esta estrategia elige tres tareas
+      (\(p_8\),
+       que solo traslapa con \(p_2\) y \(p_3\),
+       y dos que no interfieren con ella).
+    \end{description}
+  \end{example}
+  ¿Estructura común de las propuestas?
+  \begin{itemize}
+  \item
+    Elija elementos sucesivamente hasta que no queden opciones viables.
+  \item
+    Entre las opciones visibles en cada paso,
+    elija la que minimiza (maximiza) alguna propiedad.
+  \end{itemize}
+  Es importante destacar que no siempre hay un algoritmo voraz
+  que encuentra una solución óptima del problema,
+  pero sí pueden ofrecer una aproximación bastante buena.
+
+\section{Comprobar que un algoritmo da un óptimo}
+
+  Volvamos al ejemplo~\ref{07::EjemploAlma}.
+  En ese caso,
+  un criterio a usar para encontrar una solución óptima
+  consta en elegir la tarea que \emph{finaliza} más temprano
+  y no entra en conflictos con las ya elegidas.
+  Para el proyecto \(i\),
+  el instante de \emph{fin} es
+  \begin{equation*}
+    f_i
+      = s_i + \ell _i
+  \end{equation*}
+  ¿Es óptima la programación que esto construye?
+
+   Llamemos \(P\) a un conjunto de tareas,
+  una solución \(\Pi\) es un subconjunto de \(P\),
+  la solución \(\Pi\) es viable si no incluye tareas que se traslapan.
+  Buscamos \(\Pi\) viable de tamaño máximo.
+  Llamaremos \(p\) a una tarea.
+
+  Una forma de comprobar que el algoritmo voraz retorna un óptimo
+  es demostrar las siguientes propiedades:
+  \begin{description}
+  \item[Elección Voraz
+        (\emph{\foreignlanguage{english}{greedy choice}}):]
+    Para toda instancia \(P\), hay una solución óptima
+    que incluye el primer elemento \(\widehat p\) elegido.
+  \item[Estructura Inductiva
+        (\emph{\foreignlanguage{english}{inductive structure}}):]
+    Dada la elección voraz \(\widehat{p}\),
+    queda un subproblema menor \(P'\)
+    tal que si \(\Pi'\) es solución viable de \(P'\),
+    \(\{ \widehat{p} \} \cup \Pi'\) es solución viable de \(P\)
+    (\(P'\) no tiene \textquote{restricciones externas},
+     parte de lo que se hace al definir \(P'\)
+     es precisamente asegurar esto).
+  \item[Subestructura Óptima
+        (\emph{\foreignlanguage{english}{optimal substructure}}):]
+    Si \(P'\) queda de \(P\) al sacar \(\widehat p\),
+    y  \(\Pi'\) es óptima para \(P'\),
+    \(\Pi' \cup \{ \widehat{p} \}\) es óptima para \(P\).
+  \end{description}
+  Con estos tres podemos demostrar
+  que la secuencia de elecciones de \(\widehat{p}\)
+  da una solución óptima por inducción sobre los pasos.
+  El esqueleto de la demostración es el siguiente:
+  \begin{theorem}
+    \label{theo:esquema-voraz}
+    Si un algoritmo cumple con Elección Voraz, Estructura Inductiva
+    y Subestructura Óptima,
+    entrega una solución óptima al problema.
+  \end{theorem}
+  \begin{proof}
+    Por inducción sobre el tamaño del problema.
+    \begin{description}
+    \item[Base:]
+      Si \(\lvert P \rvert = 1\),
+      por Elección Voraz se elige el único \(p\) posible,
+      que claramente es óptimo.
+    \item[Inducción:]
+      Supongamos que el algoritmo voraz da una solución óptima
+      para todos los problemas hasta tamaño \(k\),
+      y consideremos la instancia \(P\) de tamaño \(k + 1\).
+      Elegimos \(\widehat{p}\) por el criterio voraz,
+      sabemos que hay una solución óptima que incluye \(\widehat{p}\)
+      por Elección Voraz.
+      Sea \(P'\) el problema
+      que resulta al eliminar \(\widehat{p}\) de \(P\),
+      junto con sus dependencias.
+      Es claro que \(\lvert P' \rvert \le k\),
+      sea \(\Pi'\) la solución dada por el algoritmo voraz a \(P'\).
+      Por inducción,
+      \(\Pi'\) es óptima para \(P'\).
+      Por Estructura Inductiva,
+      \(\Pi' \cup \{ \widehat{p} \}\) es viable para \(P\);
+      por Subestructura Óptima,
+      \(\Pi' \cup \{ \widehat{p} \}\) es óptima para \(P\).
+    \end{description}
+  \end{proof}
+
+\subsection{Demostrando que un algoritmo voraz da un óptimo}
+
+  Volvamos al ejemplo~\ref{07::EjemploAlma}.
+  Si quisiéramos demostrar que la sugerencia entrega un óptimo
+  solo tenemos que demostrar que cumple las propiedades enunciadas:
+  \begin{description}
+  \item[Elección Voraz:]
+    Hay una solución óptima que incluye la elección voraz \(\widehat{p}\).
+    \begin{proof}
+      Sea \(\widehat{p}\) la primera observación elegida
+      y \(\Pi^*\) una solución óptima para \(P\).
+      Si \(\widehat{p} \in \Pi^*\),
+      estamos listos.
+      En caso contrario,
+      sea \(\Pi'\) la solución obtenida
+      reemplazando la observación más temprana de \(\Pi^*\) por \(\widehat p\).
+      Esto no produce nuevos conflictos,
+      ya que la primera observación de \(P^*\)
+      no termina antes de \(\widehat{p}\)
+      por cómo fue elegida esta,
+      y \(\lvert \Pi^* \rvert = \lvert \Pi' \rvert\),
+      ambos son óptimos.
+    \end{proof}
+  \item[Estructura Inductiva:]
+    El elegir \(\widehat p\) nos deja un problema \(P'\)
+    sin restricciones externas.
+    \begin{proof}
+      El problema \(P \smallsetminus \{ \widehat{p} \}\)
+      incluye observaciones en conflicto con \(\widehat{p}\),
+      hay soluciones viables para este que no son viables con \(\widehat{p}\).
+      Hay restricciones externas.
+
+      Eliminar también las observaciones con conflictos con \(\widehat{p}\)
+      deja un problema \(P'\) sin restricciones externas.
+      Toda solución viable para el problema resultante
+      puede combinarse con \(\widehat{p}\).
+
+      Como comentamos,
+      estructura inductiva realmente indica cómo debemos construir
+      subproblemas que resultan de elegir \(\widehat{p}\).
+    \end{proof}
+   \item[Subestructura Óptima:]
+     Si \(P'\) queda después de elegir \(\widehat p\),
+     y \(\Pi'\) es óptima para \(P'\),
+     entonces \(\Pi'\cup \{\widehat p\}\) es óptima para \(P\).
+     \begin{proof}
+       Sea \(\Pi'\) como dado.
+       Entonces \(\Pi' \cup \{\widehat p\}\) es viable para \(P\)
+       (por Estructura Inductiva),
+       y \(\lvert \Pi' \cup \{ \widehat p\ \} \rvert
+              = \lvert \Pi' \rvert + 1\).
+       Sea \(\Pi^*\) una solución óptima para \(P\)
+       que contiene \(\widehat{p}\)
+       (existe por Elección Voraz).
+       Entonces \(\Pi^* \smallsetminus \{ \widehat{p} \}\)
+       es una solución óptima para \(P'\)
+       (si hubiese una mayor,
+        combinada con \(\widehat{p}\) daría una solución mayor que \(\Pi^*\)
+        para \(P\)).
+       Pero entonces:
+       \begin{align*}
+         \lvert \Pi' \rvert
+           &= \lvert \Pi^* \smallsetminus \{ \widehat{p} \} \rvert \\
+           &= \lvert \Pi^* \rvert - 1 \\
+        \intertext{O sea:}
+         \lvert \Pi'\cup \{\widehat{p} \} \rvert
+           &= \lvert \Pi^* \rvert
+       \end{align*}
+       y \(\Pi' \cup \{\widehat{p}\}\) es óptima.
+     \end{proof}
+   \end{description}
+
+\section{Problema de Asignación de Tareas}
+
+  Demostraremos formalmente que nuestro algoritmo voraz
+  entrega una solución óptima al problema de asignación de tareas,
+  usando las tres propiedades
+  (Elección Voraz,
+   Estructura Inductiva
+   y Subestructura Óptima).
+  \begin{theorem}
+    Para el problema de programación de tareas,
+    la estrategia de elegir en cada paso la tarea sin conflicto
+    con fin más temprano entrega una solución óptima.
+  \end{theorem}
+  \begin{proof}
+    Por inducción sobre \(\lvert P \rvert\),
+    el número de tareas.
+    \begin{description}
+    \item[Base:]
+      Si hay una única tarea,
+      la estrategia la programa.
+      Esto es óptimo.
+    \item[Inducción:]
+      Supongamos que obtiene una solución óptima para a lo más \(k\) tareas.
+      Sea \(P\) una instancia con \(\lvert P \rvert = k + 1\).
+      Elegimos \(\widehat{p}\) según criterio voraz.
+      Por Elección Voraz hay una solución óptima que lo incluye;
+      al eliminar la tarea \(\widehat{p}\)
+      con las tareas con las que interfiere
+      queda un problema \(P'\),
+      claramente \(\lvert P' \rvert \le k\).
+
+      Por inducción,
+      obtenemos una solución óptima \(\Pi'\) de \(P'\).
+      Por Estructura Inductiva \(\Pi'\) junto a \(\widehat p\)
+      es una solución viable para \(P\)
+      Esta es una solución óptima para \(P\) por Subestructura Óptima.
+    \end{description}
+  \end{proof}
+  La demostración no depende realmente de este problema,
+  lo que demuestra que siempre que se cumplan las tres propiedades
+  obtendremos una solución óptima.
+  De ahora en adelante nos contentaremos con demostrar las tres propiedades,
+  sabiendo que podemos usar el mismo esquema para completar la demostración
+  de que el algoritmo voraz entrega un óptimo.
+
+\section{Knapsack (mochila)}
+\label{sec:fractional-knapsack}
+
+  Hay una mochila de capacidad \(M\),
+  y un conjunto de \(n\) tipos de objetos,
+  del objeto tipo \(i\) hay disponible \(p_i\) en total,
+  de valor total \(v_i\).
+  Se pueden incluir fracciones de objetos
+  (es café, azúcar, arroz, \ldots)
+
+  Estrategia:
+  \begin{itemize}
+  \item
+    Ordenar los objetos por
+    \begin{equation*}
+      \frac{v_i}{p_i}
+    \end{equation*}
+    decreciente.
+  \item
+    Echar en la mochila sucesivamente todo lo que se pueda del objeto \(i\),
+    en el orden anterior.
+  \end{itemize}
+
+  Falta demostrar que esta estrategia da una solución óptima,
+  lo que quedará de ejercicio.
+
+  Una variante obvia es objetos discretos:
+  el objeto \(i\) se agrega completo o no
+  (no fracciones).
+  En este caso la estrategia voraz \emph{no} da óptimo.
+  Incluso vimos que este problema es \NP\nobreakdash-completo.
+  Construir un contraejemplo para la estrategia indicada queda de ejercicio.
+
+\section{Árbol recubridor mínimo}
+\label{sec:MST}
+
+  Dado un grafo \(G = (V, E)\),
+  con arcos rotulados \(c \colon E \to \mathbb{R}^+\),
+  se busca el árbol recubridor
+  (o sea,
+   el que une todos los vértices)
+  de costo mínimo
+  (suma de los \(c\) sobre sus arcos).
+  En inglés se le conoce
+  como \emph{\foreignlanguage{english}{minimal spanning tree}},
+  y se abrevia MST.
+  Este problema tiene una distinguida historia.
+  Nešetřil y Nešetřilová~%
+    \cite{nesetril12:_origin_mst_algorithms}
+  discuten las primeras soluciones,
+  Mareš~%
+    \cite{mares08:_saga_mst}
+  discute desarrollos más recientes.
+
+  Para el grafo \(G = (V, E)\)
+  usamos la notación \(V = G_V\), \(E = G_E\).
+  En nuestros algoritmos a continuación al iterar sobre un conjunto,
+  lo haremos en el orden dado antes.
+  Dos algoritmos alternativos para resolver este problema
+  son el algoritmo de Prim
+  (algoritmo~\ref{alg:prim},
+   en realidad de Jarník~%
+     \cite{jarnik30:_MST},
+   redescubierto por Prim~%
+     \cite{prim57:_MST}
+   y Dijkstra~%
+     \cite{dijkstra59:_MST}).
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{Prim}(G)\)}{
+      Sort \(G_E\) by increasing \(c(e)\) \;
+      \BlankLine \;
+      Select a vertex \(u \in G_V\) \;
+      \(T \gets (\{ u \}, \varnothing)\) \;
+      \For{\(u v \in G_E\) such that \(u \in T_V\), \(v \notin T_V\)}{
+        \(T \gets (T_V \cup \{ v \}, T_E \cup \{ u v \})\) \;
+      }
+      \Return \(T\) \;
+    }
+    \caption{Algoritmo de Prim}
+    \label{alg:prim}
+  \end{algorithm}
+  y el algoritmo de Kruskal~%
+   \cite{kruskal56:_MST}
+  (algoritmo~\ref{alg:kruskal}).
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{Kruskal}(G)\)}{
+      Sort \(G_E\) by increasing \(c(e)\) \;
+      \BlankLine \;
+      \(T \gets (\varnothing, \varnothing)\) \;
+      \For{\(u v \in G_E\)}{
+        \If{\(u v\) doesn't form a cycle in \(T\)}{
+          \(T \gets (T_V \cup \{ u, v \},
+                          T_E \cup \{ u v \})\) \;
+        }
+      }
+      \Return \(T\) \;
+    }
+    \caption{Algoritmo de Kruskal}
+    \label{alg:kruskal}
+  \end{algorithm}
+  Ambos son algoritmos voraces,
+  como puede apreciarse,
+  aunque usan criterios diferentes
+  para seleccionar el siguiente arco a incluir.
+
+  La demostración de ambos se basa en:
+  \begin{proposition}
+    \label{prop:base-MST}
+    Sea \(G = (V, E)\) un grafo como indicado,
+    y sea \(V_1, V_2\) una partición de \(V\).
+    Si el arco \(v_1 v_2\) tiene costo mínimo entre los arcos
+    entre \(V_1\) y \(V_2\),
+    hay un árbol recubridor mínimo de \(G\) que incluye \(v_1 v_2\).
+  \end{proposition}
+  \begin{proof}
+    Sea el grafo \(G = (V, E)\) con costos \(c \colon E \to \mathbb{R}\).
+    Sea \(V_1, V_2\) una partición de \(V\),
+    y \(e = v_1 v_2\) un arco de costo mínimo
+    con \(v_1 \in V_1\) y \(v_2 \in V_2\).
+    Consideremos un árbol recubridor de costo mínimo \(T\),
+    cuyo costo anotamos \(c(T)\).
+    Si \(e \in T\),
+    estamos listos.
+    En caso contrario,
+    el grafo \(T \cup e\) tiene un único ciclo,
+    que debe incluir otros arcos entre \(V_1\) y \(V_2\).
+    Sea \(e' = v_1' v_2'\) con \(v_1' \in V_1\) y \(v_2' \in V_2\)
+    un arco del ciclo de costo mínimo.
+    Como \(e\) es mínimo entre \(V_1\) y \(V_2\),
+    \(c(e') \ge c(e)\).
+    Intercambiando \(e\) con \(e'\),
+    obtenemos un árbol recubridor \(T'\)
+    de costo total:
+    \begin{equation*}
+      c(T') = c(T) - c(e') + c(e) \ge c(T)
+    \end{equation*}
+    Como \(T\) es de costo mínimo,
+    esto debe cumplirse con igualdad,
+    esto a su vez significa \(c(e) = c(e')\),
+    el árbol recubridor~\(T'\) que incluye a~\(e'\) también es mínimo.
+  \end{proof}
+
+  Este es un problema muy importante,
+  hay una variedad de algoritmos mejores que los planteados,
+  como el de Chazelle~%
+   \cite{chazelle00:_soft_heap,chazelle00:_minimal_spanning_tree}.
+  Karger, Klein y Tarjan~%
+    \cite{karger95:_random_linear_time_MST}
+  describen un algoritmo aleatorizado
+  (ver el capítulo~\ref{cha:randomized-algorithms})
+  con tiempo de ejecución esperado lineal.
+  Curiosamente,
+  todos ellos usan de alguna forma
+  el primer algoritmo publicado para resolver este problema,
+  el de Borůvka~%
+    \cite{boruvka26:_problemu_minimalnim}.
+  Una revisión tutorial relativamente reciente es la de Eisner~%
+    \cite{eisner97:_state_art_algor_minim_spann_trees},
+  Mareš~%
+    \cite{mares08:_graph_algorithms}
+  discute los algoritmos en detalle.
+
+\section{Programar tareas con plazo fatal}
+\label{sec:tareas-plazo-fatal}
+
+  Hay una colección de tareas,
+  cada una de las cuales requiere ejecutarse
+  por una unidad de tiempo en la única máquina disponible.
+  La tarea~\(i\) trae ganancia \(g_i\)
+  si se completa antes de su plazo fatal~\(d_i\),
+  en caso contrario no aporta nada.
+  Se busca la secuencia de tareas a programar
+  de forma de obtener la máxima ganancia.
+
+  Como cada tarea demanda una unidad de tiempo,
+  podemos considerar el tiempo dividido en ranuras,
+  que pueden estar libres u ocupadas.
+  Es claro que debemos ver de programar las tareas que más ganancia traen,
+  pero de forma que interfieran lo menos posible con otras tareas
+  de menor ganancia.
+  Vale decir,
+  programar las tareas en la ranura libre más tardía
+  antes de su plazo fatal.
+  Esto sugiere ordenar las tareas por ganancia decreciente,
+  y si hay empate en ganancia por plazo fatal decreciente;
+  luego asignar cada tarea a la ranura libre más tardía
+  en la cual aún cumple su plazo fatal o descartarla.
+  Si la programación resultante tiene tiempos muertos,
+  podemos compactar al final
+  adelantando tareas.
+  El tiempo del algoritmo resultante está dominado por el ordenamiento,
+  si hay \(n\)~tareas es~\(O(n \log n)\).
+
+  Para demostrar que esto da una solución óptima,
+  recurrimos a nuestras tres propiedades:
+  \begin{description}
+  \item[Greedy Choice:]
+    Nuestro algoritmo elige la tarea \(\hat{t}\) que más ganancia da
+    de entre las que aún pueden cumplir su plazo fatal.
+    Demostramos por contradicción
+    que hay una solución óptima que incluye la tarea \(\hat{t}\)
+    así elegida.
+
+    Tomemos una solución óptima.
+    Es claro que las ranuras antes del plazo fatal de \(\hat{t}\)
+    están todas ocupadas,
+    ya que en caso contrario podemos programar \(\hat{t}\) en una libre,
+    contradiciendo que la solución es óptima.
+
+    Si la solución óptima incluye a \(\hat{t}\),
+    estamos listos.
+    Si no la incluye,
+    podemos tomar una tarea
+    que termina antes del plazo fatal de \(\hat{t}\).
+    Si su ganancia es menor que la ganancia de \(\hat{t}\),
+    intercambiándola con \(\hat{t}\) mejoramos la ganancia total,
+    contradicción con que la solución sea óptima.
+    La única posibilidad es que tenga la misma ganancia de \(\hat{t}\),
+    podemos intercambiarlas obteniendo una solución óptima
+    que incluye a \(\hat{t}\).
+  \item[Inductive Substructure:]
+    Sea \(P\) el problema original,
+    \(\hat{t}\) la tarea elegida por el criterio voraz,
+    y el problema \(P'\) lo que queda
+    al asignar \(\hat{t}\) a la última ranura libre
+    antes de su plazo fatal.
+    Una solución viable a \(P'\),
+    o sea,
+    una colección de tareas a programar entre las restantes,
+    nunca puede entrar en conflicto con la programación de \(\hat{t}\);
+    podemos combinar una solución a \(P'\) con \(\hat{t}\)
+    para dar una solución viable a \(P\).
+
+    En realidad,
+    en este caso no hay restricciones \textquote{cruzadas},
+    esto se cumple automáticamente al eliminar tareas
+    que ya no pueden cumplir sus plazos fatales.
+  \item[Optimal Substructure:]
+    Consideremos una solución óptima \(\Pi^*\) al problema \(P\).
+    Para simplificar notación,
+    llamemos \(\lvert \Pi \rvert\)
+    a la ganancia de la solución viable \(\Pi\)
+    al problema \(P\),
+    y similarmente \(\lvert t \rvert\)
+    la ganancia que reporta la tarea \(t\).
+
+    Por \textbf{Greedy Choice},
+    podemos suponer sin pérdida de generalidad
+    que \(\Pi^*\) incluye la elección voraz \(\hat{t}\).
+    Sea \(P'\) el problema que queda al eliminar \(\hat{t}\)
+    y las tareas que ya no pueden completarse.
+    Sea \(\Pi'\) una solución óptima para \(P'\),
+    por \textbf{Inductive Substructure} es compatible con \(\hat{t}\);
+    la ganancia de esa solución es:
+    \begin{equation*}
+      \lvert \Pi' \rvert
+        \le \lvert \Pi^* \rvert
+               - \lvert \hat{t} \rvert
+    \end{equation*}
+    (si fuera mayor,
+     junto con \(\hat{t}\) daría una solución mejor que la óptima).
+    Pero la solución \(\Pi^* \smallsetminus \{ \hat{t} \}\)
+    da el valor \(\lvert \Pi^* \rvert - \lvert \hat{t} \rvert\),
+    y la combinación \(\Pi'\) con \(\hat{t}\) es óptima.
+  \end{description}
+  Como se cumplen las tres propiedades,
+  el algoritmo da una solución óptima.
+
+\section{Otras técnicas para demostrar correctitud}
+\label{sec:greedy-otras-tecnicas}
+
+  La técnica expuesta para demostrar que el algoritmo voraz entrega un óptimo
+  (basada en las tres propiedades)
+  es bastante general,
+  pero no siempre es aplicable
+  ni la manera más natural de enfrentar el problema.
+
+\subsection{Demostración por contradicción}
+\label{sec:demostr-por-contradiccion}
+
+  Notar las diferencias entre este caso
+  y la demostración por contradicción
+  para demostrar que se cumple la propiedad de elección voraz.
+
+  Consideremos el problema de ordenar archivos en forma óptima en una cinta,
+  donde el largo del archivo \(i\) es \(l_i\).
+  Los usuarios solicitan el archivo \(i\) con probabilidad \(p_i\),
+  y el costo de extraer un archivo
+  (que llamaremos \(L_i\))
+  es proporcional a la suma de los largos de los archivos que lo preceden
+  y de ese mismo.
+  Como el tiempo es proporcional al largo leído,
+  usaremos largos como medidas de tiempo.
+  Interesa minimizar el valor esperado del tiempo para extraer archivos,
+  determinando el orden de los archivos en la cinta:
+  \begin{equation*}
+    T
+      = \sum_i p_i L_i
+  \end{equation*}
+
+  Usamos el algoritmo voraz de ordenar los archivos en la cinta
+  en orden creciente de \(l_i / p_i\).
+  Para \(n\) archivos
+  este orden se puede determinar en tiempo \(O(n \log n)\),
+  el costo de ordenar domina.
+
+  Demostramos que esto es óptimo por contradicción.
+  Supongamos que un orden diferente da una solución mejor.
+  Eso quiere decir que hay archivos vecinos \((a, b)\)
+  tales que:
+  \begin{equation*}
+    \frac{l_a}{p_a}
+      > \frac{l_b}{p_b}
+  \end{equation*}
+  pero \(a\) se almacena antes de \(b\)
+  (si no se cumpliera,
+   estarían en el orden que da el algoritmo voraz).
+  Demostraremos que intercambiándolos mejora \(T\),
+  este orden no puede ser óptimo.
+
+  Como \(a\) y \(b\) son vecinos,
+  intercambiarlos no afecta el tiempo de extracción de ningún otro archivo,
+  por lo que \(T\) mejora en:
+  \begin{align*}
+    p_a l_a + p_b (l_a + l_b)
+      - (p_b l_b + p_a (l_a + l_b))
+      &= p_b l_a - p_a l_b \\
+      &= p_a p_b \left( \frac{l_a}{p_a} - \frac{l_b}{p_b} \right) \\
+      &> 0
+  \end{align*}
+  Vea la figura~\ref{fig:file-reordering},
+  donde marcamos con asterisco los supuestos óptimos.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      % Before swap
+      \draw[thick] (0, 4) rectangle (10, 4.5);
+      \draw[thick] (4,	 4) rectangle (5.5, 4.5)
+         node [pos = 0.5] {\(a\)};
+      \draw[thick] (5.5, 4) rectangle (6.5, 4.5)
+         node [pos = 0.5] {\(b\)};
+
+      \draw (0,	  3.0 - 0.125) -- (0,	4);
+      \draw (5.5, 3.5 - 0.125) -- (5.5, 4);
+      \draw (6.5, 3.0 - 0.125) -- (6.5, 4);
+
+      \draw[latex'-latex'] (0, 3.5) -- (5.5, 3.5)
+        node [pos = 0.5, fill = white] {\(L_a^*\)};
+      \draw[latex'-latex'] (0, 3.0) -- (6.5, 3.0)
+        node [pos = 0.5, fill = white] {\(L_b^*\)};
+
+      % After swap
+      \draw[thick] (0, 1.5) rectangle (10, 2.0);
+      \draw[thick] (4, 1.5) rectangle (5.0, 2)
+         node [pos = 0.5] {\(b\)};
+      \draw[thick] (5, 1.5) rectangle (6.5, 2)
+         node [pos = 0.5] {\(a\)};
+
+      \draw (0,	  0.5 - 0.125) -- (0,	1.5);
+      \draw (5.0, 1.0 - 0.125) -- (5.0, 1.5);
+      \draw (6.5, 0.5 - 0.125) -- (6.5, 1.5);
+
+      \draw[latex'-latex'] (0, 1) -- (5.0, 1)
+        node [pos = 0.5, fill = white] {\(L_b\)};
+      \draw[latex'-latex'] (0, 0.5) -- (6.5, 0.5)
+        node [pos = 0.5, fill = white] {\(L_a\)};
+    \end{tikzpicture}
+    \caption{Resultado de intercambiar los archivos \(a\) y \(b\)}
+    \label{fig:file-reordering}
+  \end{figure}
+  Pero \(p_a p_b > 0\),
+  ya que son probabilidades;
+  y supusimos que \(l_a / p_a > l_b / p_b\).
+  Al intercambiarlos,
+  disminuye el tiempo promedio.
+  Esto contradice el que haya sido óptimo antes del cambio.
+
+  Un caso particular importante de este problema
+  se da al programar tareas que deben ejecutarse una tras otra,
+  donde nos interesa minimizar el tiempo promedio de término de las tareas.
+  Es el mismo problema anterior,
+  si consideramos que las probabilidades de acceso son todas iguales.
+  Nuestro resultado indica ejecutar las tareas en orden de duración creciente
+  (lo que llaman \emph{\foreignlanguage{english}{Shortest Job First}},
+   o SJF).
+
+\subsection{Usando un invariante}
+\label{sec:greedy-invariante}
+
+  Un caso claro donde el esquema general discutido no funciona
+  es el problema de hallar los caminos más cortos
+  a todos los vértices de un grafo
+  desde un vértice dado.
+  Nuestro problema es un grafo \(G = (V, E)\)
+  con arcos rotulados \(w(u,v) \colon V \times V \to \mathbb{R}^+\),
+  y el costo del camino \(p\) es:
+  \begin{equation*}
+    w(p)
+      = \sum_{(u, v) \in p} w(u, v)
+  \end{equation*}
+  Dado un vértice origen \(s\),
+  nos interesan los costos mínimos de los caminos
+  a cada vértice \(v \in V \smallsetminus \{s\}\).
+  Llamaremos \(\delta(v)\) al costo de tal camino.
+
+  El algoritmo de Dijkstra~%
+    \cite{dijkstra59:_MST}
+  es un algoritmo voraz
+  que resuelve el problema si no hay arcos de peso negativo.
+  Funciona como sigue:
+  mantiene una partición de los vértices,
+  \(S\) y \(V \smallsetminus S\).
+  En cada instante,
+  \(S\) es el conjunto de vértices
+  a los cuales ya se conocen los caminos más cortos.
+  Inicialmente \(S = \varnothing\).
+  Para cada vértice \(v \in V\) tenemos una variable
+  \(d[v]\) que es el largo del mejor camino desde \(s\) a \(v\)
+  que se ha hallado.
+  Los vértices se ubican en una cola de prioridad \(Q\),
+  con prioridad \(d[v]\).
+  El algoritmo~\ref{alg:Dijkstra} describe esto informalmente.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \ForEach{\(v \in V\)}{
+      \(d[v] \gets \infty\) \;
+    }
+    \(d[s] \gets 0\) \;
+    Initialize \(Q\) empty \;
+    \ForEach{\(v \in V\)}{
+      Insert \(v\) in \(Q\) with priority \(d[v]\) \;
+    }
+    \(S \gets \varnothing\) \;
+    \BlankLine
+    \While{\(Q\) not empty}{
+      \(u \gets \mathrm{DeleteMin}(Q)\) \;
+      \(S \gets S \cup \{ u \}\) \;
+      \ForEach{\(v in N(u)\)}{
+        \If{\(d[v] > d[u] + w(u, v)\)}{
+          \(d[v] \gets d[u] + w(u, v)\) \;
+          Update key of \(v\) in \(Q\) to \(d[v]\) \;
+        }
+      }
+    }
+    \caption{Algoritmo de Dijkstra}
+    \label{alg:Dijkstra}
+  \end{algorithm}
+  Demostramos que el algoritmo de Dijkstra es correcto
+  demostrando por inducción sobre \(S\)
+  que se cumple el invariante:
+  \begin{equation}
+    \label{eq:Dijkstra-invariante}
+    \forall v \in S, d[v] = \delta[v]
+  \end{equation}
+  \begin{description}
+  \item[Base:]
+    Luego de la primera iteración tenemos \(S = \{ s \}\),
+    donde es \(d[s] = \delta(s) = 0\),
+    el invariante vale.
+  \item[Inducción:]
+    Supongamos que cuando \(\lvert S \rvert = k\)
+    el invariante se cumple.
+    Sea \(v\) el siguiente vértice extraído de \(Q\)
+    (y colocado en \(S\)),
+    y sea \(p\) un camino de \(s\) a \(v\) de costo \(d[v]\)
+    (claramente existe,
+     y el algoritmo en un uso real registrará tal camino con el vértice).
+    Sea \(u\) el vértice inmediatamente predecesor de \(v\) en \(p\).
+    Entonces \(u \in S\),
+    y \(d[u] = \delta[u]\) por inducción.
+
+    Demostraremos por contradicción
+    que \(p\) es un camino de costo mínimo de \(s\) a \(v\).
+    Supongamos que hay un camino \(p^*\) de \(s\) a \(v\)
+    tal que \(w(p^*) = \delta(v) < w(p)\).
+    Como \(p^*\) conecta al vértice \(s \in S\)
+    con el vértice \(v \in V \smallsetminus S\),
+    debe haber un primer arco \(a b \in p^*\)
+    con \(a \in S\) y \(b \in V \smallsetminus S\).
+    Podemos dividir el camino en \(p_1, p_2\),
+    con \(p_1\) de \(s\) a \(a\) y \(p_2\) de \(b\) a \(v\).
+    Por inducción,
+    \(d[a] = \delta[a]\).
+    Como \(p^*\) es un camino más corto,
+    \(p_1, b\) es un camino más corto de \(s\) a \(b\)
+    (si hubiera uno más corto,
+     \(p^*\) no sería óptimo).
+    Después de agregar \(a\) a \(S\)
+    se consideró el arco \(a b\),
+    con lo que después de actualizarlo \(d[b] = \delta[b]\).
+    Como \(v\) se agregó a \(S\) mientras \(b\) estaba en \(Q\),
+    es \(\delta[v] \le d[b]\).
+    Como los pesos son no negativos,
+    \(\delta[v] = w(p^*) \ge d[b]\).
+    En conjunto con \(d[v] \le d[b]\)
+    resulta \(w(p^*) \ge d[v] = w(p)\),
+    contradiciendo que \(w(p^*) < w(p)\).
+  \end{description}
+  Como el invariante se cumple al principio del algoritmo,
+  y se cumple luego de cada paso,
+  se cumple al terminar.
+  Pero al terminar el algoritmo todos los vértices están en \(S\).
+  Como en cada iteración se agrega un vértice a \(S\),
+  el algoritmo siempre termina.
+
+  Para acotar su tiempo de ejecución,
+  observamos que cada vértice se extrae de la cola \(Q\) una sola vez
+  (así se agrega \(v\) a \(S\),
+   ya se conoce \(\delta[v]\)),
+  para cada vértice se consideran todos sus vecinos.
+  O sea,
+  el tiempo de ejecución es \(O(\lvert V \rvert \Delta_G)\),
+  donde \(\Delta_G\) es el máximo grado de los vértices de \(G\).
+
+\section*{Ejercicios}
+\label{sec:ejercicios-08}
+
+  \begin{enumerate}
+  \item
+    Demuestre en detalle que el algoritmo voraz
+    da una solución óptima al problema de la mochila,
+    demostrando las tres propiedades.
+  \item
+    Demuestre la proposición~\ref{prop:base-MST}.
+  \item
+    Demuestre que el algoritmo de Prim da un árbol recubridor mínimo.
+  \item
+    Demuestre que el algoritmo de Kruskal da un árbol recubridor mínimo.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  english greedy algorithms scheduling at choice optimal
+% LocalWords:  inductive structure substructure Knapsack recubridor
+% LocalWords:  spanning tree MST Sort by increasing Select vertex in
+% LocalWords:  such that doesn form cycle aleatorizado tutorial First
+% LocalWords:  correctitud Shortest SJF Initialize empty Insert with
+% LocalWords:  priority not Update key of to

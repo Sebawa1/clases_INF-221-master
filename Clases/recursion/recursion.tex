@@ -1,0 +1,632 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Recursión}
+\label{cha:recursion}
+
+% To do: Compare with Smid
+
+  Nuestra herramienta principal
+  es \emph{reducir} problemas a problemas más \textquote{simples}.
+  Por ejemplo:
+  de una expresión regular obtener
+  un programa eficiente para reconocer un patrón.
+  Para resolver este problema usamos:
+  \begin{itemize}
+  \item
+    Expresión Regular a NFA (por ejemplo Thompson)
+  \item
+    NFA a DFA (algoritmo de subconjuntos)
+  \item
+    DFA a DFA mínimo (hay varias opciones)
+  \item Interpretar el DFA o traducirlo a código.
+  \end{itemize}
+  Es la estrategia que usamos en Informática Teórica
+  (INF-155),
+  pero allí lo hicimos para demostrar que hay problemas difíciles.
+
+  Al resolver un problema,
+  lo dividimos en subproblemas diversos y combinamos resultados.
+  Notar que al hacer esto
+  (por ejemplo,
+   invocar una rutina de biblioteca,
+   como \texttt{printf(3)} en C)
+  confiamos en que la solución al subproblema
+  hace su trabajo correctamente.
+  \emph{Confiamos} en terceros.
+  De la misma manera,
+  al invocar una función que nosotros escribimos,
+  \emph{confiamos} en que hace su trabajo correctamente.
+  La consideramos una caja negra,
+  cuyo funcionamiento no nos interesa,
+  en realidad ni siquiera nos incumbe.
+  Podemos incluso cambiarla por una versión más eficiente,
+  sin cambiar el programa.
+  Desde el otro ángulo,
+  quien escribe la solución al subproblema no considera dónde se usará,
+  se concentra en cumplir con las especificaciones de su tarea.
+
+  Usar recursión es lo mismo,
+  solo que la función se invoca a sí misma
+  (directa o indirectamente).
+
+  Recursión es inducción en forma de programa.
+  Igual que en inducción requerimos casos base y paso de inducción.
+
+  La belleza de la recursión es que nos debemos preocupar
+  solo del problema entre manos,
+  subproblemas se resuelven automáticamente.
+  Una extensa discusión,
+  introduciendo el tema gradualmente,
+  ofrece Roberts~%
+    \cite{roberts86:_thinking_recursively}.
+  Lúcida es la exposición de Hetland~%
+    \cite[capítulo~4]{hetland14:_python_algorithms};
+  otra opción es Smid~%
+    \cite[capítulo~4]{smid19:_discr_struct_comput_scien}
+  quien discute varios ejemplos de definiciones por inducción
+  que llevan a programas recursivos nada obvios.
+
+  Para escribir un programa recursivo hay varios pasos clave
+  a considerar:
+  \begin{itemize}
+  \item
+    Describir la solución al problema como la combinación
+    de resultados de problemas similares,
+    con datos distintos.
+  \item
+    Determinar situaciones en las cuales la solución es tan simple
+    que puede resolverse directamente.
+  \end{itemize}
+  Para verificar que el programa resultante es correcto,
+  debemos asegurarnos que la descomposición es correcta,
+  que las soluciones de los casos base
+  (no recursivos)
+  son correctos
+  y que cada vez las llamadas son a \textquote{casos más cercanos}
+  a los casos base.
+  Note que solo nos preocupamos de detallar el primer paso de la solución,
+  los demás pasos son automáticos.
+  Es lo que Erickson~%
+    \cite{erickson19:_algorithms}
+  llama \emph{\foreignlanguage{english}{recursion fairy}},
+  el hada de la recursión,
+  haciéndose cargo.
+  Esto hace atractiva la recursión como técnica de programación,
+  es frecuente que dé soluciones simples,
+  transparentes.
+
+\section{Factoriales}
+\label{sec:factoriales}
+
+  La definición de factoriales es recursiva:
+  \begin{equation*}
+    n!
+      = \begin{cases}
+          1		    & n = 0 \\
+          n \cdot (n - 1)!  & n > 0
+        \end{cases}
+  \end{equation*}
+  De acá es obvia la versión recursiva
+  del listado~\ref{lst:factorial-recursive}.
+  \lstinputlisting[float, floatplacement = h,
+                   language = C,
+                   firstline = 5, lastline = 11,
+                   caption = {Factoriales, versión recursiva},
+                   label = lst:factorial-recursive]
+                  {code/factorial.c}
+  Este es un ejemplo un tanto tonto,
+  ya que es fácil ver que eventualmente llegaremos al caso base \(n = 0\),
+  retornando \num{1},
+  luego
+  (trepando las llamadas recursivas)
+  vemos que en cada paso multiplicamos por el siguiente valor.
+  Esto lleva a la versión iterativa~\ref{lst:factorial-iterative}.
+  \lstinputlisting[float, floatplacement = h,
+                   language = C,
+                   firstline = 15,
+                   caption = {Factoriales, versión iterativa},
+                   label = lst:factorial-iterative]
+                  {code/factorial.c}
+  En este caso simple la relación entre las llamadas
+  es simple de dilucidar,
+  dando una solución iterativa simple.
+
+\section{Recorrer árbol binario}
+\label{sec:binary-tree-traversal}
+
+  La estructura de árbol binario tiene definición recursiva.
+  Un árbol binario es:
+  \begin{itemize}
+  \item
+    Vacío
+  \item
+    Consta de un nodo \emph{raíz},
+    conectado a un subárbol binario izquierdo
+    y un subárbol binario derecho.
+  \end{itemize}
+  Con esta definición recursiva,
+  procesar estas estructuras
+  (por ejemplo,
+   visitar cada uno de sus nodos)
+  tiene la obvia expresión recursiva
+  del listado~\ref{lst:binary-tree-traversal}.
+  \lstinputlisting[float, floatplacement = h,
+                   language = C,
+                   firstline = 5,
+                   caption = {Recorrer un árbol binario},
+                   label = lst:binary-tree-traversal]
+                  {code/binary-tree-traversal.c}
+  Esto también puede reducirse a una versión iterativa,
+  pero será necesario manejar explícitamente las tareas pendientes
+  mediante una pila explícita.
+  En tales casos es preferible que el lenguaje de programación
+  se haga cargo de estos detalles burocráticos.
+
+\section{Torres de Hanoi}
+
+  Según la leyenda
+  (inventada por Édouard Lucas en el siglo~XIX),
+  en un monasterio en Hanoi
+  hay \num{64} placas redondas de oro
+  en tres agujas de diamante.
+  Una profecía dice que se crearon cuando se creó el mundo,
+  con las placas ordenadas de mayor a menor en una de las agujas,
+  los monjes del monasterio tienen la tarea de mover las placas a otra aguja.
+  Solo se permite mover una placa a la vez
+  y nunca se debe ubicar una placa sobre una menor.
+  La figura~\ref{13::TorreHanoi1}
+  muestra la situación inicial de una versión simplificada,
+  con menos placas,
+  común como acertijo.
+
+  Lo que buscan los monjes es mover todas las placas de \(A\) a \(C\),
+  usando \(B\) como auxiliar.
+  \begin{figure}[ht]
+    \centering
+    \newcommand{\hanoiDisk}[4]
+                  {\draw [fill = #4] (#1 - #3/2, #2)
+                    -- ++ (#3, 0) -- ++ (0, 0.15)
+                    -- ++ (-#3, 0) -- cycle} %(x, y, width, color)
+    \begin{tikzpicture}[scale = 0.75]
+      % Dibujo de la primera plataforma
+      \hanoiDisk{0}{0}{2.5}{green!60!black!80};
+      \hanoiDisk{2.5}{0}{2.5}{blue!60!black!60};
+      \hanoiDisk{5}{0}{2.5}{green!60!black!80};
+      \draw (0, 0.15) -- ++ (0, 2);
+      \draw (2.5, 0.15) -- ++ (0, 2);
+      \draw (5, 0.15) -- ++ (0, 2);
+
+      % Dibujo de los discos de la primera plataforma
+      \hanoiDisk{0}{0.15}{2}{gray!40};
+      \hanoiDisk{0}{0.15 + 0.15}{1.8}{gray!20};
+      \hanoiDisk{0}{0.15 + 2 * 0.15}{1.6}{gray!40};
+      \hanoiDisk{0}{0.15 + 3 * 0.15}{1.4}{gray!20};
+      \hanoiDisk{0}{0.15 + 4 * 0.15}{1.2}{gray!40};
+      \hanoiDisk{0}{0.15 + 5 * 0.15}{1.0}{gray!20};
+      \hanoiDisk{0}{0.15 + 6 * 0.15}{0.8}{gray!40};
+      \hanoiDisk{0}{0.15 + 7 * 0.15}{0.6}{gray!20};
+      \hanoiDisk{0}{0.15 + 8 * 0.15}{0.4}{gray!40};
+      \node at (0, -0.25) (A) {\(A\)};
+      \node at (2.5, -0.25) (B) {\(B\)};
+      \node at (5, -0.25) (C) {\(C\)};
+
+      % Dibujo de la segunda plataforma
+      \hanoiDisk{0   + 8.5}{0}{2.5}{green!60!black!80};
+      \hanoiDisk{2.5 + 8.5}{0}{2.5}{blue!60!black!60};
+      \hanoiDisk{5   + 8.5}{0}{2.5}{green!60!black!80};
+      \draw (0	 + 8.5, 0.15) -- ++ (0, 2);
+      \draw (2.5 + 8.5, 0.15) -- ++ (0, 2);
+      \draw (5	 + 8.5, 0.15) -- ++ (0, 2);
+
+      % Dibujo de los discos de la segunda plataforma
+      \hanoiDisk{5 + 8.5}{0.15}{2}{gray!40};
+      \hanoiDisk{5 + 8.5}{0.15 + 0.15}{1.8}{gray!20};
+      \hanoiDisk{5 + 8.5}{0.15 + 2 * 0.15}{1.6}{gray!40};
+      \hanoiDisk{5 + 8.5}{0.15 + 3 * 0.15}{1.4}{gray!20};
+      \hanoiDisk{5 + 8.5}{0.15 + 4 * 0.15}{1.2}{gray!40};
+      \hanoiDisk{5 + 8.5}{0.15 + 5 * 0.15}{1.0}{gray!20};
+      \hanoiDisk{5 + 8.5}{0.15 + 6 * 0.15}{0.8}{gray!40};
+      \hanoiDisk{5 + 8.5}{0.15 + 7 * 0.15}{0.6}{gray!20};
+      \hanoiDisk{5 + 8.5}{0.15 + 8 * 0.15}{0.4}{gray!40};
+      \node at (0   + 8.5, -0.25) (A2) {\(A\)};
+      \node at (2.5 + 8.5, -0.25) (B2) {\(B\)};
+      \node at (5   + 8.5, -0.25) (C2) {\(C\)};
+
+      \draw [-latex', thick, red!60!black!80] (6.35, 1.25) -- ++ (0.75, 0);
+    \end{tikzpicture}
+    \caption{Mover las placas desde la plataforma \(A\) a la \(C\).}
+    \label{13::TorreHanoi1}
+  \end{figure}
+
+\subsection{Solución (recursiva)}
+
+  Una solución
+  es como se muestra en la figura~\ref{13::TorreHanoi2}.
+  \begin{figure}[ht]
+    \centering
+    \newcommand{\hanoiDisk}[4]
+         {\draw [fill = #4] (#1 - #3/2, #2) -- ++ (#3, 0)
+           -- ++ (0, 0.15) -- ++ (-#3, 0) -- cycle} %(x, y, width, color)
+    \begin{tikzpicture}[scale = 0.75]
+      % Dibujo de la primera plataforma
+      \hanoiDisk{0}{0}{2.5}{green!60!black!80};
+      \hanoiDisk{2.5}{0}{2.5}{blue!60!black!60};
+      \hanoiDisk{5}{0}{2.5}{green!60!black!80};
+      \draw (0, 0.15) -- ++ (0, 2);
+      \draw (2.5, 0.15) -- ++ (0, 2);
+      \draw (5, 0.15) -- ++ (0, 2);
+
+      % Dibujo de los discos de la primera plataforma
+      \hanoiDisk{0}{0.15}{2}{gray!40};
+      \hanoiDisk{2.5}{0.15 + 0 * 0.15}{1.8}{gray!20};
+      \hanoiDisk{2.5}{0.15 + 1 * 0.15}{1.6}{gray!40};
+      \hanoiDisk{2.5}{0.15 + 2 * 0.15}{1.4}{gray!20};
+      \hanoiDisk{2.5}{0.15 + 3 * 0.15}{1.2}{gray!40};
+      \hanoiDisk{2.5}{0.15 + 4 * 0.15}{1.0}{gray!20};
+      \hanoiDisk{2.5}{0.15 + 5 * 0.15}{0.8}{gray!40};
+      \hanoiDisk{2.5}{0.15 + 6 * 0.15}{0.6}{gray!20};
+      \hanoiDisk{2.5}{0.15 + 7 * 0.15}{0.4}{gray!40};
+      \node at (0, -0.25) (A) {\(A\)};
+      \node at (2.5, -0.25) (B) {\(B\)};
+      \node at (5, -0.25) (C) {\(C\)};
+
+      % Dibujo de la segunda plataforma
+      \hanoiDisk{0 + 8.5}{0}{2.5}{green!60!black!80};
+      \hanoiDisk{2.5 + 8.5}{0}{2.5}{blue!60!black!60};
+      \hanoiDisk{5 + 8.5}{0}{2.5}{green!60!black!80};
+      \draw (0	 + 8.5, 0.15) -- ++ (0, 2);
+      \draw (2.5 + 8.5, 0.15) -- ++ (0, 2);
+      \draw (5	 + 8.5, 0.15) -- ++ (0, 2);
+
+      % Dibujo de los discos de la segunda plataforma
+      \hanoiDisk{5 + 8.5}{0.15}{2}{gray!40};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 0 * 0.15}{1.8}{gray!20};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 1 * 0.15}{1.6}{gray!40};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 2 * 0.15}{1.4}{gray!20};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 3 * 0.15}{1.2}{gray!40};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 4 * 0.15}{1.0}{gray!20};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 5 * 0.15}{0.8}{gray!40};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 6 * 0.15}{0.6}{gray!20};
+      \hanoiDisk{2.5 + 8.5}{0.15 + 7 * 0.15}{0.4}{gray!40};
+      \node at (0   + 8.5, -0.25) (A2) {\(A\)};
+      \node at (2.5 + 8.5, -0.25) (B2) {\(B\)};
+      \node at (5   + 8.5, -0.25) (C2) {\(C\)};
+
+      \draw [-latex', thick, red!60!black!80] (6.35, 1.25) -- ++ (0.75, 0);
+    \end{tikzpicture}
+    \caption{Solo nos queda mover el último disco (más grande)
+             de \(A\) a \(C\) directamente.}
+    \label{13::TorreHanoi2}
+  \end{figure}
+  Esto es solución porque traduce el problema de mover \(n\) piezas
+  a mover \(n - 1\) recursivamente,
+  luego mover \num{1}
+  (trivial, figura~\ref{13::TorreHanoi2}),
+  luego mover \(n - 1\) recursivamente.
+  Es critico en este diseño no considerar más que el disco mayor,
+  en el que nos concentramos.
+  Dejamos el completar la tarea al hada de recursión,
+  la llamada recursiva es simplemente una caja negra
+  cuyo funcionamiento interno no es de nuestra incumbencia.
+
+\paragraph{Problema:}
+
+  Mover \(n\) piezas de \(A\) a \(C\).
+
+  \begin{proof}
+    \begin{description}
+    \item[Base:]
+      Si \(n = 0\),
+      no hay que hacer nada.
+    \item[Inducción:]
+      Supongamos que sabemos mover \(k\) piezas de \(i\) a \(j\)
+      (con \(i \ne j\)).
+      Para mover \(k + 1\) piezas de \(A\) a \(C\)
+      (con \(B\) de \textquote{apoyo}):
+      \begin{itemize}
+      \item
+        Movemos las \(k\) piezas superiores de \(A\) a \(B\).
+      \item
+        Movemos la pieza inferior de \(A\) a \(C\).
+      \item
+        Movemos las \(k\) piezas de \(B\) a \(C\)
+        (con \(A\) de \textquote{apoyo}).
+      \end{itemize}
+    \end{description}
+  \end{proof}
+  Pseudocódigo es el algoritmo~\ref{alg:Hanoi}.
+  Usamos las variables \(\mathnormal{src}\) para el origen,
+  \(\mathnormal{dst}\) para el destino
+  y \(\mathnormal{tmp}\) para el auxiliar
+  (libre).
+  Estas variables valen \(A\), \(B\) o \(C\),
+  según sea.
+  La solución al problema está dada por la llamada
+  \(\mathop{hanoi}(64, A, C, B)\)
+  (mueva \num{64} platos de \(A\) a \(C\),
+   usando \(B\) de intermediario).
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{hanoi}(n,
+                     \mathnormal{src}, \mathnormal{dst}, \mathnormal{tmp})\)}{
+      \If{\(n > 0\)}{
+        \(\mathrm{hanoi}(n - 1,
+              \mathnormal{src}, \mathnormal{tmp}, \mathnormal{dst})\) \;
+        Move a disk from \(\mathnormal{src}\) to \(\mathnormal{dst}\) \;
+        \(\mathrm{hanoi}(n - 1,
+              \mathnormal{tmp}, \mathnormal{dst}, \mathnormal{src})\) \;
+      }
+    }
+    \caption{Solución recursiva a las torres de Hanoi}
+    \label{alg:Hanoi}
+  \end{algorithm}
+  Por la estructura de la solución,
+  siempre cumplimos con las restricciones.
+
+  Una pregunta obvia es el número de movidas que hace nuestro algoritmo.
+  \begin{proposition}
+    \label{pro:Hanoi-recursive}
+    El algoritmo recursivo~\ref{alg:Hanoi}
+    ejecuta \(2^n - 1\)~movidas para transferir \(n\) placas de \(A\) a \(C\).
+  \end{proposition}
+  \begin{proof}
+    Sea \(T(n)\) el número de movidas para transferir \(n\) platos
+    usando el algoritmo~\ref{alg:Hanoi}.
+    La recursión lleva a la recurrencia:
+    \begin{align*}
+      T(0)
+        &= 0 \\
+      T(n + 1)
+        &= 2 T(n) + 1,\qquad n \ge 0
+    \end{align*}
+    Técnicas estándar de solución de recurrencias entregan:
+    \begin{equation*}
+      T(n)
+        = 2^n - 1
+    \end{equation*}
+    \qedhere
+  \end{proof}
+  \begin{proposition}
+    \label{pro:Hanoi-optimal}
+    En el problema de las torres de Hanoi
+    se requieren al menos \(2^n - 1\) movidas para transferir \(n\) placas.
+  \end{proposition}
+  \begin{proof}
+    La demostración es por inducción.
+    Llamemos \(R(n)\) el número de movidas requeridas
+    para transferir \(n\) placas.
+    \begin{description}
+    \item[Base:]
+      Si no hay placas,
+      no hay movidas,
+      o sea,
+      \(R(0) = 0 \ge 2^0 - 1\).
+    \item[Inducción:]
+      Supongamos que para mover \(k\)
+      discos debemos hacer \(R(k) \ge 2^k - 1\) movidas,
+      y consideremos mover \(k + 1\) discos.
+      El disco mayor no puede ayudar en el proceso,
+      siempre está abajo.
+      Para poder moverlo,
+      deberemos mover \(k\) discos de \(A\) a \(B\),
+      luego mover el disco mayor de \(A\) a \(C\),
+      finalmente mover los que están en \(B\) a \(C\).
+      Esto suma:
+      \begin{align*}
+        R(k + 1)
+          &\ge R(k) + R(k) + 1 \\
+          &\ge 2 (2^k - 1) + 1 \\
+          &=   2^{k + 1} - 1
+      \end{align*}
+    \end{description}
+    Por inducción,
+    se requieren \(R(n) \ge 2^n - 1\) movidas para todo \(n \in \mathbb{N}\).
+  \end{proof}
+  Como la cota inferior es exactamente lo que da nuestro algoritmo,
+  este es óptimo.
+
+\section{Interpretar expresiones regulares}
+\label{sec:regex-interpreter}
+
+  Un excelente ejemplo de recursión es el intérprete de
+  (una versión muy restringida)
+  de expresiones regulares escrito por Pike~
+    descrito y comentado por Kernighan~%
+    \cite{kernighan07:_regex_matcher}
+  (también publicado en el texto de Kernighan y Pike~%
+     \cite{kernighan99:_practice_programming}).
+  Es una muy instructiva ilustración de recursión.
+  Reconoce solo las siguientes construcciones:
+
+  \begin{tabular}[h]{cl}
+    c			   & Calza el caracter 'c'
+                             (salvo los especiales a continuación) \\
+    .			   & Calza cualquier caracter \\
+    \textasciicircum	   & Calza el comienzo
+                             del \emph{\foreignlanguage{english}{string}} \\
+    \textdollar		   & Calza el final
+                             del \emph{\foreignlanguage{english}{string}} \\
+    \textasteriskcentered  & Cero o más ocurrencias del caracter anterior
+  \end{tabular}
+
+  El código
+  (ligeramente editado para usanza moderna en C)
+  es el listado~\ref{lst:Pike-regex},
+  que usa el encabezado~\ref{lst:Pike-regex-h}.
+  \lstinputlisting[language = C,
+                   firstline = 7,
+                   caption = {Declaraciones para la rutina de Pike},
+                   label = lst:Pike-regex-h]{code/match.h}
+  \lstinputlisting[language = C,
+                   firstline = 9,
+                   caption = {La rutina de Pike},
+                   label = lst:Pike-regex]{code/match.c}
+  Usa el simple expediente de intentar calzar en cada punto de la línea actual,
+  llamando a \lstinline[language = C]!matchhere! en cada posición.
+  La función \lstinline[language = C]!matchhere! es el corazón del código,
+  ve si la expresión calza en la posición actual.
+  Según si el primer caracter que queda por manejar de la expresión
+  calza en la posición actual del código,
+  recursivamente considera el resto de la expresión y del texto;
+  si el caracter viene seguido por un asterisco
+  invoca a \lstinline[language = C]!matchstar!,
+  que intenta repetir el caracter inicial
+  (al que se aplica asterisco)
+  cero o más veces,
+  llamando recursivamente a \lstinline[language = C]!matchhere!
+  con el resto de la expresión y del texto.
+
+\section{Mergesort}
+
+  Queremos ordenar \(A[1, \ldots, n]\).
+  Nuestro pseudocódigo para mergesort es el del algoritmo~\ref{alg:mergesort}.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{mergesort}(A[1, \dotsc, n])\)}{
+      \If{\(n > 1\)}{
+        \(\mathrm{mergesort}
+             (A[1, \dotsc,
+                 \left\lfloor \frac{n}{2} \right\rfloor])\) \;
+        \(\mathrm{mergesort}
+             (A[\left\lfloor \frac{n}{2} \right\rfloor + 1,
+                 n])\) \;
+        \(\mathrm{merge}
+             (A[1, \dotsc,
+                 \left\lfloor \frac{n}{2} \right\rfloor],
+              A[\left\lfloor \frac{n}{2} \right\rfloor + 1,
+                 n])\) \;
+      }
+    }
+    \caption{Mergesort}
+    \label{alg:mergesort}
+  \end{algorithm}
+  De la misma forma que lo hicimos con las torres de Hanoi:
+  interesa el número de operaciones.
+  Para simplificar el análisis,
+  contabilizamos el número de copias de datos,
+  por cada copia hay un número acotado de operaciones adicionales.
+  Sea \(M(n)\) el número de copias para completar el ordenamiento.
+  Es claro que:
+  \begin{align}
+    M(0)
+      &= M(1) \notag \\
+    M(n)
+      &= M\left( \left\lfloor \frac{n}{2} \right\rfloor \right)
+           + M\left( \left\lceil \frac{n}{2} \right\rceil \right)
+           + m\left( \left\lfloor \frac{n}{2} \right\rfloor,
+                     \left\lceil \frac{n}{2} \right\rceil \right)
+                 \label{13::M1}
+  \end{align}
+  Acá \(m(a, b)\)
+  es el costo de intercalar dos grupos de tamaños \(a\) y \(b\).
+  Si consideramos el costo simplemente en términos de elementos a mover,
+  vemos que \(m(a, b) = a + b\),
+  todos los elementos se mueven de las áreas respectivas a la de salida,
+  y el último término de~\eqref{13::M1} es simplemente \(n\).
+  Discutiremos recurrencias como esta
+  en el capítulo~\ref{cha:dividir-conquistar},
+  donde concluiremos que:
+  \begin{equation*}
+    M(n)
+      = O(n \log n)
+  \end{equation*}
+  Dentro de un factor constante,
+  mergesort es óptimo
+  (vimos en el apunte de \emph{Fundamentos de Informática}~%
+     \cite{brand17:_fundamentos_informatica}
+   que si solo se comparan elementos
+   para ordenar \(n\)~elementos
+   se requieren~\(\Omega(n \log n)\) comparaciones).
+
+\section*{Ejercicios}
+\label{sec:ejercicios-13}
+
+  \begin{enumerate}
+  \item
+    Para plantear soluciones alternativas
+    a problemas naturalmente expresados en forma recursiva
+    sí debemos considerar las actividades de las llamadas recursivas,
+    generalmente llegando al caso base y trabajar de allí en reversa.
+    Para verificar que las soluciones son correctas,
+    deben demostrarse propiedades de la solución,
+    como por ejemplo en el caso de torres de Hanoi,
+    suponiendo que las agujas están en los vértices de un triángulo equilátero,
+    demostrar que:
+    \begin{itemize}
+    \item
+      Cada disco se mueve siempre en la misma dirección
+    \item
+      Mover un disco pequeño siempre alterna con la única movida legal.
+    \end{itemize}
+  \item
+    Una estrategia alternativa para las torres de Hanoi
+    es considerar que las agujas
+    están ubicadas en los vértices de un triángulo equilátero.
+    Repita lo siguiente hasta completar la solución:
+    \begin{itemize}
+    \item
+      Mueva el disco más pequeño una posición a la izquierda
+    \item
+      Haga la movida legal que no involucra al disco más pequeño.
+    \end{itemize}
+    Esta estrategia es más fácil de recordar para resolver el acertijo a mano,
+    pero demostrar que es correcta es mucho más trabajo
+    que para la solución recursiva del texto.
+  \item
+    Una solución no recursiva al problema de torres de Hanoi
+    es como sigue.
+    Nombre las posiciones como \(A\), \(B\) y \(C\),
+    con los discos originalmente en \(A\) y deben quedar en \(C\).
+    Si el número de discos es par,
+    repita lo siguiente hasta completar la tarea:
+    \begin{itemize}
+    \item
+      Haga la movida legal entre \(A\) y \(B\)
+      (en cualquier dirección)
+    \item
+      Haga la movida legal entre \(A\) y \(C\)
+      (en cualquier dirección)
+    \item
+      Haga la movida legal entre \(B\) y \(C\)
+      (en cualquier dirección)
+    \end{itemize}
+    Si el número de discos es impar,
+    repita lo siguiente hasta completar la tarea:
+    \begin{itemize}
+    \item
+      Haga la movida legal entre \(A\) y \(C\)
+      (en cualquier dirección)
+    \item
+      Haga la movida legal entre \(A\) y \(B\)
+      (en cualquier dirección)
+    \item
+      Haga la movida legal entre \(B\) y \(C\)
+      (en cualquier dirección)
+    \end{itemize}
+    \begin{enumerate}
+    \item
+      Determine el número de movidas para traspasar \(n\) discos
+      de \(A\) a \(C\).
+    \item
+      Demuestre que esta estrategia resuelve el problema.
+    \end{enumerate}
+  \end{enumerate}
+
+% To do:
+% - Exercises (e.g. Smid)
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Recursión NFA DFA INF subproblemas printf C recursión
+% LocalWords:  subproblema english recursion fairy Hanoi XIX ht c to
+% LocalWords:  recursivamente Pseudocódigo recurrencia recurrencias
+% LocalWords:  caracter string Mergesort pseudocódigo mergesort fill
+% LocalWords:  equilátero Édouard cycle Move disk from cl

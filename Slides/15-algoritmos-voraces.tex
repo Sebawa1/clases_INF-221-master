@@ -1,0 +1,662 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{tikz}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usetikzlibrary{positioning, arrows}
+\newcommand{\lineaTarea}[4]{ % (x, y, l, label)
+                  \draw (#1, 0.15+#2) -- (#1, -0.15+#2) -- (#1, #2)
+                          -- (#1+#3, #2) -- (#1+#3, 0.15+#2)
+                          -- (#1+#3, -0.15+#2);
+                  \node at (#1 - 0.3, #2) () {\(#4\)};
+        }
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Algoritmos voraces}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Idea general}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Idea general}
+
+  \uncover<+->{
+    Si tenemos un problema de optimización,
+    cuya solución podemos plantear en etapas,
+    una estrategia atractiva es ir eligiendo en cada etapa
+    la opción más prometedora,
+    sin reconsiderar luego las decisiones.
+  }
+  \uncover<+->{
+    Los algoritmos resultantes se conocen como \emph{algoritmos voraces}
+    (una no muy feliz traducción del inglés
+     \emph{\foreignlanguage{english}{greedy algorithm}},
+     más bien debiera ser \textquote{algoritmo ávido} o \textquote{codicioso},
+     pero eso suena mal).
+ }
+ \\ \medskip
+ \uncover<+->{
+   Jeff Erickson,
+   en su
+   \href{https://jeffe.cs.illinois.edu/teaching/algorithms/book/Algorithms-JeffE.pdf}
+        {Algorithms} (página~108),
+   amonesta
+   \alert<.>{\emph{\bfseries\foreignlanguage{english}{Greedy algorithms
+                                                      never work!}}}.
+ }
+ \uncover<+->{
+   Esto es una exageración.
+   Cierto,
+   solo en casos especiales funcionan
+   (dan el óptimo buscado),
+   pero pueden dar aproximaciones útiles,
+   suelen tener la virtud de ser simples
+   y de muy bajo consumo de recursos.
+ }
+\end{frame}
+
+\section{Ejemplos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Asuntos Caóticos}
+
+  \uncover<+->{
+    Aburrido de los arduos estudios en Informática
+    (particularmente temas como \emph{Algoritmos y Complejidad}),
+    decide migrar a la recientemente creada
+    carrera de \emph{Asuntos Caóticos}.
+  }
+  \uncover<+->{
+    Lo atractivo de la carrera es que solo hay clases un día a la semana
+    (llamado \emph{sobriedad} por los estudiantes,
+     aunque curiosamente no por los profesores),
+    los ramos se aprueban con solo inscribirlos.
+   }
+  \uncover<+->{
+    Fiel a su orientación,
+    las clases comienzan y terminan en instantes arbitrarios.
+   }
+  \uncover<+->{
+    La nueva versión de SIGA no permite inscribir ramos con topones de horario.
+  }
+
+  \uncover<+->{
+    En su afán de titularse pronto,
+    busca tomar los más ramos posibles el próximo semestre.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Asuntos Caóticos}
+  \framesubtitle{Descripción formal}
+
+  \uncover<+->{
+    Hay un conjunto de tareas \(P = \{ p_1, p_2, \dotsc, p_n \}\),
+    la tarea \(p_i\) comienza en el instante \(s_i\)
+    y termina antes de \(f_i\)
+    (duración es el intervalo \([s_i, f_i)\)).
+  }
+
+  \uncover<+->{
+    Se busca programar el máximo número de tareas que no traslapen.
+  }
+  \\ \bigskip
+  \uncover<+->{
+    \begin{center}
+      \begin{tikzpicture}
+        \lineaTarea{0}{0}{2}{p_1};
+        \lineaTarea{1}{-0.5}{2.5}{p_2};
+        \lineaTarea{2.6}{-1}{2}{p_3};
+        \lineaTarea{0.6}{-1.5}{3.2}{p_4};
+      \end{tikzpicture}
+    \end{center}
+    En este caso puede programar un máximo de dos tareas
+    (\(p_1\) y \(p_3\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Asuntos Caóticos}
+  \framesubtitle{Propuesta 1}
+
+  \uncover<+->{
+    Programe la tarea más corta
+    que no traslapa con ninguna de las ya programadas.
+  }
+
+  \uncover<+->{
+    Justificación es que cabrán más tareas cortas.
+  }
+  \\ \bigskip
+  \uncover<+->{
+    \alert<.>{¡No funciona!}
+  }
+  \uncover<+->{
+    \begin{center}
+      \begin{tikzpicture}
+        \lineaTarea{0}{0}{2}{p_1};
+        \lineaTarea{1.8}{-0.5}{0.9}{p_2};
+        \lineaTarea{2.6}{-1}{2}{p_3};
+      \end{tikzpicture}
+    \end{center}
+    Eligiendo \(p_2\) completamos una tarea,
+    óptimo es dos
+    (\(p_1\) y \(p_3\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Asuntos Caóticos}
+  \framesubtitle{Propuesta 2}
+
+  \uncover<+->{
+    Elegir la tarea con inicio más temprano
+    que no crea conflicto con las ya programadas.
+  }
+
+  \uncover<+->{
+    Comenzar temprano permite más tareas luego.
+  }
+  \\ \bigskip
+  \uncover<+->{
+    \alert<.>{¡No funciona!}
+  }
+  \uncover<+->{
+    \begin{center}
+      \begin{tikzpicture}
+        \lineaTarea{0}{0}{5}{p_1};
+        \lineaTarea{1}{-0.5}{1}{p_2};
+        \lineaTarea{3}{-0.5}{1}{p_3};
+      \end{tikzpicture}
+    \end{center}
+    Eligiendo \(p_1\) completamos una tarea,
+    óptimo es dos
+    (\(p_2\) y \(p_3\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Asuntos Caóticos}
+  \framesubtitle{Propuesta 3}
+
+  \uncover<+->{
+    Programar en orden creciente de conflictos.
+  }
+
+  \uncover<+->{
+    Tareas con menos conflictos permiten más otras tareas.
+  }
+  \\ \bigskip
+  \uncover<+->{
+    \alert<.>{¡No funciona!}
+  }
+  \uncover<+->{
+    \begin{center}
+      \begin{tikzpicture}
+        \lineaTarea{0}{0}{1.7}{p_1};
+        \lineaTarea{2.5}{0}{1.7}{p_2};
+        \lineaTarea{5}{0}{1.7}{p_3};
+        \lineaTarea{7.5}{0}{1.7}{p_4};
+        \lineaTarea{1.5}{-0.5}{1.5}{p_5};
+        \lineaTarea{1.5}{-2*0.5}{1.5}{p_6};
+        \lineaTarea{1.5}{-3*0.5}{1.5}{p_7};
+        \lineaTarea{4}{-0.5}{1.5}{p_8};
+        \lineaTarea{6.5}{-0.5}{1.5}{p_9};
+        \lineaTarea{6.5}{-2*0.5}{1.5}{p_{10}};
+        \lineaTarea{6.5}{-3*0.5}{1.5}{p_{11}};
+      \end{tikzpicture}
+    \end{center}
+    En orden,
+    elige \(p_8\), \(p_1\), \(p_4\),
+    tres tareas.
+    Óptimo es cuatro
+    (\(p_1\), \(p_2\), \(p_3\) y \(p_4\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos voraces}
+
+  \uncover<+->{
+    Demostrar correcto un algoritmo voraz
+    es demostrar las siguientes propiedades:
+  }
+  \begin{description}
+  \item[Elección Voraz
+        (\emph{\foreignlanguage{english}{Greedy Choice}}):]
+    Para toda instancia \(P\), hay una solución óptima
+    que incluye el primer elemento \(\widehat p\) elegido.
+  \item[Estructura Inductiva
+        (\emph{\foreignlanguage{english}{Inductive Structure}}):]
+    Dada la elección voraz \(\widehat{p}\),
+    queda un subproblema menor \(P'\)
+    tal que si \(\Pi'\) es solución viable de \(P'\),
+    \(\{ \widehat{p} \} \cup \Pi'\) es solución viable de \(P\)
+    (\(P'\) no tiene \textquote{restricciones externas},
+     parte de lo que se hace al definir \(P'\)
+     es precisamente asegurar esto).
+  \item[Subestructura Óptima
+        (\emph{\foreignlanguage{english}{Optimal Substructure}}):]
+    Si \(P'\) queda de \(P\) al sacar \(\widehat p\),
+    y  \(\Pi'\) es óptima para \(P'\),
+    \(\Pi' \cup \{ \widehat{p} \}\) es óptima para \(P\).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Algoritmo voraz entrega un óptimo}
+
+  \begin{theorem}
+    \label{theo:esquema-voraz}
+    Si un algoritmo cumple con Elección Voraz, Estructura Inductiva
+    y Subestructura Óptima,
+    entrega una solución óptima al problema.
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmo voraz entrega un óptimo}
+  \framesubtitle{Demostración}
+
+  Por inducción sobre el tamaño del problema.
+  \begin{description}
+  \item[Base:]
+    Si \(\lvert P \rvert = 1\),
+    por Elección Voraz se elige el único \(p\) posible,
+    que claramente es óptimo.
+  \item[Inducción:]
+    Supongamos que da un óptimo hasta tamaño \(k\),
+    y consideremos \(P\) de tamaño \(k + 1\).
+    Elegimos \(\widehat{p}\) por el criterio voraz,
+    hay una solución óptima que incluye \(\widehat{p}\)
+    por Elección Voraz.
+    Sea \(P'\) el problema
+    que resulta al eliminar \(\widehat{p}\) de \(P\),
+    junto con sus dependencias.
+    Es claro que \(\lvert P' \rvert \le k\),
+    sea \(\Pi'\) la solución dada por el algoritmo voraz a \(P'\).
+    Por inducción,
+    \(\Pi'\) es óptima para \(P'\).
+    Por Estructura Inductiva,
+    \(\Pi' \cup \{ \widehat{p} \}\) es viable para \(P\);
+    por Subestructura Óptima,
+    \(\Pi' \cup \{ \widehat{p} \}\) es óptima para \(P\).
+    \qed
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Asuntos Caóticos}
+  \framesubtitle{Solución óptima}
+
+  \begin{theorem}
+    Elegir la tarea que finaliza más temprano
+    entre las que no entran en conflicto con las ya programadas
+    da un óptimo.
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Asuntos Caóticos}
+  \framesubtitle{Demostración}
+
+  \begin{description}
+  \item[Elección voraz:]
+    Sea \(\Pi^*\) una solución óptima,
+    \(p^*\) la primera tarea en \(\Pi^*\).
+    La tarea \(\widehat{p}\) elegida por el criterio voraz
+    no termina después que \(p^*\),
+    podemos intercambiarlas.
+  \item[Estructura Inductiva:]
+    Como \(P'\) resulta de \(P\) eliminando \(\widehat{p}\)
+    y todas las tareas que traslapan con ella,
+    toda solución viable de \(P'\)
+    junto con \(\widehat{p}\) es viable para \(P\).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Asuntos Caóticos}
+  \framesubtitle{Demostración}
+
+  \begin{description}
+  \item[Subestructura Óptima:]
+     Entonces \(\Pi' \cup \{\widehat p\}\) es viable para \(P\)
+     (por EI),
+     y \(\lvert \Pi' \cup \{ \widehat p\ \} \rvert
+            = \lvert \Pi' \rvert + 1\).
+     Sea \(\Pi^*\) óptima para \(P\)
+     que contiene \(\widehat{p}\)
+     (existe por EV).
+     Entonces \(\Pi^* \smallsetminus \{ \widehat{p} \}\)
+     es óptima para \(P'\)
+     (una mayor con \(\widehat{p}\) daría una solución mayor que \(\Pi^*\)
+      para \(P\)).
+     \begin{align*}
+       \lvert \Pi' \rvert
+         &= \lvert \Pi^* \smallsetminus \{ \widehat{p} \} \rvert \\
+         &= \lvert \Pi^* \rvert - 1 \\
+       \lvert \Pi'\cup \{\widehat{p} \} \rvert
+         &= \lvert \Pi^* \rvert
+     \end{align*}
+     y \(\Pi' \cup \{\widehat{p}\}\) es óptima. \qed
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \frametitle{\textsc{Knapsack} continuo}
+
+  \uncover<+->{
+    El problema \textsc{Knapsack}
+    (mochila),
+    pone un conjunto de objetos de pesos positivos \(w_i\)
+    con sus respectivos valores positivos \(v_i\),
+    y una capacidad de la mochila \(C\).
+    La idea es llenar la mochila
+    (no sobrepasar su capacidad),
+    logrando el valor máximo.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si permitimos fracciones de ítem,
+    la solución óptima se obtiene
+    considerando los objetos en orden de \(v_i / w_i\) descendiente,
+    colocando la máxima fracción del ítem que aún cabe en la mochila.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\textsc{Knapsack} continuo}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Suponemos los ítem ordenados según el criterio.
+  }
+  \begin{description}
+  \item[Elección voraz:]
+    Sea \(\Pi^*\) una solución óptima.
+    Si incluye menos que lo que dice el criterio de \(1\),
+    podemos intercambiar lo faltante de \(1\) por fracciones de otros ítem,
+    de mayor o igual \(v / w\),
+    obteniendo un valor menor o igual.
+  \item[Subestructura inductiva:]
+    El problema que queda al fijar la máxima fracción del ítem \(1\)
+    (capacidad restante,
+     ítem restantes)
+    no tiene restricciones externas.
+  \item[Subestructura óptima:]
+    Una solución óptima al problema \(P'\)
+    junto a la máxima fracción del ítem \(1\)
+    es óptima para \(P\):
+    cambiar la fracción de \(1\) significa reemplazar su valor
+    por valor menor o igual de otros ítem.
+    \qed
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\textsc{Knapsack} continuo}
+  \framesubtitle{Demostración alternativa}
+
+  \uncover<+->{
+    Por contradicción
+    (\textquote{razonamiento por intercambio}).
+  }
+
+  \uncover<+->{
+    Suponemos los ítem ordenados según el criterio voraz,
+    que no da el óptimo.
+    Esto significa en particular que \(\sum w_i > C\).
+  }
+  \uncover<+->{
+    Sea \(p_i\) la proporción del ítem \(i\) elegida por el criterio voraz,
+    y sea \(p^*_i\) la proporción en una solución óptima.
+  }
+  \uncover<+->{
+    El valor y el peso de la propuesta voraz son,
+    respectivamente:
+    \begin{align*}
+      V
+        &= \sum_i p_i v_i \\
+      W
+        &= \sum_i p_i w_i
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\textsc{Knapsack} continuo}
+  \framesubtitle{Demostración alternativa}
+
+  \uncover<+->{
+    El algoritmo voraz elige \(p_r = 1\) siempre que puede,
+    digamos para \(1 \le r < k\),
+    toma un único ítem parcial \(k\) con \(0 \le p_k < 1\),
+    de los siguientes no toma nada
+    (\(p_r = 0\) para \(r > k\)).
+  }
+
+  \uncover<+->{
+    Sea \(i\) el menor tal que \(p_i \ne p_i^*\).
+    Entonces \(p_i^* < p_i \le 1\)
+    (no puede ser mayor si los anteriores son todos iguales,
+     excedería del peso de la solución voraz,
+     que es la capacidad total).
+  }
+  \uncover<+->{
+    Podemos completar de \(p_i^*\) a \(p_i\)
+    el ítem \(i\) en la solución óptima,
+    desplazando los ítem posteriores
+    (de menor valor por unidad de peso)
+    que ocupan ese espacio.
+    Contradicción.
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estrategias de demostración}
+
+  \uncover<+->{
+    La estrategia de demostración ilustrada es útil en muchos casos,
+    además ayuda a diseñar un criterio adecuado para el problema.
+  }
+  \uncover<+->{
+    No siempre es la mejor.
+    Ilustraremos una demostración por contradicción,
+    más adelante veremos otras estrategias.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Almacenar en cinta}
+
+  Consideremos el problema de ordenar archivos en forma óptima en una cinta,
+  donde el largo del archivo \(i\) es \(l_i\).
+  Los usuarios solicitan el archivo \(i\) con probabilidad \(p_i\),
+  y el costo de extraer un archivo
+  (que llamaremos \(L_i\))
+  es proporcional a la suma de los largos de los archivos que lo preceden
+  y de ese mismo.
+  Como el tiempo es proporcional al largo leído,
+  usaremos largos como medidas de tiempo.
+  Interesa minimizar el valor esperado del tiempo para extraer archivos,
+  determinando el orden de los archivos en la cinta:
+  \begin{equation*}
+    T
+      = \sum_i p_i L_i
+  \end{equation*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Almacenar en cinta}
+
+  \begin{theorem}
+    El algoritmo voraz de ordenar los archivos en la cinta
+    en orden creciente de \(l_i / p_i\) da un orden óptimo.
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Almacenar en cinta}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{Por contradicción.}
+
+  \uncover<+->{
+    Supongamos que un orden diferente da una solución mejor.
+    Entonces hay archivos vecinos \((a, b)\)
+    tales que:
+    \begin{equation*}
+      \frac{l_a}{p_a}
+        > \frac{l_b}{p_b}
+    \end{equation*}
+    Demostramos que intercambiándolos mejora \(T\),
+    este orden no puede ser óptimo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Almacenar en cinta}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Como \(a\) y \(b\) son vecinos,
+    intercambiarlos no afecta el tiempo de extracción de ningún otro archivo,
+    por lo que \(T\) mejora en:
+    \begin{align*}
+      p_a l_a + p_b (l_a + l_b)
+        - (p_b l_b + p_a (l_a + l_b))
+        &= p_b l_a - p_a l_b \\
+        &= p_a p_b \left( \frac{l_a}{p_a} - \frac{l_b}{p_b} \right) \\
+        &> 0
+    \end{align*}
+    Pero \(p_a p_b > 0\),
+    ya que son probabilidades;
+    y supusimos que \(l_a / p_a > l_b / p_b\).
+    Al intercambiarlos,
+    disminuye el tiempo promedio.
+    Esto contradice el que haya sido óptimo antes del cambio.
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Almacenar en cinta}
+  \framesubtitle{Ilustración}
+
+  \uncover<+->{
+    Marcamos con asterisco los supuestos óptimos.
+    \begin{center}
+      \begin{tikzpicture}
+        % Before swap
+        \draw[thick] (0, 4) rectangle (10, 4.5);
+        \draw[thick] (4,	 4) rectangle (5.5, 4.5)
+           node [pos = 0.5] {\(a\)};
+        \draw[thick] (5.5, 4) rectangle (6.5, 4.5)
+           node [pos = 0.5] {\(b\)};
+
+        \draw (0,	  3.0 - 0.125) -- (0,	4);
+        \draw (5.5, 3.5 - 0.125) -- (5.5, 4);
+        \draw (6.5, 3.0 - 0.125) -- (6.5, 4);
+
+        \draw[latex'-latex'] (0, 3.5) -- (5.5, 3.5)
+          node [pos = 0.5, fill = white] {\(L_a^*\)};
+        \draw[latex'-latex'] (0, 3.0) -- (6.5, 3.0)
+          node [pos = 0.5, fill = white] {\(L_b^*\)};
+
+        % After swap
+        \draw[thick] (0, 1.5) rectangle (10, 2.0);
+        \draw[thick] (4, 1.5) rectangle (5.0, 2)
+           node [pos = 0.5] {\(b\)};
+        \draw[thick] (5, 1.5) rectangle (6.5, 2)
+           node [pos = 0.5] {\(a\)};
+
+        \draw (0,	  0.5 - 0.125) -- (0,	1.5);
+        \draw (5.0, 1.0 - 0.125) -- (5.0, 1.5);
+        \draw (6.5, 0.5 - 0.125) -- (6.5, 1.5);
+
+        \draw[latex'-latex'] (0, 1) -- (5.0, 1)
+          node [pos = 0.5, fill = white] {\(L_b\)};
+        \draw[latex'-latex'] (0, 0.5) -- (6.5, 0.5)
+          node [pos = 0.5, fill = white] {\(L_a\)};
+      \end{tikzpicture}
+    \end{center}
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Planteamos la estrategia de algoritmos voraces.
+  \item
+    Mostramos tres maneras de demostrar que da un óptimo.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode english greedy algorithm Jeff never EI
+% LocalWords:  Algorithms algorithms work topones Choice Inductive EV
+% LocalWords:  Structure Optimal Substructure Knapsack faltante

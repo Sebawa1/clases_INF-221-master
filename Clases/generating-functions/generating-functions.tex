@@ -1,0 +1,848 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Píldoras de funciones generatrices}
+\label{apx:funciones-generatrices}
+
+  La idea de funciones generatrices es usar una serie
+  para representar una secuencia.
+  Resulta que en muchos casos manipular la serie es mucho más fácil
+  que trabajar con la secuencia,
+  y se pueden obtener resultados sorprendentes en forma muy sencilla.
+  Véase el apéndice~\ref{apx:symbolic-method-dummies} para ejemplos.
+  Mucho más detalle se da en los apuntes de Fundamentos de Informática~%
+    \cite{brand17:_fundamentos_informatica},
+  en los textos de Wilf~%
+    \cite{wilf06:_gfology}
+  y de Flajolet y Sedgewick~%
+    \cite{flajolet09:_analy_combin},
+  y muy particularmente aplicado a nuestro tema en el de
+  Sedgewick y Flajolet~%
+    \cite{sedgewick13:_introd_anal_algor}.
+
+  Wilf~\cite{wilf06:_gfology} expresa
+  que la función generatriz es una línea de ropa
+  de la cual se cuelgan los coeficientes para exhibición.
+  Entendemos el exponente de \(z\) como un contador,
+  índice del coeficiente correspondiente.
+  Como veremos,
+  operaciones sobre la función generatriz
+  corresponden a actuar sobre la secuencia,
+  en muchos casos resulta más sencillo manipular la serie
+  que trabajar con la secuencia.
+  Para nuestros efectos,
+  en general basta manipularlos como si fueran \textquote{polinomios infinitos}.
+  Si tenemos la suerte que la serie converge para algún rango
+  alrededor de \(z = 0\)
+  (como en nuestros ejemplos),
+  podremos aplicar las herramientas del cálculo.
+
+\section{Ejemplos combinatorios}
+\label{sec:gf-ejemplos-combinatorios}
+
+  Acá nos interesa analizar las sumas resultantes
+  al lanzar combinaciones de los dados no tradicionales.
+  Un dado puede representarse por una tupla
+  que indica el número de caras con cada valor,
+  agregando el valor cero para completar.
+  Los dados tradicionales quedan representados por:
+  \begin{align*}
+    \mathrm{D}
+      \text{\ (caras \(\{1, 2, 3, 4, 5, 6\}\))}
+      &\colon \langle 0, 1, 1, 1, 1, 1, 1 \rangle
+  \end{align*}
+  Los dados no transitivos que consideraremos quedan descritos por:
+  \begin{align*}
+    \mathrm{A}
+      \text{\ (caras \(\{1, 1, 3, 5, 5, 6\}\))}
+      &\colon \langle 0, 2, 0, 1, 0, 2, 1 \rangle \\
+    \mathrm{B}
+      \text{\ (caras \(\{2, 3, 3, 4, 4, 5\}\))}
+      &\colon \langle 0, 0, 1, 2, 2, 1, 0 \rangle \\
+    \mathrm{C}
+      \text{\ (caras \(\{1, 2, 2, 4, 6, 6\}\))}
+      &\colon \langle 0, 1, 2, 0, 1, 0, 2 \rangle
+  \end{align*}
+  Para lanzar
+  la suma \num{7} con dos dados
+  tenemos las opciones
+  desde que el primero aporte \num{1} y el segundo \num{6}
+  hasta aportes respectivos de \num{6} y \num{1}.
+  Debemos considerar además el número de caras del valor considerado
+  en cada dado.
+  Para los dados \(\mathrm{A}\) y \(\mathrm{C}\)
+  esto se traduce en:
+  \begin{equation*}
+    2\cdot 2 + 0 \cdot 0 + 1 \cdot 1 + 0 \cdot 0 + 2 \cdot 2 + 1 \cdot 1
+      = 10
+  \end{equation*}
+  posibilidades.
+  Esta es exactamente la manera en que se calcula
+  el coeficiente de \(z^7\) al multiplicar polinomios
+  con el coeficiente de \(z^n\)
+  dando el número de caras con valor \(n\) para cada dado:
+  \begin{align*}
+    A(z)
+      &= 2 z		   +   z^3	   + 2 z^5 +   z^6 \\
+    B(z)
+      &=	 z^2	   + 2 z^3 + 2 z^4 +   z^5 \\
+    C(z)
+      &=   z + 2 z^2	   + z^4		   + 2 z^6
+  \end{align*}
+  El coeficiente de \(z^7\)
+  en el producto \(A(z) \cdot C(z)\) nos da el valor buscado:
+  \begin{equation*}
+    A(z) \cdot C(z)
+      = 2 z^2 + 4 z^3 +	  z^4 + 4 z^5	 + 2 z^6    + 10 z^7
+              + 2 z^8 + 4 z^9 +	  z^{10} + 4 z^{11} + 2 z^{12}
+  \end{equation*}
+  Una sencilla operación
+  considera todas las combinaciones posibles.
+  Note que los polinomios del caso nos interesan
+  puramente por sus propiedades algebraicas,
+  los valores de los polinomios para diversos valores de \(z\)
+  no interesan en lo más mínimo.
+
+  Al lanzar dos dados tradicionales
+  las sumas \num{2} y \num{12} se pueden obtener de una única manera,
+  mientras para \num{4} hay tres (\(1 + 3 = 2 + 2 = 3 + 1\)).
+  Representamos un dado mediante el polinomio:
+  \begin{equation}
+    \label{eq:gf-dado}
+    D(z)
+      = z + z^2 + z^3 + z^4 + z^5 + z^6
+  \end{equation}
+  con lo cual para lanzamientos de dos dados:
+  \begin{equation}
+    \label{eq:dos-dados}
+    D^2(z)
+      = z^2 + 2 z^3 + 3 z^4 + 4 z^5 + 5 z^6 + 6 z^7
+          + 5 z^8 + 4 z^9 + 3 z^{10} + 2 z^{11} + z^{12}
+  \end{equation}
+  Interesa hallar dados marcados en forma diferente
+  que den la misma distribución de las sumas
+  (\textquote{dados locos}).%
+    \index{dados!locos|see{Sicherman, dados de}}
+  Para construirlos
+  buscamos polinomios \(D_1(z)\) y \(D_2(z)\)
+  que den el producto~\eqref{eq:dos-dados}.
+  Queremos además que ambas representen dados,
+  o sea tengan \num{6} caras,
+  y que cada cara debe estar marcada por al menos un punto.
+  El número de caras
+  es simplemente el valor de la función en \(z = 1\);
+  que cada cara esté marcada con al menos un punto
+  se traduce en que la función generatriz sea divisible por \(z\)
+  (el número de caras marcadas con cero,
+   o sea el coeficiente de \(z^0\),
+   debe ser cero),
+  O sea:
+  \begin{equation}
+    \label{eq:dados-locos-caras}
+    D_1(1)
+      = D_2(1)
+      = 6
+  \end{equation}
+  Factorizamos~\eqref{eq:gf-dado}:
+  \begin{equation}
+    \label{eq:gf-dado-factorizada}
+    D(z)
+      = z (z + 1) (z^2 - z + 1) (z^2 + z + 1)
+  \end{equation}
+  Los factores \(z\) y \(z^2 - z + 1\) tienen valor \num{1} para \(z = 1\),
+  \(z + 1\) da \num{2} y \(z^2 + z + 1\) da \num{3}.
+  Tanto \(D_1(z)\) como \(D_2(z)\)
+  deben tener los factores \(z\),
+  \(z + 1\) y \(z^2 + z + 1\);
+  solo quedan por redistribuir los dos factores \(z^2 - z + 1\) en \(D^2(z)\):
+  \begin{align}
+    D_1(z)
+      &= z (z + 1) (z^2 + z + 1) \notag \\
+      &= z + 2 z^2 + 2 z^3 + z^4 \label{eq:Sicherman-1} \\
+    D_2(z)
+      &= z (z + 1) (z^2 - z + 1)^2 (z^2 + z + 1) \notag \\
+      &= z + z^3 + z^4 + z^5 + z^6 + z^8 \label{eq:Sicherman-2}
+  \end{align}
+  Los dados marcados con \(\{ 1, 2, 2, 3, 3, 4 \}\)
+  y \(\{ 1, 3, 4, 5, 6, 8 \}\)
+  se conocen como \emph{dados de Sicherman}~%
+    \cite{gardner78_2:_mathem_games}.
+
+\section{Definiciones formales}
+\label{sec:gf-definiciones-formales}
+
+  Sea una secuencia
+  \(\left\langle a_n \right\rangle_{n \ge 0}
+     = \left\langle
+         a_0, a_1, a_2, \dotsc, a_n, \dotsc
+       \right\rangle\).
+  La \emph{función generatriz} (ordinaria) de la secuencia es
+  la serie de potencias:%
+    \index{generatriz!ordinaria|textbfhy}
+  \begin{equation*}
+    A(z)=\sum_{0 \le n} a_n z^n
+  \end{equation*}
+  Anotaremos
+  \(A(z)
+     \ogf \left\langle a_n\right\rangle_{n \ge 0}\) en este caso
+  (\emph{ogf} es por
+     \emph{\foreignlanguage{english}
+                           {Ordinary Generating Function}}).
+
+  La \emph{función generatriz exponencial}%
+    \index{generatriz!exponencial|textbfhy}
+  de la secuencia es la serie:
+  \begin{equation*}
+    \widehat{A}(z)
+      = \sum_{0 \le n} a_n \, \frac{z^n}{n!}
+  \end{equation*}
+  Anotaremos
+  \(\widehat{A}(z)
+     \egf \left\langle a_n\right\rangle_{n \ge 0}\) en este caso
+  (\emph{egf} es por
+     \emph{\foreignlanguage{english}
+                           {Exponential Generating Function}}).
+
+  Por comodidad,
+  a veces escribiremos estas relaciones
+  con la función generatriz al lado derecho.
+
+\subsection{Reglas OGF}
+\label{sec:reglas-OGF}
+\index{generatriz!ordinaria!reglas}
+
+  Las propiedades siguientes de funciones generatrices ordinarias
+  son directamente las definiciones del caso
+  o son muy simples de demostrar,
+  sus justificaciones detalladas quedarán de ejercicios.
+
+  \begin{description}
+  \item[Linealidad:]
+    Si \(A(z) \ogf \left\langle a_n \right\rangle_{n \ge 0}\)
+    y \(B(z) \ogf \left\langle b_n \right\rangle_{n \ge 0}\),
+    y \(\alpha\) y \(\beta\) son constantes,
+    entonces:
+    \begin{equation*}
+      \alpha A(z) + \beta B(z)
+         \ogf \left\langle
+                \alpha a_n + \beta b_n
+              \right\rangle_{n \ge 0}
+    \end{equation*}
+  \item[Secuencia desplazada a la izquierda:]
+    Si
+    \(A(z) \ogf \left\langle a_n \right\rangle_{n \ge 0}\),
+    entonces:
+    \begin{equation*}
+      \frac{A(z) - a_0 - a_1 z - \dotsb - a_{k - 1} z^{k - 1}}{z^k}
+        \ogf \left\langle a_{n + k}\right\rangle_{n \ge 0}
+    \end{equation*}
+  \item[Multiplicar por \(n\):]
+    Consideremos:
+    \begin{align*}
+      A(z)
+        &\ogf \left\langle a_n\right\rangle_{n \ge 0} \\
+      z \, \frac{\mathrm{d}}{\mathrm{d} z} A(z)
+        &\ogf \left\langle n a_n\right\rangle_{n \ge 0}
+    \end{align*}
+    Esta operación
+    se expresa en términos del operador \(z \mathrm{D}\)
+    (acá \(\mathrm{D}\) es por derivada,
+     para abreviar).
+    Además:
+    \begin{equation*}
+      (z \mathrm{D})^2 A(z)
+        = z D (z D A(z))
+        \ogf \left\langle n^2 a_n\right\rangle_{n \ge 0}
+    \end{equation*}
+    Note que
+      \((z \mathrm{D})^2 = z \mathrm{D} + z^2 \mathrm{D}^2\)
+    es diferente de \(z^2 \mathrm{D}^2\).
+  \item[Multiplicar por un polinomio en \(n\):]
+    Si \(p(n)\) es un polinomio,
+    usando el operador \(z \mathrm{D}\) varias veces
+    para potencias de \(n\)
+    y por linealidad:
+    \begin{align*}
+      p(z \mathrm{D}) A(z)
+        &\ogf \left\langle p(n) a_n \right\rangle_{n \ge 0}
+    \end{align*}
+  \item[Convolución:]
+    Si \(A(z) \ogf \left\langle a_n \right\rangle_{n \ge 0}\)
+    y \(B(z) \ogf \left\langle b_n \right\rangle_{n \ge 0}\)
+    entonces:
+    \begin{equation*}
+      A(z) \cdot B(z)
+        \ogf \left\langle
+               \sum_{0 \le k \le n} a_k b_{n - k}
+              \right\rangle_{n \ge 0}
+    \end{equation*}
+  \item
+    Sea \(k\) un entero positivo
+    y \(A(z) \ogf \left\langle a_n\right\rangle_{n \ge 0}\),
+    entonces:
+    \begin{equation*}
+      (A(z))^k
+        \ogf \left\langle \sum_{n_1 + n_2 + \dotsb + n_k = n}
+               \left( a_{n_1} \cdot a_{n_2} \dotsm a_{n_k} \right)
+             \right\rangle_{n \ge 0}
+    \end{equation*}
+    Vale la pena tener presente el caso especial:
+    \begin{equation*}
+      (A(z))^2
+        \ogf \left\langle
+               \sum_{0 \le i \le n} a_i a_{n - i}
+             \right\rangle_{n \ge 0}
+    \end{equation*}
+  \item[Sumas parciales:]
+    Supongamos:
+    \begin{equation*}
+      A(z) \ogf \left\langle a_n \right\rangle_{n \ge 0}
+    \end{equation*}
+    Podemos escribir:
+    \begin{equation*}
+      \sum_{0 \le k \le n} a_k
+        = \sum_{0 \le k \le n} 1 \cdot a_k
+    \end{equation*}
+    Esto no es más que la convolución de las secuencias
+    \(\left\langle 1 \right\rangle_{n \ge 0}\)
+    y \(\left\langle a_n \right\rangle_{n \ge 0}\),
+    y la función generatriz de la primera es nuestra vieja conocida,
+    la serie geométrica,
+    con lo que:
+    \begin{equation}
+      \label{eq:sumas-parciales}
+      \frac{A(z)}{1 - z}
+        \ogf \left\langle
+               \sum_{0 \le k \le n} a_k
+             \right\rangle_{n \ge 0}
+    \end{equation}
+  \end{description}
+
+\subsection{Reglas EGF}
+\label{sec:reglas-EGF}
+\index{generatriz!exponencial!reglas}
+
+  Las siguientes resumen propiedades
+  de las funciones generatrices exponenciales.
+  Son simples de demostrar,
+  y las justificaciones que no se dan acá quedarán de ejercicios.
+  \begin{description}
+  \item[Linealidad:]
+    Si \(\widehat{A}(z)
+           \egf \left\langle a_n \right\rangle_{n \ge 0}\)
+    y \(\widehat{B}(z)
+          \egf \left\langle b_n \right\rangle_{n \ge 0}\),
+    y \(\alpha\) y \(\beta\) son constantes,
+    entonces:
+    \begin{equation*}
+      \alpha \widehat{A}(z) + \beta \widehat{B}(z)
+        \egf \left\langle
+               \alpha a_n + \beta b_n
+             \right\rangle_{n \ge 0}
+    \end{equation*}
+  \item[Secuencia desplazada a la izquierda:]
+    Si \(\widehat{A}(z)
+           \egf \left\langle a_n \right\rangle_{n \ge 0}\),
+    entonces,
+    usando nuevamente \(\mathrm{D}\) para el operador derivada:
+    \begin{equation*}
+      \mathrm{D}^k \widehat{A}(z)
+        \egf \left\langle a_{n + k} \right\rangle_{n \ge 0}
+    \end{equation*}
+  \item[Multiplicación por un polinomio en \(n\):]
+    Si es \(\widehat{A}(z)
+              \egf \left\langle a_n \right\rangle_{n \ge 0}\),
+    y \(p\) es un polinomio,
+    entonces:
+    \begin{equation*}
+      p(z \mathrm{D}) \widehat{A}(z)
+        \egf \left\langle p(n) a_n \right\rangle_{n \ge 0}
+    \end{equation*}
+    Es la misma que en funciones generatrices ordinarias,
+    ya que la operación \(z \mathrm{D}\)
+    no altera el exponente en \(z^n\).
+  \item[Convolución binomial:]
+    Si \(\widehat{A}(z)
+           \egf \left\langle a_n \right\rangle_{n \ge 0}\) y
+    \(\widehat{B}(z)
+        \egf \left\langle b_n \right\rangle_{n \ge 0}\)
+    entonces:
+    \begin{align*}
+      \widehat{A}(z) \cdot \widehat{B}(z)
+        &= \sum_{n \ge 0}\biggl( \,
+                           \sum_{0 \le k \le n}
+                           \frac{a_k}{k!} \, \frac{b_{n - k}}
+                                                  {(n - k)!}
+                         \biggr) z^n \\
+        &= \sum_{n \ge 0} \biggl( \,
+                            \sum_{0 \le k \le n}
+                               \binom{n}{k} \, a_k b_{n - k}
+                          \biggr)
+               \frac{z^n}{n!}
+    \end{align*}
+    Vale decir:
+    \begin{equation*}
+      \widehat{A}(z) \cdot \widehat{B}(z)
+        \egf \left\langle
+               \sum_{0 \le k \le n} \binom{n}{k} \, a_k b_{n - k}
+             \right\rangle_{n \ge 0}
+    \end{equation*}
+  \item[Términos individuales:]
+    Es fácil ver que si
+    \(\widehat{A}(z)
+        \egf \left\langle a_n \right\rangle_{n \ge 0}\) entonces:
+    \begin{equation*}
+      a_n = \widehat{A}^{(n)}(0)
+    \end{equation*}
+    Esto en realidad no es más que el teorema de Maclaurin.%
+      \index{Maclaurin, teorema de}
+  \end{description}
+
+\section{\protect\boldmath
+           \texorpdfstring{El truco \(z \mathrm{D}\log\)}
+                          {Derivada logarítmica}%
+       \protect\unboldmath}
+\index{derivada logaritmica@derivada logarítmica|textbfhy}
+
+  Los logaritmos ayudan a simplificar expresiones con exponenciales
+  y potencias.
+  Pero terminamos con el logaritmo de una suma
+  si el argumento es una serie,
+  que es algo bastante feo de contemplar.
+  Eliminar el logaritmo se logra derivando:
+  \begin{equation*}
+    \frac{\mathrm{d} \ln(A)}{\mathrm{d} z} = \frac{A'}{A}
+  \end{equation*}
+  Esto es mucho más decente.
+  Multiplicamos por \(z\)
+  para reponer la potencia \textquote{perdida} al derivar.
+
+\section{Algunas series útiles}
+\label{ref:series-utiles}
+\index{serie de potencias!series utiles@series útiles}
+
+  Las expansiones en serie que más aparecen son las siguientes.
+
+\subsection{Serie geométrica}
+\label{sec:serie-geometrica}
+\index{serie de potencias!geometrica@geométrica}
+
+  Es la serie más común en aplicaciones.
+  Si \(\lvert z \rvert < 1\),
+  se cumple:
+  \begin{equation}
+    \label{eq:serie-geometrica-b}
+    \sum_{n \ge 0} z^n
+      = \frac{1}{1 - z}
+  \end{equation}
+  Una variante importante es la siguiente,
+  expansión válida para \(\lvert a z \rvert < 1\)
+  (con la convención \(0^0 = 1\)):
+  \begin{equation}
+    \label{eq:serie-geometrica-c}
+    \sum_{n \ge 0} a^n z^n
+      = \frac{1}{1 - a z}
+  \end{equation}
+
+\subsection{Teorema del binomio}
+\label{sec:teorema-binomio}
+\index{serie de potencias!binomio}
+
+  Una de las series más importantes
+  es la expansión de la potencia de un binomio:
+  \begin{equation}
+    \label{eq:serie-binomio}
+    \sum_{n \ge 0} \binom{\alpha}{n} \, z^n
+       = (1 + z)^\alpha
+  \end{equation}
+  Siempre que \(\lvert z \rvert < 1\)
+  esto vale incluso para \(\alpha\) complejos,
+  si definimos:
+  \begin{equation}
+    \label{eq:coeficiente-binomial}
+    \binom{\alpha}{k}
+       = \frac{\alpha}{1} \cdot \frac{\alpha - 1}{2}
+            \cdot \frac{\alpha - 2}{3}
+            \cdot \dots
+            \cdot \frac{\alpha - k + 1}{k}
+       = \frac{\alpha^{\underline{k}}}{k!}
+  \end{equation}
+  y (consistente con la convención que productos vacíos son \num{1})
+  siempre es:
+  \begin{equation}
+    \label{eq:binomial(alpha,0)}
+    \binom{\alpha}{0}
+      = 1
+  \end{equation}
+  A los coeficientes~\eqref{eq:coeficiente-binomial}
+  se les llama \emph{coeficientes binomiales}
+  por su conexión con la potencia de un binomio.
+  La expansión~\eqref{eq:serie-binomio}
+  (también conocida como \emph{fórmula de Newton}
+   si \(\alpha\) no es un natural)
+  es fácil de demostrar por el teorema de Maclaurin.
+  Resulta que~\eqref{eq:serie-geometrica-b} es
+  un caso particular de~\eqref{eq:serie-binomio}.
+
+  Si \(\alpha\) es un entero positivo,
+  la serie~\eqref{eq:serie-binomio} se reduce a un polinomio
+  (el factor \(\alpha^{\underline{k}}\) se anula si \(k > \alpha\))
+  y la relación es válida para todo \(z\).
+  Además,
+  en caso que \(n\) sea natural podemos escribir:
+  \begin{equation}
+    \label{eq:coeficiente-binomial-factorial}
+    \binom{n}{k}
+       = \frac{n!}{k! (n - k)!}
+  \end{equation}
+  Es claro que:
+  \begin{equation}
+    \label{eq:coeficiente-binomial-contorno}
+    \binom{n}{k}
+      = 0 \text{\ si \(k < 0\) o \(k > n\)}
+  \end{equation}
+  Esto con~\eqref{eq:coeficiente-binomial-factorial}
+  sugiere la convención:
+  \begin{equation}
+    \label{eq:1/k!-convention}
+    \frac{1}{k!}
+      = 0 \quad \text{si \(k < 0\)}
+  \end{equation}
+  Note la simetría:
+  \begin{equation}
+    \label{eq:coeficiente-binomial-simetria}
+    \binom{n}{k}
+      = \binom{n}{n - k}
+  \end{equation}
+
+  Casos especiales notables de coeficientes binomiales
+  para \(\alpha \notin \mathbb{N}\) son los siguientes:
+  \begin{description}
+  \item[\boldmath Caso \(\alpha = 1 / 2\):\unboldmath]
+    Tenemos,
+    como siempre:
+    \begin{equation}
+      \label{eq:binomial(1/2,0)}
+      \binom{1/2}{0}
+        = 1
+    \end{equation}
+    Cuando \(k \ge 1\):
+    \begin{align}
+      \binom{1/2}{k}
+         &= \frac{\frac{1}{2} \cdot (\frac{1}{2}-1)
+               \dotsm (\frac{1}{2} - k + 1)}{k!} \notag \\
+         &= \frac{1}{2^k}
+               \cdot \frac{1 \cdot (1 - 2) \cdot (1 - 4)
+                             \dotsm (1 - 2 k + 2)}{k!} \notag \\
+         &= \frac{(-1)^{k - 1}}{2^k k!}
+               \cdot (1 \cdot 3 \dotsm (2 k - 3)) \notag \\
+         &= \frac{(-1)^{k - 1}}{2^k k!}
+               \cdot \frac{1 \cdot 2 \cdot 3 \cdot 4
+                              \cdot \dotsm
+                              \cdot (2 k - 3) \cdot (2 k - 2)}
+                          {2 \cdot 4 \cdot 6 \dotsm (2 k - 2)}
+                                \notag \\
+         &= \frac{(-1)^{k - 1}}{2^k k!}
+               \cdot \frac{(2 k - 2)!}{2^{k - 1} (k - 1)!}
+                  \notag \\
+         &= \frac{(-1)^{k - 1}}{2^{2 k - 1} \cdot k}
+               \cdot \frac{(2 k - 2)!}{(k - 1)! \, (k - 1)!}
+                  \notag \\
+         &= \frac{(-1)^{k - 1}}{2^{2 k - 1} \cdot k}
+               \cdot \binom{2 k - 2}{k - 1}
+            \label{eq:binomial(1/2,k)}
+    \end{align}
+    Hay que tener cuidado,
+    la última fórmula no cubre el caso \(k = 0\).
+
+  \item[\boldmath Caso \(\alpha = -1/2\):\unboldmath]
+    Mucha de la derivación es similar a la del caso anterior.
+    Tenemos,
+    para \(k > 0\):
+    \begin{align}
+      \binom{-1/2}{k}
+        &= \frac{(-1/2) \cdot (-1/2 - 1) \cdot \dotsm
+                   \cdot (-1/2 - k + 1)}
+                {k!} \notag \\
+        &= (-1)^k \frac{1}{2^k}
+             \cdot \frac{1 \cdot 3 \dotsm (2 k - 1)}{k!} \notag \\
+        &= (-1)^k \frac{1}{2^k}
+             \cdot \frac{(2 k)!}{k! \, 2^k \, k!} \notag \\
+        &= (-1)^k \frac{1}{2^{2 k}} \, \binom{2 k}{k}
+            \label{eq:binomial(-1/2,k)}
+    \end{align}
+    Esta fórmula con \(k = 0\) da:
+    \begin{equation*}
+      \binom{-1/2}{0} = 1
+    \end{equation*}
+    así no se necesita hacer un caso especial acá.
+  \item[\boldmath Caso \(\alpha = -n\):\unboldmath]
+    Cuando \(\alpha\) es un entero negativo,
+    podemos escribir:
+    \begin{equation}
+      \label{eq:binomial(-n,k)}
+      \binom{-n}{k}
+        = \frac{(-n)^{\underline{k}}}{k!}
+        = (-1)^k \, \frac{n^{\overline{k}}}{k!}
+        = (-1)^k \, \frac{(n + k - 1)^{\underline{k}}}{k!}
+        = (-1)^k \, \binom{k + n - 1}{n - 1}
+    \end{equation}
+    Una fórmula cómoda es:
+    \begin{equation}
+      \label{eq:serie-binomio-negativo}
+      \frac{1}{(1 - z)^{n + 1}}
+        = \sum_{k \ge 0} \binom{n + k}{n} \, z^k
+    \end{equation}
+  \end{description}
+  Interesantes resultan las series al variar \(n\), no \(k\).
+  Sabemos que \(\binom{n}{k} = 0\) si no es que \(0 \le k \le n\),
+  podremos ahorrarnos los límites de las sumas para simplificar.
+  El índice \(n\) o \(n + k\) para \(k\) fijo
+  da lo mismo al sumar sobre todo \(n \in \mathbb{Z}\):
+  \begin{align}
+    \sum_n \binom{n}{k} \, z^n
+      &= \sum_n \binom{n + k}{k} \, z^{n + k} \notag \\
+      &= z^k \sum_n \binom{n + k}{n} \, z^n \notag \\
+      &= \frac{z^k}{(1 - z)^{k + 1}}
+            \label{eq:serie-binomio-n}
+  \end{align}
+  Al final usamos~\eqref{eq:serie-binomio-negativo}.
+  Omitir los rangos de los índices ahorró interminables ajustes.
+\subsection{Otras series}
+\label{sec:otras-series}
+
+  Una serie común es la exponencial:%
+    \index{serie de potencias!exponencial}
+  \begin{equation}
+    \label{eq:exponencial}
+    \mathrm{e}^z
+      = \sum_{n \ge 0} \frac{z^n}{n!}
+  \end{equation}
+  A veces aparecen funciones trigonométricas:%
+    \index{serie de potencias!seno}%
+    \index{serie de potencias!coseno}
+  \begin{equation*}
+    \sin z
+      = \sum_{n \ge 0} (-1)^n \frac{z^{2 n + 1}}{(2 n + 1)!} \qquad
+    \cos z
+      = \sum_{n \ge 0} (-1)^n \frac{z^{2 n}}{(2 n)!}
+  \end{equation*}
+  o hiperbólicas:%
+    \index{serie de potencias!seno hiperbolico@seno hiperbólico}%
+    \index{serie de potencias!coseno hiperbolico@coseno hiperbólico}
+  \begin{equation*}
+    \sinh z
+      = \sum_{n \ge 0} \frac{z^{2 n + 1}}{(2 n + 1)!} \qquad
+    \cosh z
+      = \sum_{n \ge 0} \frac{z^{2 n}}{(2 n)!}
+  \end{equation*}
+  Una relación útil es la fórmula de Euler:%
+    \index{Euler, formula de (exponencial complejo)@Euler, fórmula de (exponencial complejo)}
+  \begin{equation}
+    \label{eq:formula-Euler-exponencial}
+    \mathrm{e}^{u + \mathrm{i} v}
+      = \mathrm{e}^u (\cos v + \mathrm{i} \sin v)
+  \end{equation}
+
+  Es frecuente la serie para el logaritmo,%
+    \index{serie de potencias!logaritmo}
+  que podemos hallar integrando término a término:
+  \begin{align}
+    \frac{\mathrm{d}}{\mathrm{d} z} \, \ln (1 - z)
+      &= - \frac{1}{1 - z}
+       = - \sum_{n \ge 0} z^n \notag \\
+    \ln (1 - z)
+      &= - \sum_{n \ge 1} \frac{z^n}{n}
+           \label{eq:ln(1-z)}
+  \end{align}
+  Muchos ejemplos adicionales de series útiles
+  se hallan en el texto de Wilf~\cite{wilf06:_gfology}.
+
+\section{Notación para coeficientes}
+\label{sec:funciones-generatrices:notacion}
+\index{serie de potencias!extraer coeficiente}
+
+  Comúnmente extraeremos el coeficiente de un término de una serie.
+  Generalmente no hay términos con potencias negativas de \(z\),
+  tales coeficientes serán cero.
+  Para esto,
+  dadas las series:
+  \begin{equation*}
+    A(z)
+      = \sum_{n \ge 0} a_n z^n
+    \hspace{3em}
+    B(z)
+      = \sum_{n \ge 0} b_n z^n
+  \end{equation*}
+  usaremos la notación:
+  \begin{equation*}
+     \left[ z^n \right] A(z) = a_n
+  \end{equation*}
+  Tenemos algunas propiedades simples:
+  \begin{align*}
+    \left[ z^n \right] z^k A(z)
+      &= \begin{cases}
+           0				  & n < k \\
+           \left[ z^{n - k} \right] A(z)  & n \ge k
+         \end{cases} \\
+    \left[ z^n \right] (\alpha A(z) + \beta B(z))
+      &= \alpha \left[ z^n \right] A(z)
+           + \beta \left[ z^n \right] B(z)
+  \end{align*}
+
+\section{Aceite de serpiente}
+\label{sec:snake-oil}
+\index{generatriz!aceite de serpiente}
+
+  La manera tradicional de simplificar sumatorias
+  (particularmente las que involucran coeficientes binomiales)
+  es aplicar identidades u otras manipulaciones de los índices,
+  como magistralmente exponen Knuth~%
+    \cite{knuth97:_fundam_algor}
+  y Graham, Knuth y~Patashnik~%
+    \cite{graham94:_concr_mathem}.
+  Acá mostramos un método alternativo,
+  que no requiere saber y aplicar
+  una enorme variedad de identidades.
+  Wilf~%
+    \cite{wilf06:_gfology}
+  le llama \emph{\foreignlanguage{english}{Snake Oil Method}},
+  por la cura milagrosa que se ve en las películas del viejo oeste.
+  La técnica es bastante simple:
+  \begin{enumerate}
+  \item
+    Identificar la variable libre,
+    llamémosle \(n\),
+    de la que depende la suma.
+    Sea \(f(n)\) nuestra suma.
+  \item
+    Sea \(F(z)\) la función generatriz ordinaria
+    de la secuencia \(\langle f(n) \rangle_{n \ge 0}\).
+  \item
+    Multiplique la suma por \(z^n\) y sume sobre \(n\).
+    Tenemos \(F(z)\) expresado como una doble suma,
+    sobre \(n\) y la variable de la suma original.
+  \item
+    Intercambie el orden de las sumas,
+    y exprese la suma interna en forma simple y cerrada.
+  \item
+    Encuentre los coeficientes,
+    son los valores de \(f(n)\) buscados.
+  \end{enumerate}
+  Sorprende la alta tasa de éxitos de la técnica.
+  Tiene la ventaja de que no requiere mayor creatividad;
+  resulta claro cuándo funciona
+  y es obvio cuando falla.
+
+  Usaremos la convención que toda suma sin restricciones
+  es sobre el rango \(-\infty\) a \(\infty\).
+  Como los coeficientes binomiales \(\binom{n}{k}\)
+  que usaremos en los ejemplos se anulan cuando
+  \(k\) no está en el rango \([0, n]\),
+  esto evita interminables ajustes de índices.
+
+  Nuestro ejemplo viene de Riordan~%
+    \cite{riordan68:_combin_ident},
+  donde se resuelve mediante delicadas maniobras.
+  Nuestro desarrollo sigue a Dobrushkin~%
+    \cite{dobrushkin10:_method_algor_analysis}.
+
+  Evaluar:
+  \begin{equation*}
+    h_n
+      = \sum_{0 \le k \le n}
+          (-1)^{n - k} \, 4^k \, \binom{n + k + 1}{2 k + 1}
+  \end{equation*}
+
+  Definimos \(H(z)\) como la función generatriz de los \(h_n\);
+  multiplicamos por \(z^n\),
+  sumamos para \(n \ge 0\)
+  e intercambiamos orden de suma:
+  \begin{align*}
+    H(z)
+      &= \sum_{n \ge 0} z^n
+           \sum_{0 \le k \le n}
+             (-1)^{n - k} \, 4^k \, \binom{n + k + 1}{2 k + 1} \\
+      &= \sum_{n \ge 0}
+           \sum_{0 \le k \le n}
+             (-4)^k \, (-z)^n \, \binom{n + k + 1}{2 k + 1} \\
+      &= \sum_{k \ge 0}
+           (-4)^k \,
+           \sum_{n \ge k}
+             \binom{n + k + 1}{2 k + 1} \, (-z)^n
+  \end{align*}
+  Para completar el trabajo necesitamos la suma interna.
+  Haciendo el cambio de variable \(r = n - k\):
+  \begin{equation*}
+    \sum_{n \ge k} \binom{n + k + 1}{2 k + 1} \, (-z)^n
+      = (-z)^k \, \sum_{r \ge 0}
+                    \binom{r + 2 k + 1}{2 k + 1} \, (-z)^r
+      = \frac{(-z)^k}{(1 + z)^{2 k + 2}}
+  \end{equation*}
+  Substituyendo en lo anterior:
+  \begin{equation*}
+    H(z)
+      = \sum_{k \ge 0} \frac{(4 z)^k}{(1 + z)^{2 k + 2}}
+      = \frac{1}{(1 + z)^2}
+          \cdot \frac{1}{1 - \frac{4 z}{(1 + z)^2}}
+      = \frac{1}{(1 - z)^2}
+  \end{equation*}
+  Resta extraer los coeficientes,
+  lo que da:
+  \begin{equation*}
+    h_n
+      = (-1)^n \, \binom{-2}{n}
+      = \binom{n + 1}{1}
+      = n + 1
+  \end{equation*}
+
+\section{La fórmula de inversión de Lagrange}
+\label{sec:Lagrange-inversion}
+
+  Es común encontrarse con ecuaciones de la forma
+  \begin{equation*}
+    u = t \phi(u)
+  \end{equation*}
+  donde \(\phi\) es una función dada de \(u\).
+  Esta relación define \(u\) en función de \(t\),
+  y \textquote{estamos despejando \(u\) en términos de \(t\)}.
+  Fue demostrada por Lagrange%
+    \index{Lagrange, inversion de@Lagrange, inversión de|textbfhy}%
+    \index{Lagrange-Burmann, inversion de@Lagrange-Bürmann, inversión de|see{Lagrange, inversión de}}
+  y casi simultáneamente por Bürmann,%
+    \index{Burmann, Hans Heinrich@Bürmann, Hans Heinrich}
+  la forma dada acá es la de Bürmann.
+  \begin{theorem}[Fórmula de inversión de Lagrange]
+    \label{theo:LIF}
+    Sean \(f(u)\) y \(\phi(u)\) series de potencias en \(u\),
+    con \(\phi(0) = 1\).
+    Entonces hay una única serie \(u = u(t)\) que cumple:
+    \begin{equation*}
+      u = t \phi(u)
+    \end{equation*}
+    Además,
+    el valor \(f(u(t))\) de \(f\) en el cero \(u = u(t)\)
+    cumple:
+    \begin{equation*}
+      \left[ t^n \right] \left\{ f(u(t)) \right\}
+         = \frac{1}{n} \, \left[ u^{n - 1} \right] \,
+                            \left\{ f'(u) \phi(u)^n \right\}
+    \end{equation*}
+  \end{theorem}
+  Dadas \(f\) y \(\phi\),
+  esta fórmula da los coeficientes de \(f(u(t))\) en bandeja.
+  No demostraremos este resultado,
+  ya que nos llevaría demasiado fuera del rango de este ramo.
+  La demostración del teorema puede encontrarse en el texto de Wilf~%
+    \cite{wilf06:_gfology}.
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  see eq Factorizamos gf textbfhy ogf english Ordinary
+% LocalWords:  Generating Function egf Exponential geometrica Snake
+% LocalWords:  Oil Method inversion Burmann Bürmann Hans Heinrich

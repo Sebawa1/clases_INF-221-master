@@ -1,0 +1,3 @@
+--linux-style
+-nce -cdw
+-i4

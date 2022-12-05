@@ -1,0 +1,925 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Dividir y Conquistar}
+\label{cha:dividir-conquistar}
+
+  Una de las mejores estrategias para diseñar algoritmos.
+  Muchos de los algoritmos importantes se basan en esto,
+  y su análisis presenta problemas matemáticos interesantes.
+
+  La idea general es
+  dado un problema grande,
+  reducirlo a varios problemas menores del mismo tipo,
+  y combinar resultados.
+
+  Consideremos algún método de ordenamiento tonto
+  (que llamaremos \(\mathrm{DumbSort}\))
+  que siempre hace \(n^2\) comparaciones al ordenar
+  un arreglo de \(n\)~elementos.
+  Podemos crear un método mejor mediante la siguiente estrategia:
+  \begin{itemize}
+  \item
+    Dado el arreglo, divídalo en dos mitades
+    (o casi)
+    de \(\lfloor n / 2 \rfloor\) y \(\lceil n / 2 \rceil\) elementos
+  \item
+    Ordene las mitades mediante \(\mathrm{DumbSort}\)
+  \item
+    Intercale los arreglos ordenados,
+    lo que en el peor caso toma \(\lfloor n / 2 \rfloor\)~comparaciones.
+  \end{itemize}
+  El costo total
+  (número de comparaciones)
+  de este método para \(2 n\)~elementos es:
+  \begin{equation*}
+    2 n^2 + n
+     < (2 n)^2
+     = 4 n^2
+  \end{equation*}
+  Para \(n\) grande,
+  esto es poco más que la mitad de lo que demanda \(\mathrm{DumbSort}\)
+  para ordenar ese arreglo.
+  Obviamente,
+  podemos repetir el ejercicio para las mitades,
+  recursivamente,
+  con lo que se componen los ahorros.
+  En el límite esto lleva al siguiente algoritmo de ordenamiento:
+  \begin{example}[Merge Sort]
+    Ya discutido en el capítulo~\ref{cha:recursion}.
+    Para ordenar \(N\) elementos:
+    \begin{itemize}
+    \item
+      Dividir en \textquote{mitades}
+      de \(\left\lfloor \frac{N}{2} \right\rfloor\)
+      y \(\left\lceil \frac{N}{2}\right\rceil\) elementos.
+    \item
+      Ordenarlas recursivamente.
+    \item
+      Intercalar resultados.
+    \end{itemize}
+  \end{example}
+  \begin{example}[Potencias enteras]
+    Es claro que si \(n \ge 0\) es entero,
+    podemos escribir:
+    \begin{equation}
+      \label{eq:2}
+      a^n
+        = \begin{cases}
+            1  & n = 0 \\
+            \left( a^{\lfloor n / 2 \rfloor} \right)^2 \cdot a^{[2 \nmid n]}
+               & n \ge 1
+          \end{cases}
+    \end{equation}
+    Esto lleva al algoritmo~\ref{alg:integer-power}.
+    \begin{algorithm}[ht]
+      \DontPrintSemicolon\Indp
+
+      \Function{\(\operatorname{power}(a, n)\)}{
+        \If{\(n = 0\)}{
+          \Return \num{1} \;
+        }
+        \(r \gets \operatorname{power}(a, \lfloor n / 2 \rfloor)\) \;
+        \(r \gets r \cdot r\) \;
+        \If{\(2 \nmid n\)}{
+          \(r \gets r \cdot a\) \;
+        }
+        \Return \(r\) \;
+      }
+      \caption{Potencias enteras}
+      \label{alg:integer-power}
+    \end{algorithm}
+    Es claro que el algoritmo~\ref{alg:integer-power}
+    es válido siempre que la operación del caso sea asociativa.
+  \end{example}
+  \begin{example}[Búsqueda binaria]
+    Un arreglo ordenado de \(N\) elementos,
+    y una clave a buscar.
+    Obtener el elemento
+    en la posición \(\left\lfloor \frac{N}{2} \right\rfloor\),
+    buscar en la mitad que tiene que contener la clave.
+  \end{example}
+  \begin{example}[Multiplicación de Karatsuba]
+    Para multiplicar números de \(2 n\) dígitos,
+    dividimos ambos en mitades~%
+      \cite{karatsuba62:_multiplication}:
+    \begin{align*}
+      A
+        &= 10^n a + b \\
+      B
+        &= 10^n c + d
+    \end{align*}
+    con \(0 \le a, b, c, d < 10^n\).
+
+    Además:
+    \begin{equation}\label{16::Primero}
+      A \cdot B
+        = 10^{2 n} a c + 10^n (a d + b c) + b d
+    \end{equation}
+    Notando que:
+    \begin{equation*}
+      (a + b) \cdot (c + d)
+        = a c + (a d + b c) + b d
+    \end{equation*}
+    Podemos calcular los coeficientes de~\eqref{16::Primero}
+    con \num{3} (no \num{4}) multiplicaciones
+    (este truco se le atribuye a Gauß,
+     quien lo empleaba para multiplicar números complejos):
+    \begin{align*}
+      &a c \\
+      &b d \\
+      &(a + b) (c + d) - a c - b d
+    \end{align*}
+    El programa~\ref{lst:karatsuba} muestra el funcionamiento del algoritmo.
+    Obviamente,
+    en uso real no se puede depender de la suma nativa
+    (se emplea para números muy grandes,
+     un \textquote{dígito} será una palabra de la arquitectura subyacente).
+    Tampoco se emplearían operaciones de división y módulo
+    para separar dígitos.
+    \lstinputlisting[language = Python,
+                     firstline = 3, lastline = 18,
+                     caption = {Esbozo de multiplicación de Karatsuba},
+                     label = lst:karatsuba]
+                    {divide-and-conquer/karatsuba.py}
+  \end{example}
+  \begin{example}
+    Otra aplicación de esta estrategia es el algoritmo de Strassen~%
+      \cite{strassen69:_matrix_multiplication}
+    para multiplicar matrices.
+    Consideremos primeramente el producto de
+    dos matrices de \(2 \times 2\):
+    \begin{equation*}
+      \begin{pmatrix}
+        c_{1 1} & c_{1 2} \\
+        c_{2 1} & c_{2 2}
+      \end{pmatrix}
+        = \begin{pmatrix}
+            a_{1 1} & a_{1 2} \\
+            a_{2 1} & a_{2 2}
+          \end{pmatrix}
+            \cdot
+              \begin{pmatrix}
+                b_{1 1} & b_{1 2} \\
+                b_{2 1} & b_{2 2}
+              \end{pmatrix}
+    \end{equation*}
+    Sabemos que:
+    \begin{equation*}
+      \begin{array}{l@{\qquad}l}
+        c_{1 1}
+          = a_{1 1} b_{1 1} + a_{1 2} b_{2 1} &
+        c_{1 2}
+          = a_{1 1} b_{1 2} + a_{1 2} b_{2 2} \\
+        c_{2 1}
+          = a_{2 1} b_{1 1} + a_{2 2} b_{2 1} &
+        c_{2 2}
+          = a_{2 1} b_{1 2} + a_{2 2} b_{2 2}
+      \end{array}
+    \end{equation*}
+    Esto corresponde a \num{8} multiplicaciones.
+    Definamos los siguientes productos:
+    \begin{equation*}
+      \begin{array}{l@{\qquad}l}
+        m_1
+          = (a_{1 1} + a_{2 2}) \, (b_{1 1} + b_{2 2}) &
+        m_2
+          = (a_{2 1} + a_{2 2}) \, b_{1 1} \\
+        m_3
+          = a_{1 1} \, (b_{1 2} - b_{2 2}) &
+        m_4
+          = a_{2 2} \, (b_{2 1} - b_{1 1}) \\
+        m_5
+          = (a_{1 1} + a_{1 2}) \, b_{2 2} &
+        m_6
+          = (a_{2 1} - a_{1 1}) \, (b_{1 1} + b_{1 2}) \\
+        m_7
+          = (a_{1 2} - a_{2 2}) \, (b_{2 1} + b_{2 2})
+      \end{array}
+    \end{equation*}
+    Entonces podemos expresar:
+    \begin{align*}
+      \begin{array}{l@{\qquad}l}
+        c_{1 1}
+          = m_1 + m_4 - m_5 + m_7 &
+        c_{1 2}
+          = m_3 + m_5 \\
+        c_{2 1}
+          = m_2 + m_4 &
+        c_{2 2}
+          = m_1 - m_2 + m_3 + m_6
+      \end{array}
+    \end{align*}
+    Con estas fórmulas se usan \num{7} multiplicaciones
+    para evaluar el producto de dos matrices.
+    Cabe hacer notar que estas fórmulas no hacen uso de conmutatividad,
+    por lo que son aplicables también
+    para multiplicar matrices de \(2 \times 2\)
+    cuyos elementos son a su vez matrices.
+    Podemos usar esta fórmula recursivamente
+    para multiplicar matrices de \(2^n \times 2^n\).
+  \end{example}
+
+\section{La transformada rápida de Fourier}
+\label{sec:FFT}
+
+  Un algoritmo importantísimo basado en dividir y conquistar
+  es la transformada rápida de Fourier,
+  abreviada FFT
+  (por el nombre en inglés,
+   \emph{\foreignlanguage{english}{Fast Fourier Transform}}).
+  Es relevante no solo por sus aplicaciones directas
+  (particularmente en procesamiento de señales),
+  también es la base para algunos otros algoritmos importantes
+  y es el corazón de los algoritmos asintóticamente más rápidos conocidos
+  para algunos problemas.
+  La historia del algoritmo~%
+    \cite{heideman84:_gauss_history_FFT }
+  es compleja,
+  ya Gauß por 1805 empleó una variante de él,
+  muchos métodos similares hallaron uso en el intertanto.
+  La versión moderna y su popularización se atribuye a Cooley y Tukey~%
+    \cite{cooley65:_FFT}.
+  La motivación siguiente se adapta de Dasgupta, Papadimitrou y Vazirani~%
+    \cite{dasgupta06:_algorithms}.
+
+  Vimos que dividir y conquistar ayuda al multiplicar números y matrices,
+  ahora consideraremos polinomios.
+  Sabemos que un polinomio de grado \(n\)
+  queda determinado por sus valores en \(n + 1\) puntos distintos,
+  lo que nos da una representación alternativa a la secuencia de coeficientes.
+  Podemos dar el polinomio \(A(x)\) como:
+  \begin{itemize}
+  \item
+    Su secuencia de coeficientes,
+    \(a_0, a_1, \dotsc, a_n\)
+  \item
+    Sus valores en \(n + 1\) puntos distintos,
+    \(A(x_0), A(x_1), \dotsc, A(x_n)\)
+  \end{itemize}
+  La segunda representación es muy atractiva
+  a la hora de multiplicar polinomios,
+  \(A(x) \cdot B(x)\) es simplemente
+  \(A(x_0) \cdot B(x_0), A(x_1) \cdot B(x_1), \dotsc, A(x_n) \cdot B(x_n)\),
+  son \(n + 1\) multiplicaciones,
+  no \((n + 1) (n + 2) / 2\) como en el esquema tradicional:
+  \begin{equation*}
+    [x^k] A(x) B(x)
+      = \sum_{0 \le j \le k} a_j b_{k - j}
+  \end{equation*}
+  Esto lleva a la idea de partir con los coeficientes
+  de dos polinomios de grado \(d\);
+  evaluar los polinomios en \(n\)
+  puntos \(x_0, x_1, \dotsc, x_{n - 1}\) elegidos,
+  donde \(n \ge 2 d + 1\);
+  multiplicar los valores;
+  y extraer los coeficientes del producto.
+
+  Una primera idea es evaluar cada polinomio en pares positivo/negativo,
+  vale decir:
+  \begin{equation*}
+    \pm x_0, \pm x_1, \dotsc, \pm x_{n / 2 - 1}
+  \end{equation*}
+  porque de esa forma
+  las computaciones para calcular \(A(x_i)\) y \(A(-x_i)\)
+  traslapan en gran medida,
+  ya que las potencias pares de \(x_i\) coinciden con las de \(-x_i\).
+  Separando potencias pares e impares podemos escribir:
+  \begin{equation*}
+    A(x)
+      = A_e(x^2) + x A_o(x^2)
+  \end{equation*}
+  donde \(A_e\) y \(A_o\) tienen la mitad del grado de \(A\),
+  con lo que:
+  \begin{align*}
+    A(x)
+      &= A_e(x^2) + x A_e(x^2) \\
+    A(-x)
+      &= A_e(x^2) - x A_e(x^2)
+  \end{align*}
+  y basta entonces evaluar \(A_e\) y \(A_o\) en los \(n / 2\) puntos
+  \(x_0^2, x_1^2, \dotsc, x_{n/2 - 1}^2\) y un poco de trabajo adicional.
+  Lo malo es que este truco positivo/negativo
+  solo puede aplicarse una vez,
+  no podemos aplicarlo recursivamente
+  \emph{a menos que usemos números complejos}.
+
+  La pregunta ahora es,
+  ¿qué números complejos elegir?
+  Ingeniería reversa del proceso
+  indica que partimos con un número de puntos que es una potencia de \num{2},
+  que en cada recursión se dividen en dos
+  hasta terminar con un único valor final,
+  que podemos arbitrariamente fijar como \num{1}.
+  O sea,
+  en cada nivel tenemos las raíces cuadradas de los puntos del nivel previo,
+  tenemos las \(n\)\nobreakdash-ésimas raíces complejas de \num{1},
+  para \(n\) una potencia de \num{2}.
+  Recordamos que podemos escribirlas
+  \(1, \omega, \omega^2, \dotsc, \omega^{n - 1}\),
+  donde \(\omega = \mathrm{e}^{2 \pi \mathrm{i} / 2}\).
+  Si \(n\) es par,
+  están pareadas positivo/negativo,
+  o sea \(\omega^{n/2 + j} = - \omega^j\),
+  y sus cuadrados son las \((n/2)\)\nobreakdash-ésimas raíces de \num{1}.
+  Si partimos con las \(n\)\nobreakdash-ésimas raíces de \num{1},
+  con \(n\) una potencia de \num{2},
+  en cada nivel tendremos las raíces \((n / 2^k)\)\nobreakdash-ésimas
+  para \(k = 0, 1, \dotsc\).
+  Sucesivos niveles de la recursión funcionan perfectamente.
+  El algoritmo~\ref{alg:FFT} resultante es la transformada rápida de Fourier.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{FFT}(A, \omega)\)}{
+      \If{\(\omega = 1\)}{
+        \Return \(A(1)\) \;
+      }
+      Write \(A(x) = A_e(x^2) + x A_o(x^2)\) \;
+      Call \(\mathrm{FFT}(A_e, \omega^2)\) to evaluate \(A_e\)
+        on even powers of \(\omega\) \;
+      Call \(\mathrm{FFT}(A_o, \omega^2)\) to evaluate \(A_o\)
+        on even powers of \(\omega\) \;
+      \For{\(j \gets 0\) \KwTo \(n - 1\)}{
+        Compute \(A(\omega^j)
+                   = A_e(\omega^{2 j}) + \omega^j A_o(\omega^{2 j})\) \;
+      }
+      \Return \(A(\omega^0), A(\omega^1), \dotsc, A(\omega^{n - 1})\) \;
+    }
+    \caption{Transformada rápida de Fourier}
+    \label{alg:FFT}
+  \end{algorithm}
+  Tenemos así un algoritmo \(O(n \log n)\)
+  para evaluar un polinomio en los \(n\)~puntos \(\omega^j\),
+  podemos multiplicar polinomios expresados como valores en tiempo \(O(n)\),
+  falta obtener los coeficientes del producto,
+  la operación inversa.
+  Sorprendentemente,
+  si:
+  \begin{equation*}
+    \langle \mathrm{valores} \rangle
+      = \mathrm{FFT}(\langle \mathrm{coeficientes} \rangle, \omega)
+  \end{equation*}
+  es:
+  \begin{equation*}
+    \langle \mathrm{coeficientes} \rangle
+      = \frac{1}{n}
+          \mathrm{FFT}(\langle \mathrm{valores} \rangle, \omega^{-1})
+  \end{equation*}
+  Esto porque si:
+  \begin{equation*}
+    b_r
+      = \sum_{0 \le k \le n} a_k \omega^{k r}
+  \end{equation*}
+  tenemos que:
+  \begin{align*}
+    \sum_{0 \le k < n} b_k \omega^{-k r}
+      &= \sum_{0 \le k < n}
+           \left(
+             \sum_{0 \le j < n} a_j \omega^{j k}
+           \right) \omega^{-k r} \\
+      &= \sum_{0 \le j < n}
+           a_j \sum_{0 \le k < n} \omega^{(j - r) k} \\
+  \end{align*}
+  Ahora bien,
+  sabemos que:
+  \begin{equation*}
+    \sum_{0 \le k < n} \omega^{k m}
+      = \begin{cases}
+           n & n \mid m \\
+           0 & n \centernot\mid m
+        \end{cases}
+  \end{equation*}
+  Esto porque la suma es una serie geométrica.
+  Si \(m \mid n\),
+  es \(\omega^{k m} = 1\),
+  dando el primer caso;
+  cuando \(n \centernot\mid m\),
+  tenemos que \(\omega^m \ne 1\),
+  por definición es \(\omega^n = 1\) y:
+  \begin{align*}
+    \sum_{0 \le k < n} \omega^{k m}
+      &= \frac{1 - \omega^{m n}}{1 - \omega^m} \\
+      &= 0
+  \end{align*}
+  En nuestra suma solo cuando \(j = r\) es \(n \mid (j - r)\),
+  dando el resultado anunciado:
+  \begin{equation*}
+    \sum_{0 \le k < n} b_k \omega^{-k r}
+      = a_r
+  \end{equation*}
+  Esto completa un elegante algoritmo \(O(n \log n)\)
+  para multiplicar polinomios.
+
+  Multiplicar enteros,
+  por ejemplo en notación decimal,
+  es multiplicar dos polinomios evaluados en la base del caso.
+  Puede adaptarse el algoritmo de multiplicación de polinomios
+  para obtener un algoritmo \(O(n \log n)\) para números de \(n\) dígitos.
+
+\section{El teorema maestro}
+\label{sec:master-theorem}
+
+  Un problema de tamaño \(n\) se reduce a \(a\) problemas de tamaño \(n / b\),
+  que se resuelven recursivamente
+  y las soluciones se combinan.
+  El siguiente desarrollo toma de Bentley, Haken y Saxe~%
+   \cite{bentley80:_master_theorem}
+  y de CLRS~%
+     \cite{cormen09:_CLRS}.
+  Este último texto fue el que bautizó como \emph{teorema maestro}
+  el tipo de resultados que discutimos.
+
+  Si el trabajo para resolver una instancia de tamaño \(n\)
+  la llamamos \(T(n)\),
+  omitiendo pisos y cielos
+  (cosa que justificaremos luego,
+   esto restringe \(n\) a potencias de \(b\))
+  y el trabajo para reducir y combinar soluciones lo llamamos \(f(n)\),
+  resulta la recurrencia:
+  \begin{equation}
+    \label{eq:divide-and-conquer}
+    T(n)
+      = \begin{cases}
+          a T(n / b) + f(n) & n > 1 \\
+          T_1		    & n = 1
+        \end{cases}
+  \end{equation}
+  La situación que estamos analizando
+  indica que \(a \ge 1\), \(b > 1\), \(f(n) > 0\).
+  Para llevar a una recurrencia lineal,
+  hacemos el cambio de variable:
+  \begin{equation*}
+    W(r)
+      = T(b^r)
+  \end{equation*}
+  y obtenemos:
+  \begin{equation*}
+    W(r)
+      = \begin{cases}
+          a W(r - 1) + f(b^r)  & r > 0 \\
+          T_1		       & r = 0
+        \end{cases}
+  \end{equation*}
+  La solución de esta recurrencia lineal de primer orden es:
+  \begin{align*}
+    W(r)
+      &= T_1 a^r + \sum_{0 \le k < r} a^{r - 1 - k} f(b^{k + 1}) \\
+      &= T_1 a^r + a^r \sum_{0 \le k < r} a^{- k - 1} f(b^{k + 1}) \\
+      &= a^r
+           \cdot \left(
+                   T_1 + \sum_{1 \le k \le r} a^{-k} f(b^k)
+                 \right)
+  \end{align*}
+  En términos de las variables originales,
+  como:
+  \begin{equation*}
+    r
+      = \log_b n
+  \end{equation*}
+  resulta:
+  \begin{align*}
+    a^r
+      &= a^{\log_b n} \\
+      &= \left( b^{\log_b a} \right)^{\log_b n} \\
+      &= b^{\log_b a \cdot \log_b n} \\
+      &= b^{\log_b n \cdot \log_b a} \\
+      &= \left( b^{\log_b n} \right)^{\log_b a} \\
+      &= n^{\log_b a}
+  \end{align*}
+  Definimos \(\alpha = \log_b a\),
+  ya que es una constante que aparece frecuentemente en lo que sigue.
+  Resulta:
+  \begin{equation*}
+    T(n)
+      = n^\alpha
+         \cdot \left(
+                 T_1 + \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+               \right)
+  \end{equation*}
+  Si la suma converge cuando \(n\) tiende a infinito,
+  vale decir,
+  si \(f(n) = O(n^c)\) para algún \(c < \alpha\),
+  es determinante el factor \(n^\alpha\):
+  \begin{equation*}
+    T(n)
+      = \Theta(n^\alpha)
+  \end{equation*}
+
+  En caso que la suma no converja,
+  dominará el segundo término.
+  Analicemos primeramente el caso en que \(f(n) = \Omega(n^c)\),
+  donde \(c > \alpha\).
+  Es central la suma:
+  \begin{equation*}
+    \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+  \end{equation*}
+  Los términos son positivos y crecen,
+  siendo el último el mayor.
+  O sea,
+  \(T(n) = \Omega(f(n))\).
+  Si suponemos además que \(a f(n / b) \le k f(n)\)
+  para alguna constante \(k < 1\)
+  la suma es acotada por una serie geométrica convergente,
+  que podemos acotar por su límite:
+  \begin{align*}
+    \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+      &=   \frac{1}{a^{\log_b n}} \sum_{1 \le r \le \log_b n} a^r f(n / b^r) \\
+      &\le \frac{1}{a n^\alpha} \sum_{1 \le r \le \log_b n} k^r f(n) \\
+      &<   \frac{1}{a n^\alpha} \frac{f(n)}{1 - k}
+  \end{align*}
+  Esto con la cota inferior anterior se resume en:
+  \begin{equation*}
+    T(n)
+      = \Theta(f(n))
+  \end{equation*}
+
+  El caso intermedio de mayor interés es
+  \(f(n) = \Theta(n^\alpha \log^\beta n)\):
+  \begin{align*}
+    \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+      &= \sum_{1 \le r \le \log_b n} a^{-r} \Theta(a^r r^\beta) \\
+      &= \sum_{1 \le r \le \log_b n} \Theta(r^\beta) \\
+      &= \Theta \left(
+                  \sum_{1 \le r \le \log_b n} r^\beta
+                \right)
+  \end{align*}
+  Lo último es válido al ser una suma finita.
+  Esta suma a su vez converge siempre que \(\beta < -1\),
+  si \(\beta = -1\) es una suma harmónica
+  (sabemos que \(H_n \sim \ln n + \gamma\))
+  y si \(\beta > -1\) podemos acotar por una integral.
+  Esto resulta en:
+  \begin{equation*}
+    T(n)
+      = \begin{cases}
+          \Theta(n^\alpha)		      & \text{si \(\beta < -1\)} \\
+          \Theta(n^\alpha \log \log n)	      & \text{si \(\beta = -1\)} \\
+          \Theta(n^\alpha \log^{\beta + 1} n) & \text{si \(\beta > -1\)}
+        \end{cases}
+  \end{equation*}
+
+  Uniendo todas las piezas,
+  tenemos:
+  \begin{theorem}[Teorema Maestro]
+    \label{theo:master-theorem}
+    La recurrencia:
+    \begin{equation}
+    T(n)
+      = \begin{cases}
+          a T(n / b) + f(n) & n > 1 \\
+          T_1		    & n = 1
+        \end{cases}
+    \end{equation}
+    con constantes \(a \ge 1\), \(b > 1\),
+    la función \(f(n) > 0\),
+    con la constante \(\alpha = \log_b a\)
+    tiene solución:
+    \begin{equation*}
+      T(n)
+        = \begin{cases}
+            \Theta(n^{\alpha})
+               & \text{\(f(n) = O(n^c)\) para \(c < \alpha\)} \\
+            \Theta(n^{\alpha})
+               & \text{\(f(n) = \Theta(n^{\alpha} \log^\beta n)\)
+                       con \(\beta < -1\)} \\
+            \Theta(n^{\alpha} \log \log n)
+               & \text{\(f(n) = \Theta(n^{\alpha} \log^\beta n)\)
+                       con \(\beta = -1\)} \\
+            \Theta(n^{\alpha} \log^{\beta + 1} n)
+               & \text{\(f(n) = \Theta(n^{\alpha} \log^\beta n)\)
+                       con \(\beta > -1\)} \\
+            \Theta(f(n))
+              & \text{\(f(n) = \Omega(n^c)\) con \(c > \alpha\)
+                      y \(a f(n / b) < k f(n)\) para \(n\) grande
+                      con \(k < 1\)}
+          \end{cases}
+    \end{equation*}
+  \end{theorem}
+
+\subsection{Recurrencias exactas y el teorema maestro}
+\label{sec:exact-recurrence-master-theorem}
+
+  En la práctica no podemos dividir arbitrariamente,
+  tendremos recurrencias
+  como la que describe realmente a mergesort:
+  \begin{equation*}
+    M(n)
+      = M(\lceil n / 2 \rceil) + M(\lfloor n / 2 \rfloor) + c n
+  \end{equation*}
+  porque al dividir por ejemplo \num{101}~elementos en dos grupos
+  tendremos un grupo de~\num{51} y otro de~\num{50}.
+  Pero resulta que las soluciones de tales recurrencias
+  tienen el mismo comportamiento asintótico que analizamos.
+
+  Consideremos la recurrencia genérica:
+  \begin{equation}
+    \label{eq:recurrence-generic}
+    T(n)
+      = \sum_{1 \le j \le m} b_j T(\lfloor p_j n + \delta_j \rfloor)
+          + \sum_{1 \le j \le m} b_j' T(\lceil p_j' n + \delta_j' \rceil)
+          + f(n)
+  \end{equation}
+  con valores iniciales:
+  \begin{equation}
+    \label{eq:recurrence-generic-initial}
+    T(n)
+      = g(n) \qquad 0 \le n \le k
+  \end{equation}
+  Para que la recurrencia haga referencia a casos anteriores,
+  debe ser \(0 < p_j < 1\) y \(0 < p_j' < 1\).
+  En un algoritmo,
+  cada término es un costo,
+  serán positivos \(b_j\) y \(b_j'\).
+  Es natural suponer que \(f(n)\)
+  (en nuestros casos,
+   el costo de subdividir y combinar)
+  es monótona creciente,
+  al igual que \(g\)
+  (costos de casos pequeños).
+  Es claro que bajo estas condiciones \(T(n)\) es monótona creciente
+  (por inducción;
+   para \(T(n + 1)\) cada término es mayor o igual al término respectivo
+   en \(T(n)\)).
+  Si consideramos las recurrencias similares
+  que dan cotas inferiores y superiores a \(T\):
+  \begin{align*}
+    c(n)
+      &= \sum_{1 \le j \le m} b_j c(\lfloor p_j n + \delta_j \rfloor)
+           + \sum_{1 \le j \le m} b_j' c(\lfloor p_j' n + \delta_j' \rfloor)
+           + f(n) \\
+    c(n)
+      &= g(n) \qquad 0 \le n \le k \\
+    C(n)
+      &= \sum_{1 \le j \le m} b_j C(\lceil p_j n + \delta_j \rceil)
+           + \sum_{1 \le j \le m} b_j' C(\lceil p_j' n + \delta_j' \rceil)
+           + f(n) \\
+    C(n)
+      &= g(n) \qquad 0 \le n \le k
+  \end{align*}
+  Nuevamente,
+  por inducción es claro que:
+  \begin{equation*}
+    c(n) \le T(n) \le C(n)
+  \end{equation*}
+  Si hay una secuencia de \(n\) para los cuales todos los pisos y techos
+  de~\eqref{eq:recurrence-generic} toman argumentos enteros,
+  es entonces claro que para esos valores de \(n\):
+  \begin{equation*}
+    c(n) = T(n) = C(n)
+  \end{equation*}
+  Pero esta es exactamente la situación que resolvimos para el teorema maestro.
+  Para el caso típico de \(n = b^k\),
+  obtenemos:
+  \begin{equation*}
+    T(b^{\lfloor \log_b n \rfloor}) = c(b^{\lfloor \log_b n \rfloor})
+      \le T(n)
+      \le C(b^{\lceil \log_b n \rceil}) = T(b^{\lceil \log_b n \rceil})
+  \end{equation*}
+  Viendo el teorema maestro,
+  teorema~\ref{theo:master-theorem},
+  en todos los casos salvo el último
+  esto significa una diferencia en un factor de a lo más \(b\) entre las cotas,
+  las condiciones sobre el último caso dan un factor de \(k\).
+
+\subsection{El teorema de Akra-Bazzi}
+\label{sec:Akra-Bazzi}
+
+  Una variante del teorema maestro es el teorema de Akra-Bazzi~%
+       \cite{akra98:_solution_linear_recurrennce_equations},
+  del que reportamos la versión de Leighton~%
+    \cite{leighton96:_notes_better_master_theo},
+  como simplificada en el texto de Lehman, Leighton y Meyer~%
+    \cite{lehman18:_mathem_comput_scien}.
+  \begin{theorem}[Akra-Bazzi]
+    \label{theo:Akra-Bazzi}
+    Sea una recurrencia de la forma:
+    \begin{equation*}
+      T(z)
+        = g(z) + \sum_{1 \le k \le n} a_k T(b_k z + h_k(z))
+           \quad \text{para \(z \ge z_0\)}
+    \end{equation*}
+    donde \(z_0\), \(a_k\) y \(b_k\) son constantes,
+    sujeta a las siguientes condiciones:
+    \begin{itemize}
+    \item
+      La recurrencia está bien definida para todo \(z \ge z_0\).
+    \item
+      Hay suficientes casos base.
+    \item
+      Para todo \(k\) se cumplen \(a_k > 0\) y \(0 < b_k < 1\).
+    \item
+      La función \(g(z)\) es no negativa,
+      tal que \(\lvert g'(z) \rvert\) está acotado por un polinomio
+    \item
+      Para todo \(k\),
+      \(\lvert h_k(z) \rvert = O(z/\log^2 z)\).
+    \end{itemize}
+    Entonces,
+    si \(p\) es el único real tal que:
+    \begin{equation*}
+      \sum_{1 \le k \le n} a_k b_k^p
+        = 1
+    \end{equation*}
+    la solución a la recurrencia cumple:
+    \begin{equation*}
+      T(z)
+        = \Theta
+            \left(
+              z^p \left(
+                     1 + \int_1^z \frac{g(u)}{u^{p + 1}}
+                           \, \mathrm{d} u
+                  \right)
+            \right)
+    \end{equation*}
+  \end{theorem}
+  Frente a nuestro tratamiento tiene la ventaja
+  de manejar divisiones desiguales
+  (\(b_k\) diferentes),
+  y explícitamente
+  considera pequeñas perturbaciones en los términos,
+  como lo son aplicar pisos o techos,
+  a través de los \(h_k(z)\).
+  Diferencias con pisos y techos están acotados por una constante
+  (la diferencia entre \(n / b\)
+   y \(\lfloor n / b \rfloor\) o \(\lceil n / b \rceil\)
+   es a lo más \((b - 1) / b < 1\)),
+  mientras la cota del teorema permite que crezcan.
+
+\subsection{Otras variantes}
+\label{sec:master-theorem-variants}
+
+  Variantes útiles del teorema maestro,
+  pero de expresión bastante engorrosa,
+  presenta Yap~%
+    \cite{yap11:_elemen_approach_master_recurrences}.
+  También discute en detalle una variedad de resultados afines.
+
+\section{Ejemplos de dividir y conquistar}
+\label{sec:divide-and-conquer-examples}
+
+  Nuestros ejemplos se resumen en el cuadro~\ref{tab:complejidades}.
+  En los casos límite
+  (mergesort y búsqueda binaria)
+  tenemos \(\alpha = 0 > -1\),
+  que es lejos lo más común en la práctica.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{l*{3}{>{\(}c<{\)}}>{\(}l<{\)}}
+      \multicolumn{1}{c}{\textbf{Algoritmo}}
+                & \multicolumn{1}{c}{\boldmath\(a\)\unboldmath}
+                & \multicolumn{1}{c}{\boldmath\(b\)\unboldmath}
+                & \multicolumn{1}{c}{\boldmath\(f(n)\)\unboldmath}
+                & \multicolumn{1}{c}{\boldmath\(t(n)\)\unboldmath} \\
+      \hline
+      Potencias
+                & 1 & 2 & 1   & \Theta(\log n) \\
+      Mergesort
+                & 2 & 2 & n   & \Theta(n \log n) \\
+      FFT
+                & 2 & 2 & n   & \Theta(n \log n) \\
+      Búsqueda binaria
+                & 1 & 2 & 1   & \Theta(\log n) \\
+      Karatsuba
+                & 3 & 2 & n   & \Theta(n^{\log_2 3}) \\
+      Strassen
+                & 7 & 2 & n^2 & \Theta(n^{\log_2 7})
+    \end{tabular}
+    \caption{Complejidad de nuestros ejemplos}
+    \label{tab:complejidades}
+  \end{table}
+
+  La recurrencia correcta para el número de comparaciones
+  en ordenamiento por intercalación es:
+  \begin{equation*}
+    M(n)
+      = M(\lfloor n / 2 \rfloor) + M(\lceil n / 2 \rceil)
+          + \lfloor n / 2 \rfloor
+  \end{equation*}
+  El teorema de Akra-Bazzi es aplicable.
+  La recurrencia es:
+  \begin{equation*}
+    M(n)
+      = M(n / 2 + h_{+}(n)) + M(n / 2 + h_{-}(n)) + n - 1
+  \end{equation*}
+  Acá \(\lvert h_{\pm}(n) \rvert \le 1/2\),
+  además \(a_{\pm} = 1\) y \(b_{\pm} = 1/2\).
+  Tenemos \(\lvert g'(z) \rvert = 1 = O(1)\).
+  Estos cumplen las condiciones del teorema,
+  de:
+  \begin{equation*}
+    \sum_{1 \le k \le 2} a_k b_k^p = 1
+  \end{equation*}
+  resulta \(p = 1\),
+  y tenemos la cota:
+  \begin{equation*}
+    M(n)
+      = \Theta
+          \left(
+            z \left(
+          1 + \int_1^n \frac{u - 1}{u^2} \, \mathrm{d} u
+              \right)
+          \right)
+      = \Theta
+          \left(
+            n \ln n + 1
+          \right)
+      = \Theta(n \log n)
+  \end{equation*}
+  Otro ejemplo son los árboles de búsqueda aleatorizados
+  (\emph{\foreignlanguage{english}{Randomized Search Trees}},
+   ver por ejemplo Aragon y Seidel~%
+     \cite{aragon89:_random_search_tree},
+   Martínez y Roura~%
+     \cite{martinez98:_random_binar_searc_trees}
+   y Seidel y Aragon~%
+     \cite{seidel96:_random_search_trees})
+  en uno de ellos de tamaño~\(n\)
+  una búsqueda toma tiempo aproximado:
+  \begin{equation*}
+    T(n)
+      = \frac{1}{4} \, T(n / 4) + \frac{3}{4} \, T(3 n / 4) + 1
+  \end{equation*}
+  Nuevamente es aplicable el teorema~\ref{theo:Akra-Bazzi},
+  de:
+  \begin{equation*}
+    \frac{1}{4} \, \left(\frac{1}{4}\right)^p
+        + \frac{3}{4} \left(\frac{3}{4}\right)^p
+      = 1
+  \end{equation*}
+  obtenemos \(p = 0\),
+  y por tanto la cota
+  \begin{equation*}
+    T(z)
+      = \Theta \left(
+          z^0 \left( 1 + \int_1^z \frac{\mathrm{d} u}{u} \right)
+        \right)
+      = \Theta ( \log z )
+  \end{equation*}
+
+
+\section*{Ejercicios}
+\label{sec:ejercicios-16}
+
+  \begin{enumerate}
+  \item % 20162c2p1
+    Para cierto problema
+    cuenta con tres algoritmos alternativos:
+    \begin{description}
+    \item[Algoritmo A:]
+      Resuelve el problema dividiéndolo en cinco problemas
+      de la mitad del tamaño,
+      los resuelve recursivamente
+      y combina las soluciones en tiempo lineal.
+    \item[Algoritmo B:]
+      Resuelve un problema de tamaño \(n\)
+      resolviendo recursivamente dos problemas de tamaño \(n - 1\)
+      y combina las soluciones en tiempo constante.
+    \item[Algoritmo C:]
+      Divide el problema de tamaño \(n\)
+      en nueve problemas de tamaño \(n / 3\),
+      resuelve los problemas recursivamente
+      y combina las soluciones en tiempo \(O(n^2)\).
+    \end{description}
+    ¿Cuál elije si \(n\) es grande,
+    y porqué?
+  \item % 20162c2p3
+    En un arreglo \(a\) se dice que la posición \(i\) es un \emph{mínimo local}
+    si \(a[i]\) es menor a sus vecinos,
+    o sea \(a[i - 1] > a[i]\) y \(a[i] < a[i + 1]\).
+    Decimos además que \num{0} es un mínimo local si \(a[0] < a[1]\),
+    y que lo es \(n - 1\) si \(a[n - 2] > a[n - 1]\)
+    (los extremos tienen un único vecino).
+    Dado un arreglo \(a\) de \(n\) números distintos,
+    diseñe un algoritmo eficiente basado en dividir y conquistar
+    para hallar un mínimo local
+    (pueden haber varios).
+    Justifique su algoritmo,
+    y derive su complejidad aproximada.
+  \item % 20162cRp4
+    Se dan \(k\) listas ordenadas de \(n\) elementos,
+    y se pide intercalarlas para obtener una única lista ordenada.
+    Considere que el costo de intercalar es proporcional al largo del resultado.
+    Analice las siguientes alternativas:
+    \begin{enumerate}
+    \item % 20162cRp4a
+      Intercalar las primeras dos listas,
+      intercalar el resultado con la tercera,
+      y así sucesivamente hasta terminar el trabajo.
+    \item % 20162cRp4b
+      Usar un esquema de dividir y conquistar.
+    \end{enumerate}
+% TODO: Swizzle exercises from Stein, Bogart, Drysdale (chapter 5)
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  conmutatividad FFT english Fast Transform intertanto
+% LocalWords:  asintóticamente ésimas Write Call to evaluate on even
+% LocalWords:  powers of CLRS mergesort eq recurrence generic Search
+% LocalWords:  aleatorizados Randomized Trees

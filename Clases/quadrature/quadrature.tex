@@ -1,0 +1,919 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Cuadratura}
+\label{cha:cuadratura}
+
+  Interesa desarrollar técnicas numéricas para calcular integrales.
+  A estas técnicas se les llama \emph{cuadratura}
+  porque son hallar áreas,
+  para los geómetras griegos esto era construir un cuadrado de la misma área
+  que la figura planteada.
+  La triste realidad es que,
+  a pesar del entusiasmo de los colegas de matemáticas
+  por técnicas de integración,
+  la minoría de las integrales que debemos calcular en la práctica
+  tienen una forma cerrada,
+  e incluso si la tienen puede ser poco manejable.
+
+  Queremos evaluar:
+  \begin{equation}
+    \label{05::Integral}
+    \int_a^b f(x) \mathrm{d} x
+  \end{equation}
+  Nuevamente,
+  no consideramos errores de redondeo,
+  esos aspectos deberán considerarse aparte.
+  Supongamos \(f\) dado en \(x_0, \ldots, x_n\)
+  (los \textit{puntos de cuadratura}).
+  Para encontrar el valor de~\eqref{05::Integral}
+  simplemente interpolamos \(f\)
+  dando el polinomio \(p\),
+  e integramos el polinomio interpolante.
+  Si usamos la fórmula de Lagrange~\eqref{04::Lagrange:2}
+  para el polinomio interpolador:
+  \begin{align}
+    \int_a^b p(x) \mathrm{d} x
+      &= \int_a^b \left( \sum_{0 \le j \le n} f(x_j) l_j(x) \right)
+                           \mathrm{d} x \notag \\
+      &= \sum_{0 \le j \le n} f(x_j) \int_a^b l_j(x) \mathrm{d} x
+                 \notag \\
+      &= \sum_{0 \le j \le n} f(x_j) A_j
+                  \label{eq:quadrature-general}
+  \end{align}
+  De~\eqref{eq:quadrature-general} obtenemos la fórmula general
+  para los coeficientes:
+  \begin{equation}
+    \label{eq:quadrature-coefs}
+    A_j
+      = \int_a^b l_j(x) \mathrm{d} x
+  \end{equation}
+  Claro que las integrales~\eqref{eq:quadrature-coefs} son engorrosas,
+  alternativamente podemos plantear un sistema de ecuaciones para los \(A_j\)
+  suponiendo que la fórmula es exacta para polinomios elegidos.
+
+  El error está dado por:
+  \begin{equation}
+    \label{eq:quadrature-error}
+    E
+      = \int_a^b f(x) \mathrm{d} x
+          - \sum_{0 \le j \le n} A_j f(x_j)
+  \end{equation}
+  Suponiendo que la fórmula es exacta para polinomios hasta grado \(m\)
+  (no siempre coincidirá con \(n\)),
+  expandimos mediante serie de Taylor alrededor de \(a\)
+  hasta el término en \((x - a)^{m + 1}\)
+  y simplificamos.
+  Si son muchos puntos,
+  esto es bastante engorroso.
+  Sabemos,
+  eso sí,
+  que los términos hasta grado \(m\) se cancelan
+  (dado que la fórmula es exacta hasta ese grado).
+  En los desarrollos que siguen mostraremos algunos trucos
+  que simplifican los cálculos para situaciones consideradas.
+
+\section{Caso más simple: Polinomio de grado 0}
+\label{sec:cuadratura-0}
+
+  Corresponde a una aproximación con rectángulos
+  (figura \ref{05::CasoSimple:Cuadratura})
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                      xmin = 0,	   xmax = 3,
+                      ymin = -0.6, ymax = 2.3,
+                      xtick = {0.5, 2.0},
+                      xticklabels = {\(a\), \(b\)},
+                      ytick = {0},
+                      yticklabels = {},
+                      height = 6cm, width = 9cm
+                    ]
+
+        \addplot [black!10!red!90, samples = 100, domain = 0.15:2.4]
+          {ln(2 * x + 0.8) + 0.2} node [xshift = 10] (f) {\(f(x)\)};
+
+        \draw [blue!60!black!90]
+          (axis cs:0.5, 0) -- (axis cs:0.5, 0.79) -- (axis cs: 0.8, 0.79)
+            -- (axis cs: 0.8, 0);
+        \draw [blue!60!black!90]
+          (axis cs:0.8, 0) -- (axis cs:0.8, 1.07) -- (axis cs: 1.1, 1.07)
+            -- (axis cs: 1.1, 0);
+        \draw [blue!60!black!90]
+          (axis cs:1.1, 0) -- (axis cs: 1.1, 1.3) -- (axis cs: 1.4, 1.3)
+            -- (axis cs: 1.4, 0);
+        \draw [blue!60!black!90]
+          (axis cs:1.4, 0) -- (axis cs: 1.4, 1.48) -- (axis cs: 1.7, 1.48)
+            -- (axis cs: 1.7, 0);
+        \draw [blue!60!black!90]
+          (axis cs:1.7, 0) -- (axis cs: 1.7, 1.63) -- (axis cs: 2.0, 1.63)
+            -- (axis cs: 2.0, 0);
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Aproximar el área bajo una curva usando rectangulitos}
+    \label{05::CasoSimple:Cuadratura}
+  \end{figure}
+  Para ello,
+  usamos la fórmula:
+  \begin{align*}
+    \int_a^b f(x) \mathrm{d} x
+      \approx \sum_{0 \le j < n} f(x_j)(x_{j + 1} - x_j)
+        \qquad\qquad a = x_0, b = x_n
+  \end{align*}
+  Si son igualmente espaciados,
+  se tiene que \(x_{j + 1} - x_j = h\) para \(0 \le j < n\):
+  \begin{align*}
+    \int_a^b f(x) \mathrm{d} x
+      &\approx h \sum_{0 \le j < n} f(x_j) \\
+      &=       h \sum_{0 \le j < n} f(x_0 + j h)
+  \end{align*}
+
+  Interesa obtener un valor suficientemente preciso de la integral,
+  el número de subintervalos determina el trabajo a efectuar en el cálculo.
+  Veamos un único intervalo \([x_j, x_{j + 1}]\)
+  de largo \(h\) para derivar el error.
+  Consideremos la anti-derivada%
+    \footnote{Es claro suponer que la anti-derivada existe,
+              de lo contrario este cuento no tiene chiste.}:
+  \begin{equation*}
+    F(x)
+      = \int_{x_j}^{x} f(t) \mathrm{d} t
+  \end{equation*}
+  Expandiendo \(F(x)\) en serie de Taylor alrededor de \(x_j\)
+  y usando el teorema fundamental del cálculo:
+  \begin{align*}
+    F(x)
+      &= F(x_j)
+          + F'(x_j) (x - x_j)
+          + \frac{1}{2!} F''(\xi) (x - x_j)^2 \\
+      &= 0 + f(x_j) (x - x_j) + \frac{1}{2!} f'(\xi) (x - x_j)^2
+  \end{align*}
+  donde \(x_j \le \xi \le x\).
+  (Como siempre,
+   el determinar dónde cortar la serie es un arte,
+   no una ciencia.
+   Acá sospechamos que solo el término lineal incide.
+   Si resultara que los términos relevantes se cancelan,
+   habría que incluir términos adicionales;
+   si sobraran términos irrelevantes,
+   conviene cortar antes.)
+
+  Recordando \(h = x_{j + 1} - x_j\)
+  esto es:
+  \begin{align}
+    \int_{x_j}^{x_{j + 1}} f(x) \mathrm{d} x
+      &= f(x_j) h
+           + \frac{f'(\xi)}{2} h^2 \notag \\
+    E
+      &= \int_{x_j}^{x_{j + 1}} f(x) \mathrm{d} x - f(x_j) h \notag \\
+      &= \frac{f'(\xi)}{2} h^2
+           \label{eq:E-initial-point}
+  \end{align}
+  El error es cuadrático en \(h\)
+  para cada intervalo,
+  si son \(n\) intervalos es:
+  \begin{align*}
+    n O(h^2)
+      &= O\left( n \frac{(b - a)^2}{n^2} \right) \\
+      &= O\left( \frac{(b - a)^2}{n} \right) \\
+      &= O(h)
+  \end{align*}
+  La misma observación es válida para otras reglas compuestas.
+
+\subsection{Teorema del Valor Intermedio Ad Hoc}
+
+  Considerando el error obtenido en la ecuación~\eqref{eq:E-initial-point}:
+  \begin{equation}
+    E
+      = \frac{1}{2} f'(\xi) h^2
+          \qquad \text{con \(x_j \le \xi \le x_{j + 1}\)}
+  \end{equation}
+  Suponiendo intervalos \(a = x_0, x_1, \dotsc, x_n = b\)
+  con \(x_{j + 1} - x_j = h\),
+  tenemos para cada uno:
+  \begin{align*}
+    E_j
+      = \frac{1}{2} f'(\xi_j) h^2, \qquad x_j \le \xi _j \le x_{j + 1}
+  \end{align*}
+  Con \(m\) el mínimo y \(M\) el máximo de \(f'\) en \([a, b]\),
+  tenemos \(m \le f'(x) \le M\):
+  \begin{equation}
+    \label{eq:E-rectangles}
+    E
+      = \sum_j E_j
+      = \frac{h^2}{2} \sum_j f'(\xi _j)
+  \end{equation}
+  Ahora:
+  \begin{align*}
+    n m
+      &\le \sum_j f'(\xi_j) \le n M \\
+    m
+      &\le \frac{1}{n} \sum_j f'(\xi_j) \le M
+  \end{align*}
+  Como suponemos \(f'\) continua en el intervalo,
+  esto nos dice que hay \(\xi \in [a, b]\) tal que:
+  \begin{equation*}
+    \frac{1}{n} \sum_j f'(\xi_j)
+      = f'(\xi)
+  \end{equation*}
+  Con la fórmula~\eqref{eq:E-rectangles},
+  recordando que \(n h = b - a\),
+  una constante,
+  tenemos para la regla compuesta:
+  \begin{equation}
+    \label{eq:E-rectangles-composite}
+    E
+      = \frac{n h^2}{2} f'(\xi)
+      = \frac{(b - a) h}{2} f'(\xi)
+  \end{equation}
+  Un desarrollo similar es aplicable a los otros métodos.
+
+\section{Variante del caso simple: punto medio}
+
+  En lugar de considerar una cota
+  como se hizo en el caso de la figura~\ref{05::CasoSimple:Cuadratura},
+  el punto de evaluación de \(f(x)\) será el punto medio
+  de la base del rectángulo
+  (figura~\ref{05::CasoVariado:Cuadratura}).
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                    xmin = 0,	 xmax = 3,
+                    ymin = -0.6, ymax = 2.3,
+                    xtick = {0.5, 0.65, 0.95, 1.25, 1.55, 1.85, 2.0},
+                    xticklabels = {\(a\), {}, {}, {}, {}, {}, \(b\)},
+                    ytick = {0},
+                    yticklabels = {},
+                    height = 6cm, width = 9cm
+                  ]
+
+        \addplot [black!10!red!90, samples = 100, domain = 0.15:2.4]
+          {ln(2 * x + 0.8) + 0.2} node [xshift = 10] (f) {\(f(x)\)};
+
+        \draw [blue!60!black!90]
+          (axis cs:0.5, 0) -- (axis cs:0.5, 0.94) -- (axis cs: 0.8, 0.94)
+            -- (axis cs: 0.8, 0);
+        \draw [blue!60!black!90]
+          (axis cs:0.8, 0) -- (axis cs:0.8, 1.2) -- (axis cs: 1.1, 1.2)
+            -- (axis cs: 1.1, 0);
+        \draw [blue!60!black!90]
+          (axis cs:1.1, 0) -- (axis cs: 1.1, 1.39) -- (axis cs: 1.4, 1.39)
+            -- (axis cs: 1.4, 0);
+        \draw [blue!60!black!90]
+          (axis cs:1.4, 0) -- (axis cs: 1.4, 1.56) -- (axis cs: 1.7, 1.56)
+            -- (axis cs: 1.7, 0);
+        \draw [blue!60!black!90]
+          (axis cs:1.7, 0) -- (axis cs: 1.7, 1.7) -- (axis cs: 2.0, 1.7)
+            -- (axis cs: 2.0, 0);
+      \end{axis}
+    \end{tikzpicture}
+    \caption{El excedente de \textquote{triangulitos} por sobre \(f\)
+             compensan la falta de estos que están bajo \(f\).}
+    \label{05::CasoVariado:Cuadratura}
+  \end{figure}
+  Suponemos que \(f\) es integrable,
+  y que además tiene \textquote{suficientes} derivadas continuas.
+
+  Para este caso se tiene que:
+  \begin{align*}
+    \int_a^b f(x) \mathrm{d} x
+      \approx (b - a) f \left( \frac{a + b}{2} \right)
+  \end{align*}
+  Expandimos usando series de Taylor:
+  \begin{align*}
+    F(a + h)
+      &= F(a) + F'(a) h
+           + \frac{1}{2} F''(a) h^2 + \frac{1}{6} F'''(a) h^3
+           + O(h^4) \\
+      &= f(a) h + \frac{1}{2} f'(a) h^2 + \frac{1}{6} f''(a) h^3
+           + O(h^4)
+  \end{align*}
+  Si \(b = a+h\),
+  tenemos
+  (expandiendo \(f(a + h / 2)\))
+  para el error:
+  \begin{align}
+    E
+      &= \int_a^{a + h} f(x) \mathrm{d} x - h f\left( a + \frac{h}{2} \right)
+              \notag \\
+      &= h f(a) + \frac{h^2}{2} f'(a)
+           + \frac{h^3}{6} f''(a)
+           + O(h^4)
+        - h \left(
+              f(a) + \frac{h}{2} f'(a) + \frac{h^2}{8} f''(a) + O(h^3)
+            \right)
+              \notag \\
+      &= h f(a) + \frac{h^2}{2} f'(a) + \frac{h^3}{6} f''(a)
+           + O(h^4)
+        - \left(
+            h f(a) + \frac{h^2}{2} f'(a) + \frac{h^3}{8} f''(a)
+              + O(h^4)
+          \right)
+              \notag \\
+      &= \frac{1}{24} f''(a) h^3
+           + O(h^4)
+              \label{05::ErrrObtenido}
+  \end{align}
+  Sorprendentemente,
+  el error es de carácter cúbico,
+  cabía esperar un error cuadrático como en el caso anterior
+  (sección~\ref{sec:cuadratura-0}).
+  Si tenemos una cota para la segunda derivada de \(f\) en \(a\),
+  estamos listos.
+
+\subsection{Teorema del Valor Intermedio Ad Hoc}
+\label{sec:mean-value-ad-hoc}
+
+  Considerando el error obtenido en la ecuación~\eqref{05::ErrrObtenido}:
+  \begin{equation}
+    E
+      = \frac{1}{24} f''(\xi) h^3
+          \qquad \text{con \(a \le \xi \le a + h\)}
+  \end{equation}
+  Suponiendo intervalos \(a = x_0, x_1, \dotsc, x_n = b\)
+  con \(x_{j + 1} - x_j = h\),
+  tenemos para cada uno:
+  \begin{align*}
+    E_j
+      = \frac{1}{24} f''(\xi_j) h^3, \qquad x_j \le \xi _j \le x_{j + 1}
+  \end{align*}
+  Si \(m \le f''(x) \le M\) en \([a, b]\):
+  \begin{equation*}
+    E
+      = \sum_j E_j
+      = \frac{h^3}{24} \sum_j f''(\xi _j)
+      = \frac{n h^3}{24} f''(\xi)
+  \end{equation*}
+  porque:
+  \begin{align*}
+    n m
+      &\le \sum_j f''(\xi_j) \le n M \\
+    m
+      &\le \frac{1}{n} \sum_j f''(\xi_j) \le M
+  \end{align*}
+  Lo que nos dice que hay \(\xi \in [a, b]\) tal que:
+  \begin{equation*}
+    \frac{1}{n} \sum_j f''(\xi_j)
+      = f''(\xi)
+  \end{equation*}
+
+\section{Polinomio de grado 1 (trapezoides)}
+\label{sec:trapezoides}
+
+  La siguiente idea más simple es aproximar \(f(x)\)
+  mediante la recta que pasa por \((a, f(a))\) y \((b, f(b))\),
+  ver la figura~\ref{fig:trapezoid}.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                      xmin = 0,	   xmax = 3,
+                      ymin = -0.6, ymax = 2.3,
+                      xtick = {0.5, 2.0},
+                      xticklabels = {\(a\), \(b\)},
+                      ytick = {0},
+                      yticklabels = {},
+                      height = 6cm, width = 9cm
+                    ]
+
+        \addplot [black!10!red!90, samples = 100, domain = 0.15:2.4]
+          {ln(2 * x + 0.8) + 0.2} node [xshift = 10] (f) {\(f(x)\)};
+
+        \draw [blue!60!black!90]
+          (axis cs:0.5, 0) -- (axis cs:0.5, 0.79) -- (axis cs: 2.0, 1.77)
+            -- (axis cs: 2.0, 0);
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Aproximar el área bajo una curva usando un trapezoide}
+    \label{fig:trapezoid}
+  \end{figure}
+  Esto lleva a la aproximación:
+  \begin{equation*}
+    \int_a^b f(x) \mathrm{d} x
+      = \frac{1}{2} (f(a) + f(b)) (b - a)
+  \end{equation*}
+  Si tenemos múltiples intervalos,
+  digamos \(n\) con
+  \(x_0, \ldots, x_n\) donde \(x_{i + 1} - x_i = h\),
+  donde \(a = x_0\) y \(b = x_n\),
+  la regla se traduce en:
+  \begin{equation*}
+    \int_a^b f(x) \mathrm{d} x
+      = \left(
+          \frac{1}{2} (f(x_0) + f(x_n)) + \sum_{0 < i < n} f(x_i)
+        \right) \frac{b - a}{n}
+  \end{equation*}
+
+  El análisis tradicional es relativamente complejo,
+  pero Cruz-Uribe y~Neugebauer~%
+    \cite{cruz-uribe03:_elemen_proof_error_estim_trapez_rule}
+  proponen la técnica que usaremos.
+  Consideremos un intervalo,
+  tenemos para el error:
+  \begin{equation}
+    \label{eq:def-error-trapezoide}
+    E_j
+      = \frac{x_{j + 1} - x_j}{2} (f(x_j) + f(x_{j + 1}))
+          - \int_{x_j}^{x_{j + 1}} f(x) \mathrm{d} x
+  \end{equation}
+  Sea \(c\) el centro del intervalo:
+  \begin{equation*}
+    c
+      = \frac{x_j + x_{j + 1}}{2}
+  \end{equation*}
+  con lo que:
+  \begin{equation*}
+    x_{j + 1} - c
+      = c - x_j
+      = \frac{x_{j + 1} - x_j}{2}
+  \end{equation*}
+  De~\eqref{eq:def-error-trapezoide}
+  vemos que corresponde usar integración por partes \textquote{en reversa}:
+  \begin{equation*}
+    E_j
+      = \int_{x_j}^{x_{j + 1}} (x - c) f'(x) \mathrm{d} x
+  \end{equation*}
+  Nuevamente integrando por partes,
+  como \(x_{j + 1} - c = c - x_j = (x_{j + 1} - x_j) / 2\):
+  \begin{align*}
+    E_j
+      &= \left. \frac{1}{2}(x - c)^2 f'(x) \right|_{x_j}^{x_{j + 1}}
+           - \frac{1}{2} \int_{x_j}^{x_{j + 1}}
+               (x - c)^2 f''(x) \, \mathrm{d} x \\
+      &= \frac{(x_{j + 1} - x_j)^2}{4} (f(x_{j + 1}) - f(x_j))
+           - \frac{1}{2} \int_{x_j}^{x_{j + 1}}
+               (x - c)^2 f''(x) \, \mathrm{d} x \\
+  \intertext{El primer término
+             es una constante por la integral de \(f''(x)\):}
+      &= \frac{1}{2}
+           \int_{x_j}^{x_{j + 1}}
+                    \left(
+                      \left(
+                        \frac{x_{j + 1} - x_j}{2}
+                      \right)^2
+                        - (x - c)^2
+                    \right) f''(x) \mathrm{d} x
+  \end{align*}
+  El polinomio bajo la integral no cambia de signo en \([x_j, x_{j + 1}]\),
+  suponiendo \(f''\) continua en el intervalo
+  podemos aplicar el teorema del valor intermedio de la integral,
+  que nos asegura que hay \(\xi_j \in [x_j, x_{j + 1}]\) tal que:
+  \begin{align*}
+    E_j
+      &= \frac{1}{2} f''(\xi_j)
+                   \int_{x_j}^{x_{j + 1}}
+                      \left(
+                        \left(
+                          \frac{x_{j + 1} - x_j}{2}
+                        \right)^2
+                          - (x - c)^2
+                    \right) \mathrm{d} x \\
+      &= f''(\xi_j) \frac{(x_{j + 1} - x_j)^3}{12} \\
+      &= \frac{f''(\xi_j)}{12} h^3
+  \end{align*}
+
+  Tomemos un rango completo ahora.
+  El error de la integral para el rango \([a, b]\)
+  dividido en \(n\)~intervalos es:
+  \begin{align*}
+    E
+      &= \sum_{0 \le j < n} E_j \\
+      &= \sum_{0 \le j < n} \frac{f''(\xi_j)}{6} h^3 \\
+      &= \frac{h^3}{6} \sum_{0 \le j < n} f''(\xi_j) \\
+      &= n \frac{h^3}{6} \cdot \frac{1}{n} \sum_{0 \le j < n} f''(\xi_j)
+  \end{align*}
+  Suponiendo \(f''\) continua en \([a, b]\),
+  como el promedio de los valores debe estar entre el máximo y el mínimo,
+  hay \(\xi \in [a, b]\) tal que:
+  \begin{equation*}
+    \frac{1}{n} \sum_{0 \le j < n} f''(\xi_j)
+      = f''(\xi)
+  \end{equation*}
+  con lo que:
+  \begin{align*}
+    E
+      &= \frac{n h^3}{12} f''(\xi) \\
+      &= \frac{(b - a) h^2 f''(\xi)}{12}
+  \end{align*}
+
+  Consideremos la función de Runge~\eqref{eq:Runge-function}
+  y su integral:
+  \begin{equation*}
+    \int_{-1}^1 \frac{\mathrm{d} x}{1 + 25 x^2}
+      = \frac{2 \arctan 5}{5}
+  \end{equation*}
+  El cuadro~\ref{tab:Runge-trapezoids}
+  resume los resultados de estimar la integral por trapezoides.
+  Se da el valor de largo del subintervalo,
+  \(h\),
+  el error
+  y una estimación de \(C\) en \(E = C h^2\).
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{>{\(}c<{\)}*{2}{>{\(}r<{\)}}}
+      \multicolumn{1}{c}{\boldmath\(h\)\unboldmath} &
+        \multicolumn{1}{c}{\textbf{Error}} &
+        \multicolumn{1}{c}{\boldmath\(C\)\unboldmath} \\
+      \hline
+      2 / 2^1 & \num{-4.8910e-1} & \num{-4.8910e-1} \\
+      2 / 2^2 & \num{-1.0780e-1} & \num{-4.3121e-1} \\
+      2 / 2^3 & \num{-7.5376e-3} & \num{-1.2060e-1} \\
+      2 / 2^4 &	 \num{1.3798e-4} &  \num{8.8309e-3} \\
+      2 / 2^5 &	 \num{4.8118e-5} &  \num{1.2318e-2} \\
+      2 / 2^6 &	 \num{1.2036e-5} &  \num{1.2325e-2} \\
+      2 / 2^7 &	 \num{3.0095e-6} &  \num{1.2327e-2} \\
+      2 / 2^8 &	 \num{7.5240e-7} &  \num{1.2327e-2} \\
+      2 / 2^9 &	 \num{1.8810e-7} &  \num{1.2327e-2}
+    \end{tabular}
+    \caption{Aproximando la integral de la función de Runge por trapezoides}
+    \label{tab:Runge-trapezoids}
+  \end{table}
+
+\section{Fórmula general para el error}
+\label{sec:general-quadrature-error}
+
+  Para el caso general de reglas de la forma:
+  \begin{equation*}
+    \int_a^b f(x) \, \mathrm{d} x
+       \approx \sum_{0 \le k \le n} w_k f(x_k)
+  \end{equation*}
+  obtenidas integrando el polinomio interpolador
+  podemos acotar el error en forma simple:
+  \begin{align*}
+    E
+      &=   \int_a^b f(x) \, \mathrm{d} x
+             - \sum_{0 \le k \le n} w_k f(x_k) \\
+      &=   \int_a^b (f(x) - Q_n(x)) \, \mathrm{d} x \\
+    \lvert E \rvert
+      &\le \int_a^b \lvert f(x) - Q_n(x) \rvert \, \mathrm{d} x
+  \end{align*}
+  La fórmula~\ref{05::Teo2} para el error de interpolación nos dice:
+  \begin{align*}
+    f(x) - Q_n(x)
+       &=   \frac{1}{(n + 1)!} f^{(n+1)}(\zeta)
+              \prod_{0 \le j \le n}(x - x_j) \\
+       &\le \frac{M_{n + 1}}{(n + 1)!}
+              \left\lvert \prod_{0 \le j \le n}(x - x_j) \right\rvert
+  \end{align*}
+  Acá usamos una cota \(\lvert f^{(n + 1})(x) \rvert \le M_{n + 1}\)
+  para \(a \le x \le b\).
+  Esto da la cota genérica:
+  \begin{equation}
+    \label{eq:general-quadrature-error}
+    \lvert E \rvert
+      = \frac{M_{n + 1}}{(n + 1)!}
+          \int_a^b \lvert \omega_{n + 1}(x) \rvert \, \mathrm{d} x
+  \end{equation}
+  Claro que esta cota no suele ser ajustada.
+
+\section{Regla de Simpson}
+\label{sec:regla-de-simpson}
+
+  El siguiente paso es interpolar con una parábola
+  (polinomio cuadrático).
+  Hay varias maneras,
+  más o menos complicadas,
+  para deducir la fórmula del caso.
+  Es recomendable el artículo de Talvila y Wiersma~%
+    \cite{talvila12:_simpl_deriv_basic_quadr_formul},
+  que resume derivaciones sencillas de los métodos más comunes.
+  Acá tomaremos un camino distinto.
+
+  Integrar el polinomio interpolador cuadrático significa \num{3} puntos,
+  que para simplificar consideramos igualmente espaciados,
+  en \(a\), \((a + b) / 2\) y \(b\).
+  Una transformación lineal transforma esto en los puntos \(-1, 0, 1\),
+  aún más cómodos.
+  Lo que buscamos es una fórmula de la forma:
+  \begin{equation*}
+    \int_{-1}^1 f(x) \mathrm{d} x
+      = A_{-1} f(-1) + A_0 f(0) + A_1 f(1)
+  \end{equation*}
+  Si esto es exacto para polinomios hasta de grado \num{2},
+  quiere decir que:
+  \begin{align*}
+    \int_{-1}^1 \mathrm{d} x
+      &= 2
+       = A_{-1} + A_0 + A_1 \\
+    \int_{-1}^1 x \mathrm{d} x
+      &= 0
+       = - A_{-1} + A_1 \\
+    \int_{-1}^1 x^2 \mathrm{d} x
+      &= \frac{2}{3}
+       = A_{-1} + A_1
+  \end{align*}
+  Notamos que también:
+  \begin{equation*}
+    \int_{-1}^1 x^3 \mathrm{d} x
+      = 0
+      = - A_{-1} + A_1
+  \end{equation*}
+  que simplemente repite la ecuación que tenemos para \(x\),
+  inesperadamente el método es exacto hasta grado~\num{3}.
+  Lamentablemente,
+  para grado~\num{4} no coincide:
+  \begin{equation*}
+    \int_{-1}^1 x^4 \mathrm{d} x
+      = \frac{2}{5}
+      = A_{-1} + A_1
+  \end{equation*}
+  contradiciendo la ecuación para grado~\num{2}.
+
+  La solución a nuestro sistema de ecuaciones es
+  \(A_{-1} = A_1 = 1/3\), \(A_0 = 4/3\).
+
+  Lamentablemente,
+  el resultado general~\eqref{eq:general-quadrature-error}
+  sobreestima el error,
+  en particular,
+  no considera que la regla es exacta para polinomios cúbicos.
+  Tenemos el siguiente resultado para la regla de Simpson:
+  \begin{theorem}
+    Sean \(f \in C^4([a, b])\),
+    \(h = (b - a) / 2\),
+    y llamemos \(x_0 = a\), \(x_1 = x_0 + h\), \(x_2 = b\).
+    Entonces hay \(\xi \in [a, b]\) tal que:
+    \begin{equation*}
+      E
+        = \int_a^b f(x) \mathrm{d} x
+            - \frac{h}{3} (f(x_0) + 4 f(x_1) + f(x_2))
+        = - \frac{(b - a)^5}{2880} f^{(4)}(\xi)
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Esta demostración viene de Süli y Mayers~%
+      \cite[capítulo 7]{sueli03:_intro_numerical_analysis}.
+    Considere el cambio de variable:
+    \begin{equation*}
+      x(t)
+        = x_1 + h t
+        \quad t \in [-1, 1]
+    \end{equation*}
+    Defina \(F(t) = f(x(t))\),
+    con lo que \(\mathrm{d} x = h \mathrm{d} t\),
+    y nuestra integral es:
+    \begin{equation*}
+      \int_{x_0}^{x_2} f(x) \mathrm{d} x
+        = h \int_{-1}^1 F(\tau) \mathrm{d} \tau
+    \end{equation*}
+    y el error es:
+    \begin{equation*}
+      E
+        = \int_a^b f(x) \mathrm{d} x
+            -  \frac{h}{3} (f(x_0) + 4 f(x_1) + f(x_2))
+        = h \left(
+              \int_{-1}^1 F(\tau) \mathrm{d} \tau
+                - \frac{1}{3} (F(-1) + 4 F(0) + F(1))
+            \right)
+    \end{equation*}
+    Para \(t \in [-1, 1]\) definamos la función:
+    \begin{equation*}
+      G(t)
+        = \int_{-t}^t F(\tau) \mathrm{d} \tau
+                - \frac{t}{3} (F(-t) + 4 F(0) + F(t))
+    \end{equation*}
+    En particular,
+    el error de integración que nos interesa estimar es \(E = h G(1)\).
+    Consideremos ahora:
+    \begin{equation*}
+      H(t)
+        = G(t) - t^5 G(1)
+    \end{equation*}
+    Vemos que \(H(0) = H(1) = 0\),
+    con lo que por el teorema de Rolle hay \(\xi_1 \in (0, 1)\)
+    tal que \(H'(\xi_1) = 0\).
+    Como a su vez \(H'(0) = 0\),
+    por el teorema de Rolle hay \(\xi_2 \in (0, \xi_1) \subset (0, 1)\)
+    tal que \(H''(\xi_2) = 0\).
+    El mismo argumento muestra que hay \(\xi_3 \in (0, 1)\)
+    con \(H'''(\xi_3) = 0\).
+    Note que la tercera derivada de \(G\) es:
+    \begin{equation*}
+      G'''(t)
+        = -  \frac{t}{3} (F'''(t) - F'''(-t))
+    \end{equation*}
+    de donde:
+    \begin{equation*}
+      H'''(\xi_3)
+        = - \frac{\xi_3}{3} (F'''(\xi_3) - F'''(- \xi_3)) - 60 \xi_3^2 G(1)
+        = 0
+    \end{equation*}
+    O sea,
+    dividiendo la última igualdad por \(2 \xi_3^2 = \xi_3^2 - (-\xi_3^2)\),
+    lo que es válido ya que \(\xi_3 \ne 0\),
+    y reorganizando:
+    \begin{equation*}
+      - \frac{F'''(\xi_3) - F'''(-\xi_3)}{\xi_3 - (-\xi_3)}
+        = 90 G(1)
+    \end{equation*}
+    Por el teorema del valor intermedio de la derivada,
+    sabemos que hay \(\xi_4 \in (-\xi_3, \xi_3) \subset (-1, 1)\)
+    tal que:
+    \begin{equation*}
+      90 G(1)
+        = - F^{(4)}(\xi_4)
+    \end{equation*}
+    de donde tenemos para el error:
+    \begin{align*}
+      E
+        &= - \frac{h}{90} F^{(4)}(\xi_4) \\
+        &= - \frac{h^5}{90} f^{(4)}(x_1 + h \xi_4) \\
+        &= - \frac{h^5}{90} f^{(4)}(\xi)
+    \end{align*}
+    donde \(\xi = x_1 + h \xi_4 \in (a, b)\).
+  \end{proof}
+  Esto explica el \(t^5\) mágico que empleamos antes:
+  sabíamos que el error resultaría \(O(h^4)\),
+  necesitábamos uno más.
+
+\subsection{Fórmula compuesta}
+\label{sec:composite-Simpson}
+
+  Del desarrollo anterior para un par de intervalos \(x_i\) a \(x_{i + 2}\)
+  tenemos que hay \(\xi_i \in (x_i, x_{i + 2})\)
+  tal que el error para ese intervalo cumple:
+  \begin{equation*}
+    E_i
+      = - \frac{h^5}{90} f^{(4)}(\xi_i)
+  \end{equation*}
+  Para el rango completo \([a, b]\) con \(n\) intervalos
+  (sabemos que \(n\) debe ser par):
+  \begin{align*}
+    E
+      &= \sum_{0 \le i < n / 2} E_i \\
+      &= - \frac{h^5}{90} \sum_{0 \le i < n / 2} f^{(4)}(\xi_i) \\
+      &= - \frac{n h^5}{2 \cdot 90}
+             \frac{1}{n / 2} \sum_{0 \le i < n / 2} f^{(4)}(\xi_i) \\
+      &= - \frac{(b - a) h^4 f^{(4)}(\xi)}{180}
+  \end{align*}
+  La existencia del valor \(\xi \in (a, b)\)
+  es consecuencia del teorema del valor medio.
+
+\section{Fórmulas de mayor grado}
+\label{sec:cuadratura-alto-grado}
+
+  Por la simetría del sistema de ecuaciones subyacente,
+  si tenemos \(2 n + 1\) puntos \(-n, \dotsc, n\)
+  es claro que debe ser \(A_{-k} = A_k\)
+  y tendremos:
+  \begin{align*}
+    \sum_{-n \le k \le n} A_k k^{2 n + 1}
+      &= A_0 0^{2 n + 1}
+          + 2 \sum_{1 \le k \le n} A_k
+                \left( (-k)^{2 n + 1} + k^{2 n + 1} \right) \\
+      &= 0
+  \end{align*}
+  Vale decir,
+  si el número \(n\) de puntos igualmente espaciados es impar
+  (en realidad,
+   basta que estén distribuidos simétricamente alrededor del \num{0}),
+  la regla de cuadratura es exacta
+  hasta para polinomios de grado~\(n\).
+  No ocurre lo mismo si \(n\) es par,
+  en cuyo caso es exacta para polinomios hasta grado~\(n - 1\),
+  como plantea el sistema de ecuaciones,
+  pero para grado~\(n\)
+  (que es par)
+  falla.
+
+  Vimos el fenómeno de Runge,
+  usar polinomios interpolantes de alto grado con puntos igualmente espaciados
+  puede llevar al desastre.
+  Por esa razón en la práctica se usan fórmulas compuestas
+  con pocos puntos en cada intervalo,
+  como la regla de Simpson.
+  Una opción para disminuir el error es usar puntos de Chebyshev,
+  pero eso complica las fórmulas.
+  No nos detendremos en esto,
+  veremos reglas mejores en el capítulo~\ref{cha:cuadratura-gauss}.
+
+\section{Aceleración de Richardson}
+\label{sec:richardson-acc}
+
+  Una técnica general de aceleración de secuencias es la de Richardson~%
+    \cite{richardson11:_approx_arith_solut_finit_differ,
+          richardson27:_deferred_approach_limit}.
+  Supongamos que tenemos una aproximación a una cantidad \(A^*\)
+  que cumple:
+  \begin{equation}
+    \label{eq:richardson-start}
+    A(h)
+      = A^* + C h^n + O(h^{n + 1})
+  \end{equation}
+  Si despreciamos el término de orden mayor,
+  y calculamos aproximaciones para dos valores de \(h\),
+  tenemos dos ecuaciones en las incógnitas \(A^*\) y \(C\):
+  \begin{align*}
+    A(h)
+      &= A^* + C h^n \\
+    A(h/t)
+      &= A^* + C (h/t)^n
+  \end{align*}
+  Obtenemos una nueva aproximación \(A^+\):
+  \begin{equation*}
+    A^+
+      = \frac{t^n A(h/t) - A(h)}{t^n - 1}
+  \end{equation*}
+  Vemos que:
+  \begin{align*}
+    A^+
+      &= \frac{t^n (A^* + C (h/t)^n + O(h^{n + 1}))
+                 - (A^* + C h^n + O(h^{n + 1}))}
+              {t^n - 1} \\
+      &= A^* + O(h^{n + 1})
+  \end{align*}
+  Calculando con dos pasos distintos aumentamos el orden del método.
+
+  Una aplicación es integración de Romberg~%
+    \cite{romberg55:_vereinfachte_integration}:
+  aproxima la integral mediante trapezoides
+  o usando la regla del punto medio
+  para \(h\) y \(h/2\),
+  y usa extrapolación de Richardson
+  con \(t = 2\) para obtener una aproximación mejor.
+  Como pueden reutilizarse nodos,
+  el trabajo requerido es solo aproximadamente el para el paso menor.
+  Si la estimación del error resultante es demasiado grande,
+  podemos volver a disminuir el paso a la mitad
+  (calculando la función para puntos intermedios).
+
+  Esto puede extenderse a \emph{cuadratura adaptativa}:
+  vamos monitorizando el error en cada subintervalo,
+  deteniendo el refinamiento en este
+  cuando hemos alcanzado la precisión requerida para él.
+  Esto es aplicable a funciones con comportamientos distintos
+  en el intervalo de interés.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-06-previa}
+
+\begin{enumerate}
+\item
+  Derive algunas de las fórmulas de cuadratura
+  integrando los polinomios interpolantes.
+  Compare con nuestras derivaciones.
+\item
+  Derive fórmulas para el error de algunas de las fórmulas de cuadratura
+  usando la técnica tradicional.
+  Compare con nuestras derivaciones.
+\item
+  Hay una segunda regla de Simpson,
+  que parte de interpolación cúbica.
+  Derive esa fórmula mediante nuestra técnica
+  de plantear un sistema de ecuaciones,
+  junto con la estimación del error
+  (conviene elegir \num{4} puntos igualmente espaciados,
+   centrados en \num{0}).
+\item
+  Use un sistema de álgebra simbólica
+  para obtener los polinomios interpolantes con
+  \numlist{3; 5; 7; 9; 11}  puntos igualmente espaciados
+  de la función de Runge,
+  y compare la integral exacta con la integral de los polinomios.
+\item
+  Use un sistema de álgebra simbólica
+  para obtener los polinomios interpolantes
+  con \numlist{3; 5; 7; 9; 11} puntos de Chebyshev
+  de la función de Runge,
+  y compare la integral exacta con la integral de los polinomios.
+\end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  eq quadrature coefs rectangulitos subintervalos anti
+% LocalWords:  Ad Hoc initial point rectangles triangulitos def
+% LocalWords:  function subintervalo sobreestima

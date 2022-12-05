@@ -1,0 +1,549 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{siunitx}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage[noline, noend]{algorithm2e}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+\DeclareMathOperator{\var}{var}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Algoritmos aleatorizados}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Definiciones}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Justificaciones}
+
+  \uncover<+->{
+    Creciente importancia tienen \emph{algoritmos aleatorizados}
+    (mala traducción del inglés
+     \emph{\foreignlanguage{english}{randomized algorithms}}):
+    algoritmos cuyo funcionamiento
+    usa decisiones aleatorias.
+  }
+  \uncover<+->{
+    Con los mismos datos pueden dar diferentes resultados
+    y sus tiempos de ejecución no necesariamente son fijos.
+  }
+  \uncover<+->{
+    Es de interés la distribución de los tiempos de ejecución
+    de estos algoritmos para datos dados.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Un fenómeno sorprendente es que para muchos problemas
+    hay algoritmos aleatorizados mucho más rápidos
+    que los mejores algoritmos deterministas conocidos.
+  }
+  \uncover<+->{
+    Aún más,
+    muchos algoritmos aleatorizados son simples,
+    hasta ingenuos.
+    Métodos con muy mal peor caso
+    pueden dar excelentes rendimientos en promedio
+    al tomar decisiones aleatoriamente.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Definiciones}
+
+  \uncover<+->{
+    Se distinguen básicamente dos grandes clases de algoritmos aleatorizados:
+  }
+  \begin{description}
+  \item[Algoritmos de Las Vegas:]
+    Dan siempre el resultado correcto en tiempo de ejecución esperado finito.
+  \item[Algoritmos de Monte Carlo:]
+    No siempre dan el resultado correcto,
+    pueden dar una señal de falla o simplemente no terminan.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Sesgos}
+
+  \uncover<+->{
+    En el caso de problemas de decisión
+    (respuesta sí o no únicamente)
+    los algoritmos pueden dar respuestas erradas.
+  }
+  \uncover<+->{
+    Están las posibilidades de errores bilaterales
+    (cualquier respuesta puede estar errada)
+    o errores unilaterales
+    (si da una respuesta,
+     esta garantizadamente es correcta,
+     la otra puede estar equivocada).
+  }
+  \begin{description}
+  \item[Sesgo verdadero:]
+    Si responde \textquote{sí},
+    esa respuesta es correcta;
+    de responder \textquote{no} puede estar equivocado.
+  \item[Sesgo falso:]
+    La respuesta \textquote{no} es definitiva,
+    un \textquote{si} puede ser errado.
+  \end{description}
+  \uncover<+->{
+    Obviamente la idea es que,
+    independiente de sesgos,
+    la respuesta sea correcta en la mayoría de las corridas.
+    Algunos autores exigen al menos 75\% de éxitos.
+   }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Sesgos}
+
+  \uncover<+->{
+    Por ejemplo,
+    el método más popular para determinar si un número es primo
+    es el de Miller-Rabin,
+    un algoritmo de Monte Carlo con sesgo falso
+    (puede decir que \(n\) es primo siendo compuesto,
+     con probabilidad menor a \(1/4\);
+     si dice que es compuesto esa es la respuesta definitiva).
+  }
+  \uncover<+->{
+    Repitiendo el algoritmo \(r\)~veces,
+    la probabilidad que diga que es primo siendo compuesto
+    es a lo más \(2^{-2 r}\).
+    Si se corren \num{100} rondas,
+    la probabilidad de error
+    es menor que la de una falla al azar producida por un rayo cósmico.
+  }
+  \uncover<+->{
+    Lo anterior puede hacerse en un computador modesto en algunos segundos
+    para números de \num{2048}~bits,
+    demostrar que tal número es primo mediante técnicas tradicionales
+    tomaría años.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo}
+
+  \uncover<+->{
+    Considere el problema de hallar la posición de un \(0\)
+    en un arreglo de \(n \ge 2\) elementos,
+    la mitad de los cuales es \(0\) y la otra mitad \(1\).
+  }
+  \uncover<+->{
+    El algoritmo determinista obvio debe revisar \(n / 2 + 1\)~elementos
+    para garantizar hallar un \(0\).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Algoritmo Las Vegas}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Function{\(\mathrm{posLV}(\mathbf{A})\)}{
+      \Repeat{\(\mathbf{A}[i] = 0\)}{
+        Select \(i\) at random in \([0, n - 1]\) \;
+      }
+      \Return \(i\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmo Las Vegas}
+  \framesubtitle{Análisis}
+
+  \uncover<+->{
+    La probabilidad de éxito es \(1\).
+  }
+
+  \uncover<+->{
+    Como elige elementos al azar,
+    la probabilidad de éxito en un intento es \(1/2\),
+    con lo que el número esperado de elementos revisados es \(2\).
+  }
+  \\ \medskip
+  \uncover<+->{
+    Note que el tiempo de ejecución no está acotado.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Algoritmo Monte Carlo}
+
+  \begin{algorithm}[H]
+     \DontPrintSemicolon
+
+    \Function{\(\mathrm{posMC}(\mathbf{A}, k)\)}{
+      \For{\(j = 1\) \KwTo \(k\)}{
+        Select \(i\) at random in \([0, n - 1]\) \;
+        \If{\(\mathbf{A}[i] = 0\)}{
+          \Return \(i\) \;
+        }
+      }
+      \Return \emph{Fail} \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmo Monte Carlo}
+  \framesubtitle{Análisis}
+
+  \uncover<+->{
+    La probabilidad de éxito es \(1 - 2^{-k}\).
+  }
+
+  \uncover<+->{
+    Revisa a lo más \(k\) elementos,
+    el tiempo de ejecución es fijo.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Eligiendo \(k = 30\),
+    la probabilidad de falla es \(2^{-30}\),
+    hay más posibilidades de que un rayo cósmico interfiera con el cómputo.
+  }
+\end{frame}
+
+\section{Usos de aleatoriedad}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Usos de aleatoriedad}
+
+  \uncover<+->{
+    Usos generales de la aleatoriedad son:
+  }
+  \begin{description}
+  \item[Frustrar ataques:]
+    Si puede forzar el peor caso de un algoritmo determinista,
+    una salida es tomar elecciones al azar.
+  \item[Muestreo:]
+    Una muestra de la población permite estimar sus propiedades.
+  \item[Abundantes testigos:]
+    Si un \emph{testigo}
+    (\emph{certificado})
+    permite decidir un problema,
+    y son comunes,
+    elegir al azar rápidamente da con uno.
+  \item[Huellas digitales:]
+    Es un resumen pequeño de una gran estructura.
+    Si dos estructuras tienen la misma huella,
+    con alta probabilidad son iguales
+    si se calculan resúmenes mediante una función al azar.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Usos de aleatoriedad}
+
+  \begin{description}
+  \item[Reordenar:]
+    A veces un algoritmo ingenuo tiene muy buen rendimiento en promedio
+    con datos en orden aleatorio.
+  \item[Balance de carga:]
+    Si se requiere asignar tareas a diversos recursos,
+    una solución simple es distribuir al azar.
+  \item[Romper simetría:]
+    En computación distribuida,
+    si se requiere que los procesadores trabajen aspectos distintos
+    una solución es elegir al azar.
+  \end{description}
+\end{frame}
+
+\section{Quicksort con elección aleatoria del pivote}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    Una variante de Quicksort propone elegir el pivote al azar,
+    para evitar el peor caso con alta probabilidad
+    (y evitar ataques de complejidad algorítmica).
+  }
+  \uncover<+->{
+    Incluso se propone reordenar los elementos al azar
+    antes de ordenar.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Supongamos que recibimos
+    para ordenar una permutación elegida uniformemente al azar
+    de \([1, n]\).
+    Siempre elegimos el primer elemento como pivote
+    (da lo mismo dada la suposición de datos).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    Definamos \(X_{i j} = 1\) para \(i < j\)
+    si \(i\) se compara con \(j\) al ordenar,
+    \(X_{i j} = 0\) en caso contrario.
+  }
+  \uncover<+->{
+    Los elementos \(i\) y \(j\)
+    se comparan solo si uno de los dos es elegido como pivote
+    antes de dar en particiones distintas.
+  }
+  \uncover<+->{
+    Terminan en particiones distintas
+    si se elige \(k\) como pivote,
+    con \(i < k < j\),
+    o sea si al comienzo \(k\) aparece antes de \(i\) y de \(j\).
+  }
+  \uncover<+->{
+    Basta fijarse en permutaciones de \([i, j]\)
+    (los demás elementos no influyen).
+  }
+  \uncover<+->{
+    Hay intercambio si la permutación del rango comienza en \(i\) o \(j\),
+    con probabilidad \(2 / (j - i + 1)\).
+  }
+  \uncover<+->{
+    \begin{equation*}
+      \Exp[X_{i j}]
+         = \frac{2}{j - i + 1}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    Sumando sobre los pares relevantes
+    tenemos el número promedio de comparaciones:
+    \begin{align*}
+      \Exp\left[ \sum_{i < j} X_{i j} \right]
+        &= \sum_{i < j} \Exp[X_{i j}] \\
+        &= \sum_{1 \le i < j \le n} \frac{2}{j - i + 1} \\
+        &= \sum_{1 \le i \le n - 1} \sum_{i < j \le n} \frac{2}{j - i + 1} \\
+        &= 2 \sum_{1 \le i \le n - 1}
+               \sum_{2 \le k \le n - i + 1} \frac{1}{k}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    \begin{align*}
+      \Exp\left[ \sum_{i < j} X_{i j} \right]
+        &= 2 \sum_{1 \le i \le n - 1}
+               \sum_{2 \le k \le n - i + 1} \frac{1}{k} \\
+        &= 2 \sum_{1 \le i \le n - 1}
+               \left( H_{n - i + 1} - 1 \right) \\
+        &= 2 \sum_{1 \le i \le n - 1} H_{n - i + 1} - 2 (n - 1)
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    \begin{align*}
+      \Exp\left[ \sum_{i < j} X_{i j} \right]
+        &= 2 \sum_{1 \le i \le n - 1} H_{n - i + 1} - 2 (n - 1) \\
+        &= 2 \sum_{2 \le k \le n} H_k - 2 (n - 1) \\
+        &= 2 \sum_{1 \le k \le n} H_k - 2 n \\
+        &= 2 \left( (n + 1) H_n - n \right) - 2 n \\
+        &= 2 (n + 1) H_n - 4 n
+    \end{align*}
+    Igual que lo que obtuvimos antes.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    Supongamos que cortamos la recursión a profundidad \(c \ln n\).
+    ¿Cuál es la probabilidad de una hoja del árbol de llamadas
+    con rango de más de un elemento?
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Llame \emph{buena} una división
+    (inducida por un pivote)
+    si divide el \(S\) en tramos \(S_1\) y \(S_2\)
+    tales que:
+    \begin{equation*}
+      \min\{ \lvert S_1 \rvert, \lvert S_2 \rvert \}
+        \ge \frac{1}{3} \lvert S \rvert
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    Como suponemos que los datos son distintos,
+    la probabilidad de una división buena es \(1/3\).
+  }
+  \uncover<+->{
+    Cada división buena reduce el tamaño al menos en \(2/3\).
+    Llegar a un único elemento requiere:
+    \begin{align*}
+      k
+        &= \frac{\ln n}{\ln (3/2)} \\
+        &= a \ln n
+    \end{align*}
+  }
+  \uncover<+->{
+    Interesa qué tan grande debe ser \(c\)
+    para que la probabilidad de menos de \(a \ln n\) buenas divisiones
+    sea pequeña.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    Consideremos el camino de la raíz a una hoja del árbol de recursión.
+    Divisiones sucesivas son buenas o malas independientemente,
+    por la cota de Chernoff:
+    \begin{align*}
+      \Pr\left[
+           \text{número de buenas divisiones}
+              < \frac{1}{3} a \ln n
+          \right]
+        &\le \mathrm{e}^{- \beta(1 / c) \cdot \frac{1}{3} c a \ln n} \\
+        &= n^{- \beta(1 / c) c a / 3}
+    \end{align*}
+    Podemos elegir \(c\) de manera que \(\beta(1 / c) c a / 3 \ge 2\)
+    (con \(c = 6\) tenemos de sobra).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    La probabilidad que en \emph{una} rama
+    hayan muy pocas divisiones buenas es a lo más \(n^{-2}\);
+    como hay a lo más \(n\) ramas,
+    por la cota de la unión
+    esto significa que la probabilidad
+    que en \emph{alguna} rama hayan pocas divisiones buenas
+    es a lo más \(n^{-1}\).
+  }
+  \uncover<+->{
+    Pero esto es la probabilidad que tome más de \(O(n \log n)\) comparaciones,
+    Quicksort aleatorizado ejecuta \(O(n \log n)\) comparaciones
+    con alta probabilidad.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Definimos algoritmos aleatorizados.
+  \item
+    Distinguimos algoritmos de Monte Carlo y Las Vegas.
+  \item
+    Planteamos algunas razones para usar elecciones al azar.
+  \item
+    Mostramos que Quicksort,
+    si elige el pivote al azar,
+    tiene alta probabilidad de tiempo de ejecución \(O(n \log n)\).
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step aleatorizados english Carlo at
+% LocalWords:  randomized algorithms Select random in Fail Quicksort
+% LocalWords:  handout

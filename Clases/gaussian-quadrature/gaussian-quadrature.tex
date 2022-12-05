@@ -1,0 +1,768 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Cuadratura Gaussiana}
+\label{cha:cuadratura-gauss}
+
+  Estamos interesados en investigar la posibilidad de escribir cuadraturas
+  (cálculo de la integral definida)
+  más precisas sin incrementar el número de \emph{puntos de cuadratura}
+  (los llamaremos \(x_0, x_1, \dotsc, x_n\)).
+  Esto puede ser posible si nos tomamos la libertad de escoger estos puntos.
+  Por lo tanto,
+  el problema de cuadratura se transforma
+  en un problema de escoger los puntos de cuadratura
+  en adición a determinar los respectivos coeficientes
+  tal que la cuadratura es exacta para los polinomios de grado máximo.
+  Las cuadraturas que son obtenidas con este método
+  se conocen como \emph{cuadratura gaussianas}.
+
+  \begin{ejemplo}[Cuadratura gaussiana con dos puntos]
+    \label{06::CuadGauss:n2}
+    Supongamos que queremos encontrar dos puntos de cuadratura de la ecuación:
+    \begin{equation}
+      \label{06::Asterisco}
+      \int_{-1}^1 f(x) \mathrm{d} x
+        \approx A_0 f(x_0) + A_1 f(x_1)
+      \end{equation}
+      Como queremos encontrar los valores de \(A_0, A_1, x_0\) y \(x_1\),
+      esperamos que la ecuación~\eqref{06::Asterisco}
+      sea exacta para polinomios hasta de grado \(2 \cdot 2 - 1 = 3\).
+      O sea,
+      es exacta para \(1, x, x^2, x^3\)
+      (puede reemplazar \(f(x)\)
+       por cualquier otro conjunto de polinomios linealmente independientes
+       de grado hasta \num{3},
+       claro,
+       si es que busca complicarse la existencia\ldots).
+      Entonces,
+      reemplazamos \(f(x) = x^k\) con \(k \in \{ 0, 1, 2, 3 \}\)
+      para la \(k\)-ésima ecuación,
+      y con ello,
+      formamos el siguiente sistema de ecuaciones:
+      \begin{equation}
+        \label{06::SistemaEcuaciones}
+        \int_{-1}^{1} x^k \mathrm{d} x
+          = A_0 x_0^k + A_1 x_1^k
+              \qquad\qquad k \in \{ 0, 1, 2, 3 \}
+      \end{equation}
+      Resolvemos la integral:
+      \begin{align*}
+        \int_{-1}^1 x^k \mathrm{d} x
+          &= \frac{x^{k + 1}}{k + 1} \Bigg |_{-1}^1
+           = \begin{cases}
+               0,		&\text{si \(k\) es impar} \\
+               \frac{2}{k + 1}, &\text{si \(k\) es par}
+             \end{cases}
+      \end{align*}
+      y reemplazamos en el sistema de ecuaciones~\eqref{06::SistemaEcuaciones}:
+      \begin{equation}
+        \label{eq:Gauss-2}
+        \begin{split}
+          2
+            &= A_0 + A_1 \\
+          0
+            &= A_0 x_0 + A_1 x_1 \\
+          \frac{2}{3}
+            &= A_0 x_0^2 + A_1 x_1^2 \\
+          0
+            &= A_0 x_0^3 + A_1 x_1^3
+        \end{split}
+      \end{equation}
+      Al resolver el sistema de ecuaciones~\eqref{eq:Gauss-2} se obtiene:
+      \begin{equation*}
+        A_0 = 1,\qquad A_1 = 1,\qquad
+        x_0 = - \frac{1}{\sqrt{3}},\qquad x_1 = \frac{1}{\sqrt{3}}
+      \end{equation*}
+    \end{ejemplo}
+    Una observación es que los coeficientes
+    de los valores extremos \(A_0\) y \(A_1\) son iguales:
+    \begin{equation*}
+      A_0 = A_1
+    \end{equation*}
+    y que los puntos de cuadratura extremos \(x_0\) y \(x_1\) son opuestos,
+    vale decir:
+    \begin{equation*}
+      x_0 = - x_1
+    \end{equation*}
+    Lo anterior es extensible para \(n\) puntos de cuadratura,
+    donde para \(0 \le i < n\):
+    \begin{align*}
+      A_i
+        &= A_{n - i - 1} \\
+      x_i
+        &= - x_{n - i - 1}
+    \end{align*}
+
+  \begin{ejemplo}[Cuadratura gaussiana con tres puntos]
+    Supongamos que queremos encontrar tres puntos de cuadratura,
+    entonces usamos la ecuación:
+    \begin{align*}
+      \int_{-1}^{1} f(x) \mathrm{d} x
+        \approx A_0 f(x_0) + A_1 f(x_1) + A_2 f(x_2)
+    \end{align*}
+    Sospechamos que:
+    \begin{align*}
+      x_0
+        &= - x_2 \\
+      x_1
+        &= 0 \\
+      A_0
+        &= A_2
+    \end{align*}
+    Siguiendo los pasos del ejemplo~\ref{06::CuadGauss:n2},
+    el cuadro~\ref{06::SistemaEcuaciones:Cuadro}
+    exhibe el sistema de ecuaciones a resolver.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{>{\(}c<{\)}|>{\(}c<{\)}@{\quad = \quad}>{\(}c<{\)}}
+        k & \mathlarger{\int}_{-1}^1 x^k \mathrm{d} x
+          & A_0x_0^k + A_1 x_1^k + A_2 x_2^k \\[7pt]
+        \hline
+        0 & 2		& A_0 \phantom{x_0}
+                            + A_1 \phantom{x_1}
+                            + A_2 \phantom{x_2} \\
+        1 & 0		& A_0 x_0   + A_1 x_1	+ A_2 x_2 \\
+        2 & 2/3		& A_0 x_0^2 + A_1 x_1^2 + A_2 x_2^2 \\
+        3 & 0		& A_0 x_0^3 + A_1 x_1^3 + A_2 x_2^3 \\
+        4 & 2/5		& A_0 x_0^4 + A_1 x_1^4 + A_2 x_2^4 \\
+        5 & 0		& A_0 x_0^5 + A_1 x_1^5 + A_2 x_2^5 \\
+      \end{tabular}
+      \caption{Comprobamos nuestras sospechas.}
+      \label{06::SistemaEcuaciones:Cuadro}
+    \end{table}
+
+    Comenzamos con la ecuación para \(k = 2\),
+    la ecuación para \(k = 0\) no es demasiado informativa en este punto
+    y nuestra sospecha sobre los \(x_j\)
+    hace que se cumplan las ecuaciones para valores impares de \(k\):
+    \begin{align}
+      \frac{2}{3}
+        &= 2 A_0 x_2^2
+             \notag \\
+      x_2^2
+        &= \frac{1}{3 A_0}
+             \label{06::Ej2:x2:inicio}
+    \end{align}
+    Continuamos con \(k = 4\):
+    \begin{align*}
+      \frac{2}{5}
+        & = 2 A_0 x_2^4 \\
+      A_0
+        &= \frac{5}{9}
+    \end{align*}
+    Luego,
+    reemplazamos \(A_0\) en~\eqref{06::Ej2:x2:inicio}:
+    \begin{align*}
+      x_2^2
+        &= \frac{1}{3\cdot \dfrac{5}{9}} \\
+      x_2
+        &= \sqrt{\frac{3}{5}}
+    \end{align*}
+    Además:
+    \begin{align*}
+      A_1
+        &= 2 - 2 A_0 \\
+        &= \frac{8}{9}
+    \end{align*}
+    Basta reemplazar nuestra solución en el sistema de ecuaciones
+    para comprobarla.
+  \end{ejemplo}
+
+\section{Teoría de cuadraturas gaussianas}
+\label{sec:cuadratura-gauss-teo}
+
+  Muy bonito todo lo anterior\ldots{}
+  pero no es una técnica particularmente elegante,
+  y no da luces
+  sobre el comportamiento de las reglas de cuadratura resultantes.
+  Para tratar ese tema,
+  se requiere un desvío.
+  Lo siguiente es básicamente de Levy~%
+    \cite[capítulos~4 y~6]{levy10:_introd_numer_analy},
+  sazonado con un poco de Treil~%
+    \cite[capítulo~5]{treil17:_linear_algeb_done_wrong}.
+  La teoría requerida sobre espacios normados
+  se reseña en el apéndice~\ref{apx:espacios-normados}.
+
+\subsection{Polinomios ortogonales}
+\label{sec:polinomios-ortogonales}
+
+  Para simplificar notación,
+  llamaremos \(\Pi_n\)
+  al conjunto de polinomios con coeficientes reales
+  de grado menor o igual a \(n\).
+  Notamos que \(\Pi_n\) es un espacio vectorial de dimensión \(n + 1\)
+  (una base es el conjunto \(\{1, x, x^2, \dotsc, x^n\}\))
+  y que \(\Pi_m\) es un subespacio de \(\Pi_n\) si \(m < n\).
+
+  \begin{definition}
+    \label{def:producto-interno}
+    Consideremos un intervalo \([a, b]\),
+    y una función peso \(w \colon [a, b] \to \mathbb{R}\),
+    continua y positiva.
+    Dadas dos funciones \(f\) y \(g\),
+    continuas sobre el intervalo,
+    definimos su \emph{producto interno}
+    (sobre \([a, b]\) respecto de \(w\)) por:
+    \begin{equation*}
+      \langle f, g \rangle_w
+        = \int_a^b w(x) f(x) g(x) \mathrm{d} x
+    \end{equation*}
+    Definimos la \emph{norma}
+    (sobre \([a, b]\) respecto de \(w\)) por:
+    \begin{equation*}
+      \lVert f \rVert_w
+        = \sqrt{\langle f, f \rangle_w}
+    \end{equation*}
+
+    Decimos que \(f\) y \(g\) son \emph{ortogonales}
+    (sobre \([a, b]\) con peso \(w\))
+    si \(\langle f, g \rangle_w = 0\).
+    Decimos que \(f\) está \emph{normalizada}
+    (sobre \([a, b]\) con peso \(w\))
+    si \(\lVert f \rVert_w = 1\)
+  \end{definition}
+  Es claro de la definición que la norma nunca es negativa.
+  Comúnmente omitimos el subíndice,
+  la función peso y el intervalo se subentienden.
+
+  \begin{definition}
+    \label{def:polinomios-ortogonales}
+    Sea \(w\) un peso sobre \([a, b]\).
+    Diremos que la secuencia de polinomios \(p_n(x)\)
+    con \(\deg(p_n) = n\)
+    son \emph{\(w\)\nobreakdash-ortogonales}
+    (o simplemente \emph{ortogonales},
+     si \(w\) se subentiende)
+    si \(\langle p_i, p_j \rangle_w = 0\) para todo \(i \ne j\).
+    Los llamaremos \emph{\(w\)\nobreakdash-orto\-nor\-ma\-les}
+    (o simplemente \emph{ortonormales})
+    si además \(\lVert p_i \rVert_w = 1\).
+  \end{definition}
+  Dado un conjunto de vectores linealmente independientes
+  (en nuestro caso,
+   \(\{ 1, x, x^2, \dotsc \}\)),
+  el proceso de Gram-Schmidt
+  (ver cualquier texto de álgebra lineal,
+   recomendamos el de Treil~%
+     \cite{treil17:_linear_algeb_done_wrong},
+   o refiérase al apéndice~\ref{apx:espacios-normados})
+  permite construir un conjunto ortogonal.
+
+  \begin{theorem}
+    \label{theo:polinomios-ortogonales-ceros}
+    Sea \(p_n(x)\) un polinomio ortogonal de grado \(n\)
+    sobre \([a, b]\) con peso \(w\).
+    Entonces \(p_n\) tiene \(n\) ceros reales simples en \([a, b]\).
+  \end{theorem}
+  \begin{proof}
+    Sean \(x_1, \dotsc, x_r\) los ceros de \(p_n\) en \([a, b]\)
+    (pueden repetirse),
+    y consideremos:
+    \begin{equation*}
+      q(x)
+        = (x - x_1) (x - x_2) \dotsm (x - x_r)
+    \end{equation*}
+    Claramente \(\deg(q) = r \le n\).
+    En \([a, b]\),
+    \(p_n(x) q(x)\) tiene un único signo
+    (todos los ceros restantes de \(p_n\) caen fuera de \([a, b]\)),
+    por lo que:
+    \begin{equation*}
+      \int_a^b w(x) p_n(x) q(x) \mathrm{d} x
+        \ne 0
+    \end{equation*}
+    Pero \(p_n\) es ortogonal a todo \(\Pi_{n - 1}\),
+    por lo que \(\deg(q) = n\).
+
+    Supongamos que \(x_1\) es un cero múltiple de \(p_n\),
+    y analicemos:
+    \begin{equation*}
+      p_n(x)
+        = (x - x_1)^2 g(x)
+    \end{equation*}
+    O sea:
+    \begin{equation*}
+      p_n(x) g(x)
+        =   (x - x_1)^2 g^2(x)
+        =   \left( \frac{p_n(x)}{x - x_1} \right)^2
+        \ge 0
+    \end{equation*}
+    Por tanto:
+    \begin{equation*}
+      \int_a^b w(x) p_n(x) g(x) \mathrm{d} x
+        > 0
+    \end{equation*}
+    Esto se contradice con \(g \in \Pi_{n - 2}\),
+    con los que \(p_n\) es ortogonal.
+  \end{proof}
+
+\subsection{Cuadratura de Gauß}
+\label{sec:cuadratura-Gauss}
+
+  Buscamos reglas de cuadratura de la forma:
+  \begin{equation}
+    \label{eq:regla-cuadratura}
+    \int_a^b w(x) f(x) \mathrm{d} x
+      = \sum_{0 \le i \le n} A_i f(x_i)
+  \end{equation}
+  La ecuación~\eqref{eq:regla-cuadratura} es exacta para todo \(f \in \Pi_n\)
+  si y solo si
+  (esto es básicamente por la forma de Lagrange del polinomio interpolador):
+  \begin{equation}
+    \label{eq:regla-cuadratura-Ai}
+    A_i
+      = \int_a^b w(x)
+          \prod_{\substack{0 \le j \le n \\
+                           j \ne i}} \frac{x - x_j}{x_i - x_j} \mathrm{d} x
+  \end{equation}
+  En~\eqref{eq:regla-cuadratura} tenemos \(2 n + 2\) grados de libertad,
+  (\(x_0, \dotsc, x_n\) y \(A_0, \dotsc, A_n\)),
+  aspiramos a una regla que sea exacta en \(\Pi_{2 n + 1}\).
+  \begin{theorem}
+    \label{theo:regla-gaussiana-exacta-2n+1}
+    Sea \(q\) un polinomio de grado \(n + 1\),
+    ortogonal a \(\Pi_n\),
+    o sea para todo \(p \in \Pi_n\):
+    \begin{equation*}
+      \int_a^b w(x) p(x) q(x) \mathrm{d} x
+        = 0
+    \end{equation*}
+    Si \(x_i\) para \(0 \le i \le n\) son los ceros de \(q\),
+    entonces la regla de cuadratura~\eqref{eq:regla-cuadratura}
+    con los coeficientes~\eqref{eq:regla-cuadratura-Ai}
+    es exacta para todo \(f \in \Pi_{2 n + 1}\).
+  \end{theorem}
+  \begin{proof}
+    Por construcción,
+    nuestra fórmula es exacta para polinomios hasta grado \(n\).
+    Sea \(f \in \Pi_{2 n + 1}\),
+    escribamos por el algoritmo de división:
+    \begin{equation*}
+      f(x)
+        = q(x) p(x) + r(x)
+    \end{equation*}
+    Acá \(\deg(r) \le n\),
+    con lo que	notamos que \(p, r \in \Pi_n\).
+    En los ceros de \(q\) tenemos:
+    \begin{equation*}
+      f(x_i)
+        = r(x_i)
+    \end{equation*}
+    Por lo tanto:
+    \begin{align*}
+      \int_a^b w(x) f(x) \mathrm{d} x
+        &= \int_a^b w(x) (q(x) p(x) + r(x)) \mathrm{d} x \\
+        &= \int_a^b w(x) r(x) \mathrm{d} x \\
+        &= \sum_{0 \le i \le n} A_i r(x_i) \\
+        &= \sum_{0 \le i \le n} A_i f(x_i)
+    \end{align*}
+    y la regla es exacta para \(f\).
+  \end{proof}
+  Otro punto interesante es el siguiente:
+  \begin{lemma}
+    \label{lem:cuadratura-gaussiana-suma-coeficientes}
+    En una regla de cuadratura gaussiana,
+    los coeficientes son positivos
+    y su suma es:
+    \begin{equation*}
+      \sum_{0 \le i \le n} A_i
+        = \int_a^b w(x) \mathrm{d} x
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    Fijemos \(n\),
+    y sea \(q \in \Pi_{n + 1}\) \(w\)\nobreakdash-ortogonal a \(\Pi_n\)
+    (con esto \(\deg(q) = n + 1\)),
+    donde \(q(x_i) = 0\)
+    en los puntos de cuadratura \(\{ x_i \}_{0 \le i \le n}\):
+    \begin{equation*}
+      \int_a^b w(x) f(x) \, \mathrm{d} x
+        \approx \sum_{0 \le i \le n} A_i f(x_i)
+    \end{equation*}
+    Fijemos \(0 \le j \le n\),
+    y sea dado por:
+    \begin{equation*}
+      p(x)
+        = \frac{q(x)}{x - x_j}
+    \end{equation*}
+    Siendo \(x_j\) un cero de \(q\),
+    \(p\) es un polinomio de grado \(n\),
+    con lo que \(\deg(p^2) = 2 n\),
+    así que la siguiente es exacta:
+    \begin{equation*}
+      0
+        < \int_a^b w(x) p^2(x) \mathrm{d} x
+        = \sum_{0 \le i \le n} A_i p^2(x_i)
+        = A_j p^2(x_j)
+    \end{equation*}
+    Concluimos que \(A_j > 0\).
+
+    Por el otro lado,
+    la regla de cuadratura es exacta para \(1 \in \Pi_{2 n + 1}\):
+    \begin{equation*}
+      \int_a^b w(x) \mathrm{d} x
+        = \sum_{0 \le i \le n} A_i
+    \end{equation*}
+  \end{proof}
+
+\section{Más sobre Cuadratura Gaussiana}
+\label{sec:mas-cuadratura-gauss}
+
+  Interesan métodos de cálculo mejores para los polinomios ortogonales,
+  y derivar fórmulas para el error de reglas de cuadratura gaussianas.
+  Antes de entrar en el tema,
+  daremos un desvío.
+
+\subsection{Interpolación de Hermite}
+\label{sec:interpolacion-Hermite}
+
+  Un problema de interpolación interesante se presenta
+  si se dan los valores de la función
+  y adicionalmente se especifican valores para derivadas.
+  Obtener un polinomio que cumple estas condiciones
+  se conoce como \emph{interpolación de Hermite}.
+  Mayores detalles se hallan por ejemplo en el texto de Levy~%
+    \cite{levy10:_introd_numer_analy},
+  acá requeriremos solo un caso muy particular.
+
+  Supongamos que tenemos los valores de las función \(f\)
+  y los de su primera derivada en los puntos \(x_i\)
+  para \(0 \le i \le n\).
+  Buscamos un polinomio que coincida con ellos.
+  Claramente,
+  tal polinomio será de grado \(2 n + 1\)
+  (tenemos \(2 n + 2\) condiciones).
+  Podemos escribirlo:
+  \begin{equation}
+    \label{eq:Hermite-A-B}
+    p(x)
+      = \sum_{0 \le i \le n} f(x_i) A_i(x)
+          + \sum_{0 \le i \le n} f'(x_i) B_i(x)
+  \end{equation}
+  para polinomios \(A_i, B_i\) de grado \(2 n + 1\),
+  donde requerimos:
+  \begin{equation}
+    \label{eq:A-B-requirements}
+    \begin{array}{ll}
+      A_i(x_j) = [i = j] & A_i'(x_j) = 0 \\
+      B_i(x_j) = 0	 & B_i'(x_j) = [i = j]
+    \end{array}
+  \end{equation}
+  Notamos que los polinomios \(l_i\) definidos por~\eqref{eq:Lagrange-bases}
+  para los puntos \(x_0, \dotsc, x_n\) cumplen:
+  \begin{equation*}
+    l_i(x_j)
+      = [i = j]
+        \quad \text{para \(0 \le j \le n\)}
+  \end{equation*}
+  El cuadrado de \(l_i\) tiene ceros dobles en \(x_j\) para \(j \ne i\):
+  \begin{equation*}
+    l_i^2(x_j) = 0
+      \quad \left( l_i^2(x_j) \right)' = 0
+  \end{equation*}
+  Como \(l_i\) es de grado \(n\),
+  el grado de \(l_i^2\) es \(2 n\).
+  Esto sugiere que los polinomios \(A_i\) y \(B_i\) pueden escribirse:
+  \begin{align*}
+    A_i(x)
+      &= r_i(x) l_i^2(x) \\
+    B_i(x)
+      &= s_i(x) l_i^2(x)
+  \end{align*}
+  con polinomios lineales \(r_i, s_i\).
+  Ahora bien,
+  por~\eqref{eq:A-B-requirements}:
+  \begin{equation*}
+    [i = j]
+      = A_i(x_j)
+      = r_i(x_j) l_i^2(x_j)
+      = r_i(x_j) [i = j]
+  \end{equation*}
+  por lo que \(r_i(x_i) = 1\).
+  Por el otro lado requerimos:
+  \begin{equation*}
+    0
+      = A_i'(x_j)
+      = r_i'(x_j)l_i^2(x_j) + 2 r_i(x_j) l_i(x) l_i'(x)
+      = r_i'(x_j) [i = j] + 2 r_i(x_j) [i = j] l_i'(x_j)
+  \end{equation*}
+  Esto se resume en:
+  \begin{equation*}
+    r_i'(x_i) + 2 l_i'(x_i)
+      = 0
+  \end{equation*}
+  Suponiendo \(r_i\) lineal,
+  resulta:
+  \begin{equation*}
+    r_i(x)
+      = - 2 l_i'(x_i) x + (1 + 2 l_i'(x_i) x_i)
+  \end{equation*}
+  que lleva a:
+  \begin{equation*}
+    A_i(x)
+      = \left( 1 - 2 l_i'(x_i) (x - x_i) \right) l_i^2(x)
+  \end{equation*}
+  De forma similar,
+  de~\eqref{eq:A-B-requirements}:
+  \begin{align*}
+    0
+      &= B_i(x_j)
+       = s_i(x_j) l_i^2(x_j) \\
+    [i = j]
+      &= B_i'(x_j)
+       = s_i'(x_j) l_i^2(x_j) + 2 s_i(x_j) \left( l_i^2(x_j) \right)'
+  \end{align*}
+  Concluimos que:
+  \begin{equation*}
+    s_i(x)
+      = x - x_i
+  \end{equation*}
+  con lo que:
+  \begin{equation*}
+    B_i(x)
+      = (x - x_i) l_i^2(x)
+  \end{equation*}
+  y finalmente el polinomio interpolador de Hermite
+  toma la forma:
+  \begin{equation}
+    \label{eq:p-Hermite}
+    p(x)
+      = \sum_{0 \le i \le n} \left( 1 - 2 l_i'(x_i) (x - x_i) \right)
+                             l_i^2(x) f(x_i)
+          + \sum_{0 \le i \le n} (x - x_i) l_i^2(x) f'(x_i)
+  \end{equation}
+  Para el error en~\eqref{eq:p-Hermite}
+  tenemos:
+  \begin{theorem}
+    \label{theo:Hermite-interpolation-error}
+    Sean \(x_0, \dotsc, x_n\) puntos distintos en \([a, b]\)
+    y \(f \in C^{2 n + 2}[a, b]\).
+    Si \(p \in \Pi_{2 n + 1}\) es tal que para \(0 \le i \le n\):
+    \begin{equation*}
+      p(x_i) = f(x_i)
+        \qquad
+        p'(x_i) = f'(x_i)
+    \end{equation*}
+    entonces hay \(\xi \in (a, b)\) tal que:
+    \begin{equation}
+    \label{eq:Hermite-interpolation-error}
+      f(x) - p(x)
+        = \frac{f^{(2 n + 2)}(\xi)}{(2 n + 2)!} \prod_{0 \le i \le n} (x - x_i)^2
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    La técnica es similar a la empleada
+    para demostrar el teorema~\ref{theo:interpolation-error}.
+    Sea \(x\) un punto fijo en	\([a, b]\),
+    distinto de los \(x_i\),
+    y definimos:
+    \begin{equation*}
+      w(y)
+        = \prod_{0 \le i \le n} (y - x_i)^2
+    \end{equation*}
+    Definimos también:
+    \begin{equation*}
+      \phi(y)
+        = f(y) - p(y) - \lambda w(y)
+    \end{equation*}
+    donde elegimos \(\lambda\) de manera que \(\phi(x) = 0\),
+    o sea:
+    \begin{equation*}
+      \lambda
+        = \frac{f(x) - p(x)}{w(x)}
+    \end{equation*}
+    Entonces \(\phi\) tiene al menos \(n + 2\) ceros en \([a, b]\),
+    a saber \(x, x_0, \dotsc, x_n\).
+    Por el teorema de Rolle,
+    \(\phi'\) tiene (al menos) \(n + 1\) ceros distintos de los anteriores,
+    y sabemos que \(\phi'\) se anula en \(x_0, \dotsc, x_n\),
+    con lo que \(\phi'\) tiene al menos \(2 n + 2\) ceros en \((a, b)\).
+    Finalmente \(\phi^{(2 n + 2)}\) tiene al menos un cero en \((a,  b)\),
+    llamémosle \(\xi\):
+    \begin{equation*}
+      0
+        = \phi^{(2 n + 2)}(\xi)
+        = f^{(2 n + 2)}(\xi) - p^{(2 n + 2)}(\xi) - \lambda w^{(2 n + 2)}(\xi)
+    \end{equation*}
+    Como \(p\) es un polinomio de grado \(2 n + 1\)
+    y \(w\) un polinomio mónico de grado \(2 n + 2\),
+    resulta lo indicado.
+  \end{proof}
+
+\subsection{Error de reglas de cuadratura gaussiana}
+\label{sec:error-integracion-gaussiana}
+
+  Estamos en condiciones de obtener el error
+  de la regla de cuadratura gaussiana.
+  \begin{theorem}
+    \label{theo:gauss-quadrature-error}
+    Sea \(f \in C^{2 n + 2}[a, b]\) y sea \(w\) una función de peso
+    en ese intervalo.
+    Considere la cuadratura gaussiana:
+    \begin{equation*}
+      \int_a^b w(x) f(x) \mathrm{d} x
+        \approx \sum_{0 \le i \le n} A_i f(x_i)
+    \end{equation*}
+    Entonces existe \(\zeta \in (a, b)\) tal que
+    \begin{equation*}
+      \int_a^b w(x) f(x) \mathrm{d} x - \sum_{0 \le i \le n} A_i f(x_i)
+        = \frac{f^{(2 n + 2)}(\zeta)}{(2 n + 2)!}
+            \int_a^b w(x) \prod_{0 \le i \le n} (x - x_i)^2 \, \mathrm{d} x
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Consideremos interpolación de Hermite en puntos \(x_0, \dotsc, x_n\),
+    cuyo error por el teorema~\ref{theo:Hermite-interpolation-error}
+    para algún \(\xi \in (a, b)\) cumple:
+    \begin{equation*}
+      f(x) - p(x)
+        = \frac{f^{(2 n + 2)}(\xi)}{(2 n + 2)!} \prod_{0 \le i \le n} (x - x_i)^2
+    \end{equation*}
+    Tenemos la fórmula~\eqref{eq:p-Hermite} para \(p\):
+    \begin{equation}
+      p(x)
+        = \sum_{0 \le i \le n} \left( 1 - 2 l_i'(x_i) (x - x_i) \right)
+                               l_i^2(x) f(x_i)
+            + \sum_{0 \le i \le n} (x - x_i) l_i^2(x) f'(x_i)
+    \end{equation}
+    Vemos que:
+    \begin{equation*}
+      (x - x_i) l_i^2(x)
+        = l_i(x) \prod_{0 \le k \le n} (x - x_k)
+    \end{equation*}
+    Para una cuadratura gaussiana
+    \(x_0, \dotsc, x_n\)
+    son los ceros del polinomio ortogonal de grado \(n + 1\),
+    el producto es un múltiplo de ese polinomio,
+    ortogonal a \(l_i\) de grado \(n\).
+    Las integrales de los términos
+    que involucran las derivadas \(f'(x_i)\) se anulan.
+
+    En consecuencia,
+    tenemos
+    (recuerde que \(\xi\) depende de \(x\)):
+    \begin{align*}
+      \int_a^b w(x) f(x) \, \mathrm{d} x
+        - \sum_{0 \le i \le n} A_i f(x_i)
+        &= \int_a^b w(x) f(x) \, \mathrm{d} x
+             - \int_a^b w(x) p(x) \, \mathrm{d} x \\
+        &=  \int_a^b w(x) \frac{f^{(2 n + 2)}(\xi)}{(2 n + 2)!}
+              \prod_{0 \le i \le n} (x - x_i)^2 \, \mathrm{d} x
+    \end{align*}
+    Por el teorema del valor intermedio de la integral,
+    teorema~\ref{theo:mean-value-integral},
+    hay \(\zeta\) tal que la última integral puede expresarse:
+    \begin{equation*}
+      \frac{f^{(2 n + 2)}(\zeta)}{(2 n + 2)!}
+         \int_a^b w(x) \prod_{0 \le i \le n} (x - x_i)^2 \, \mathrm{d} x
+    \end{equation*}
+    que es lo que asevera el teorema.
+  \end{proof}
+
+\section{La recurrencia para polinomios ortogonales}
+\label{sec:recurrencia-polinomios-ortogonales}
+
+  Los polinomios ortogonales tienen bastantes propiedades notables.
+  Comentaremos una de ellas.
+  \begin{theorem}
+    \label{theo:triple-recursion-relation}
+    La secuencia de polinomios ortogonales \(P_n\)
+    cumple una recurrencia de la forma:
+    \begin{equation}
+      \label{eq:triple-recursion-relation}
+      P_{n + 1}(x)
+        = (A_n x + B_n) P_n(x) + C_n P_{n - 1}(x)
+    \end{equation}
+    Si \(P_n(x) = a_n x^n + b_n x^{n - 1} + \dotsb\)
+    entonces:
+    \begin{equation}
+      \label{eq:triple-recursion-relation-coefs}
+      A_n
+        = \frac{a_{n + 1}}{a_n}
+        \quad
+      B_n
+        = \frac{a_{n + 1}}{a_n}
+            \left( \frac{b_{n + 1}}{a_{n + 1}} - \frac{b_n}{a_n} \right)
+        \quad
+      C_n
+        = \frac{a_{n + 1} a_{n - 1}}{a_n^2}
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    Es claro que el polinomio:
+    \begin{equation*}
+      Q_n(x)
+        = P_{n + 1}(x) - A_n x P_n(x)
+    \end{equation*}
+    es de grado a lo más \(n\),
+    por lo que podemos escribirlo como:
+    \begin{equation*}
+      Q_n(x)
+        = \sum_{0 \le i \le n} \alpha_i P_i(x)
+    \end{equation*}
+    Los coeficientes pueden expresarse usando el producto interno:
+    \begin{equation*}
+      \alpha_i
+        = \frac{\langle Q_n, P_i \rangle}{\langle P_i, P_i \rangle}
+        = \frac{\langle P_{n + 1} - A_n x P_n, P_i \rangle}
+               {\langle P_i, P_i \rangle}
+        = \frac{\langle P_{n + 1}, P_i \rangle
+                  - \langle A_n x P_n, P_i \rangle}
+               {\langle P_i, P_i \rangle}
+        = - A_n \frac{\langle x P_n, P_i \rangle}
+                     {\langle P_i, P_i \rangle}
+    \end{equation*}
+    Por la definición del producto interno:
+    \begin{equation*}
+      \langle f, g \rangle_w
+        = \int_a^b w(x) f(x) g(x) \mathrm{d} x
+    \end{equation*}
+    vemos que:
+    \begin{equation*}
+      \langle x P_n, P_i \rangle
+        = \langle P_n, x P_i \rangle
+    \end{equation*}
+    y como \(P_n\) es ortogonal a todo \(\Pi_{n - 1}\):
+    \begin{equation*}
+      \langle P_n, x P_i \rangle
+        = 0
+        \qquad 0 \le i \le n - 2
+    \end{equation*}
+    O sea:
+    \begin{equation*}
+      P_{n + 1}(x)
+        = A_n x P_n(x) + \alpha_n P_n + \alpha_{n - 1} P_{n - 1}(x)
+    \end{equation*}
+    Reordenando
+    y comparando coeficientes de \(x^n\) y \(x^{n - 1}\) a ambos lados
+    completa los valores indicados para \(B_n\) y \(C_n\) citados.
+  \end{proof}
+
+% To do:
+% - Table of polynomials and points?
+% - Program(s) to find them (SciPy, SymPy, ...)
+% - Sturm-Liouville theory (!)
+
+\section*{Ejercicios}
+\label{sec:ejercicios-06}
+
+  \begin{enumerate}
+  \item
+    Demostrar que \(\langle f, g \rangle_w\)
+    es un producto interno.
+  \item
+    Demostrar que los coeficientes \(A_i\)
+    están dados por la ecuación~\eqref{eq:regla-cuadratura-Ai}.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Gaussiana gaussianas ésima eq pt subespacio nor ma Ai
+% LocalWords:  ortonormales gaussiana ll requirements

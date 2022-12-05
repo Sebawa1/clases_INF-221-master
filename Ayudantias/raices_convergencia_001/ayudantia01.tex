@@ -1,0 +1,286 @@
+\documentclass[spanish, fleqn]{article}
+\usepackage{babel}
+\usepackage{fourier}
+\usepackage{amsmath, amsfonts, amsthm, fourier}
+\usepackage[colorlinks, urlcolor=blue]{hyperref}
+
+\setlength{\parindent}{0pt}
+
+\title{Ayudantía 1 - Algoritmos y Complejidad\\
+Cálculo de raíces y análisis de convergencia}
+\author{Complex Executioners}
+\date{}
+
+\begin{document}
+\maketitle
+
+\thispagestyle{empty}
+\section{Introducción}
+Las raíces de una función $f$ son los puntos $x_*$ tal que $f(x_*)=0$.
+
+Intentamos encontrar dichos puntos sabiendo que podemos evaluar $f(x)$ en cualquier momento, y a veces incluso $f'(x)$.
+
+Esto también nos sirve, por ejemplo, para igualar dos funciones $f(x)$ y $g(x)$, pues, encontrar los puntos en que se igualen equivale a encontrar las raíces de la función $h(x)=f(x)-g(x)$.
+
+Existen varios algoritmos para lograr esto, trabajaremos con dos grupos:
+\begin{enumerate}
+\item Los que buscan directamente una solución para $f(x)=0$, reduciendo cada vez más, de manera iterativa, el intervalo donde se puede encontrar.
+\item Los que se aprovechan de otras funciones cuyos puntos fijos coinciden con las raíces de $f$. Un punto fijo $x_p$ de una función $g$ cumple con la propiedad de $x_p=g(x_p)$.
+\end{enumerate}
+
+\section{Métodos iterativos}
+
+\subsection{Método de la bisección}
+
+Del teorema del valor medio se deduce que si una función $f(x)$ es continua y de un punto $x=a$ a otro $x=b$ cambia de signo, hay una raíz $x_* \in [a,b]$.
+
+Si se conoce la existencia de una raíz en el intervalo $[a,b]$ (por ejemplo, si los signos de $f(a)$ y $f(b)$ son distintos) se puede evaluar $f(\frac{a+b}{2})$ para descartar una de las dos mitades del intervalo (la que tenga signos iguales).
+
+Este proceso se pude repetir para ir \emph{atrapando} a la raíz en un intervalo cada vez más pequeño. Cuando nos cansemos de hacer pequeño el intervalo, tomamos la mitad del mismo como aproximación de $x_*$. Suena lógico el que si en algún momento evaluamos $f(x)$ y nos da $0$, hemos encontrado la raíz exacta, pero no siempre ocurre.
+
+\paragraph{\textbf{Pregunta al margen}:} Si se busca una raíz $x_*$ en el intervalo $[a,b]$ con el método de la bisección y se pueden realizar tantas iteraciones como se quiera ¿Qué valores de $x_*$ es imposible encontrar de manera exacta?
+\paragraph{Respuesta:} Los que se no puedan expresar como:
+\begin{align*}
+x_*&= a+(b-a)\frac{j}{2^{k+1}} \qquad \text{Con $j,k \in \mathbb{Z}$ }
+\end{align*}
+
+Si se realizan $n$ iteraciones, $f$ se evaluará $n+2$ veces y el error máximo será:
+\begin{align*}
+|x-x_*|= \frac{b-a}{2^n}\cdot \frac{1}{2}
+\end{align*}
+\emph{Si la aproximación $x$ hecha de $x_*$ se hace en la mitad del último intervalo encontrado, el error no puede ser mayor a la mitad de dicho intervalo}.
+
+\paragraph{Pregunta}: Calcule cuantas iteraciones son necesarias para lograr una precisión de $k$ números decimales usando el método de la bisección cuando se parte con el intervalo $[2,7]$.
+\paragraph{Respuesta}: El tamaño del intervalo tras $n$ pasos será $\frac{B-A}{2^n}$ y el error máximo $x_n-x_*$ será la mitad de eso (porque siempre colocaremos $x_n$ en la mitad del intervalo en el paso actual.
+\\ Que la presición sea mayor a $k$ números decimales equivale a que el error sea menor que $0.5\cdot 10^{-k}$. Entonces tenemos que lograr:
+\begin{align*}
+e_{n} &< 0.5\cdot 10^{-k}
+\\\frac{7-2}{2^{n+1}} &< 0.5 \cdot 10^{-k}
+\\\frac{5}{2^{n+1}} &< 0.5 \cdot 10^{-k}
+\\2^{-(n+1)} &< 10^{-k-1}
+\\ -(n+1) &< \log_2(10^{-k-1})
+\\ -n &< \log_2(10^{-k-1})+1
+\\ n &> (k+1)\log_2(10)-1
+\end{align*}
+
+\subsection{Método regula-falsi}
+
+El método de la regla falsa es como el método de la bisección, sin embargo, ve en cual de los extremos del intervalo $[a,b]$ la función se acera más al $0$ y decide hacer el corte más cerca de ese extremo.
+
+Si la función es más cercana a la recta entre estos dos puntos (osea, no tiene sesgo, o dicho de otra forma, no está muy abultada) convergerá más rápido que el método de la bisección, si no, convergirá peor, pues sólo descartará la parte más corta del intervalo.
+
+\begin{align*}
+c&= b-f(b)\frac{b-a}{f(b)-f(a)}
+\\ c&= \frac{af(b)- bf(a)}{f(b)-f(a)}
+\end{align*}
+
+\section{Iteraciones de punto fijo}
+
+Los puntos fijos de una función $f$ son los $x_p$ tal que $f(x_p)=x_p$.
+
+Algunas funciones convergen a un punto fijo cuando se aplican muchas veces sobre si mismas, por ejemplo:
+\begin{align*}
+cos(cos(cos(cos(...(cos(\alpha))...))))&= \frac{1}{\sqrt{2}} \quad \alpha \in \mathbb{R}
+\end{align*}
+
+Siempre podemos trasformar cualquier problema $f(x)=0$ a uno $g(x)=x$, simplemente realizando las operaciones correctas. La forma más sencilla de hacer esto es:
+\begin{align*}
+f(x)&=0
+\\f(x)+x&=x
+\\g(x)&=x
+\end{align*}
+Sin embargo, no todas convergen al punto fijo, ni todas necesariamente tienen uno. Pero si convergen a algo, será a un punto fijo.
+
+\section{Análisis de convergencia}
+
+A la hora de elegir un método es importante saber a qué velocidad nos estamos acercando a la solución o qué condiciones, si las hay, se requieren para que converjan.
+
+Para tener una idea de la velocidad de convergencia buscamos una relación entre el error en un paso $n\rightarrow \infty$, $e_n= x_n-x_*$ y en el siguiente $e_{n+1}= x_{n+1}-x_*$.
+
+\begin{itemize}
+\item \textbf{Convergencia lineal}: Un método convergerá linealmente con razón $M$ si:
+\begin{align*}
+\lim_{n\rightarrow \infty} \left|\frac{e_{n+1}}{e_n}\right| &= M
+\end{align*}
+Siempre que $M$ sea menor que $1$, si no, el error crecerá.
+\item \textbf{Convergencia cuadrática}: Un método convergerá cuadráticamente con razón $S$ si:
+\begin{align*}
+\lim_{n\rightarrow \infty} \left|\frac{e_{n+1}}{(e_n)^2}\right| &= S
+\end{align*}
+Siendo $S$ cualquier valor (cuando no hay convergencia cuadrática el límite se hace $\infty$).\\
+Si se evalúa la convergencia lineal de estos métodos, resultará ser $0$.
+\item \textbf{Convergencia (en general)}: Se dice que hay convergencia de orden $p$ si se puede demostrar que:
+\begin{align*}
+\lim_{n\rightarrow \infty} \left|\frac{e_{n+1}}{(e_n)^p}\right| \leq C
+\end{align*}
+para alguna $C>0$.
+
+A veces no hay convergencia cuadrática pero se puede demostrar que lo anterior se cumple para $1<p<2$, en tal caso se llama \textbf{convergencia super-lineal}. Si $p>1$, entonces $M=0$.
+\end{itemize}
+
+\paragraph{Problema}: Calcular la convergencia lineal del método de la bisección.
+
+\paragraph{Respuesta}: Si el intervalo inicial era $[A,B]$, tras el paso $n$ vemos que el tamaño del intervalo será $\frac{B-A}{2^n}$ y el error máximo $x_n-x_*$ a lo más será $\frac{\frac{B-A}{2^n}}{2}$ y que la aproximación en el paso $n$, se coloca en la mitad del intervalo pequeño.
+
+Al comparar los errores máximos en $n$ y $n+1$, resulta:
+\begin{align*}
+\frac{e_{n+1}}{e_n} &= \frac{\frac{\frac{B-A}{2^{n+1}}}{2}}{\frac{\frac{B-A}{2^n}}{2}}
+\\ &= \frac{\frac{B-A}{2^{n+2}}}{\frac{B-A}{2^{n+1}}}= \frac{1}{2}
+\end{align*}
+
+\subsection{Convergencia lineal de iteraciones de punto fijo}
+Lo clave es que el error de la aproximación $n+1$ está relacionado con la aproximación anterior, por ejemplo, si se trata de una iteración de punto fijo $e_{n+1}= x_{n+1}-x_* = g(x_n)-x_*$.
+
+Por ejemplo, para intentar demostrar convergencia podemos partir de la serie de Taylor, intentando formar $f(x)$ y sabiendo que los términos más pequeños de la serie podemos descartarlos ya que $n \rightarrow \infty$ y que $f(x_*)=0$.
+
+Para demostrar la convergencia lineal de cualquier método iterativo:
+\begin{align*}
+g(x_*) &= g(x_n)+g'(x_n)(x_*-x_n)+O((x_*-x_n)^2)
+\\ x_* &= g(x_n)+g'(x_n)(x_*-x_n)
+\\ x_* &= x_{n+1}+g'(x_n)(x_*-x_n)
+\\ x_{n+1}-x_* &= -g'(x_n)(x_*-x_n)
+\\ \frac{x_{n+1}-x_*}{x_*-x_n} &= -g'(x_n)
+\end{align*}
+Todos los métodos convergerán si $|g'(x_n)|<1$.
+
+Si demostramos que $|g'(x_*)|<1$ sabremos que al menos en un intervalo cerca de la solución (puede ser muy pequeño para nuestra desgracia), pasará que los $x_n$ convergirán, ya que habrá un intervalo en que también $|g'(x_n)|<0$ y siempre nos iremos acercando, esto se llama \emph{convergencia local}. El problema es que generalmente no sabemos el valor de $x_*$ (de hecho eso es lo que queremos buscar al principio), pero podemos demostrar que un intervalo que contiene la raíz cumple con $|g'(x)|<1$.
+
+\paragraph{Ejercicio} Se busca resolver el siguiente problema $f(x)=x^3+x-1=0$ para lo cual se descubren las siguientes iteraciones de punto fijo:
+\begin{align*}
+x&= 1-x^3= g(x)
+\\x&= \sqrt[3]{1-x}= g(x)
+\\x&= \frac{1+2x^3}{1+3x^2}= g(x)
+\end{align*}
+Comprobar si hay convergencia local en las raíces de $f(x)$, que son los puntos fijos de cada una de estas $g(x)$.
+\paragraph{Respuesta} Se deben derivar cada $g(x)$ y comprobar si el valor absoluto de la derivada es menor a 1 en
+
+\subsection{Método de la tangente (o de Newton)}
+
+Consiste en, a partir de una suposición inicial $x_0$, aproximar la función a su recta tangente y avanzar al punto en que ésta se hace $0$.
+
+Osea:
+\begin{align*}
+x_{n+1} &= x_n-\frac{f(x_n)}{f'(x_n)}
+\end{align*}
+Esta es una FPI muy especial, dado que siempre $g'(x)=0$ (a menos que $f(x)=0$), por lo tanto no sólo siempre converge linealmente, sino que (a menos que $f(x)=0$) converge cuadráticamente (lo demostraremos más adelante).
+
+\subsection{Método de la secante}
+
+Si queremos utilizar el método de Newton pero no tenemos la derivada de la función (es muy común que sea así en aplicaciones computacionales), podemos partir con dos initial guests $x_0$ y $x_1$; y aproximar una \emph{tangente} con la secante entre esos dos puntos para obtener un punto $x_2$ nuevo, y así seguimos, siempre con los últimos dos puntos.
+
+\begin{align*}
+x_{n+2} &= x_{n+1}-\frac{f(x_{n+1})}{\frac{f(x_{n+1})-f(x_n)}{x_{n+1}-x_n}}
+\\x_{n+2} &= x_{n+1}-\frac{f(x_{n+1})(x_{n+1}-x_n)}{f(x_{n+1})-f(x_n)}
+\end{align*}
+
+Resulta algo bastante parecido al método regular-falsi ¿Cuál es la diferencia?
+
+\textbf{Nota}: Como son iteraciones de punto fijo, no está garantizado que converjan.
+
+
+\subsection{Convergencia cuadrática del método de Newton}
+
+Para demostrar la convergencia del método de Newton:
+\begin{align*}
+f(x_*) &= f(x_n)+f'(x_n)(x_*-x_n)+\frac{f''(x_n)(x_*-x_n)^2}{2}+O((x_*-x_n)^3)
+\\0 &= f(x_n)+f'(x_n)(x_*-x_n)+\frac{f''(x_n)(x_*-x_n)^2}{2}
+\\-f(x_n) &= f'(x_n)(x_*-x_n)+\frac{f''(x_n)(x_*-x_n)^2}{2}
+\\-\frac{f(x_n)}{f'(x_n)} &= x_*-x_n+\frac{f''(x_n)(x_*-x_n)^2}{2f'(x_n)}
+\\x_n-\frac{f(x_n)}{f'(x_n)} &= x_*+\frac{f''(x_n)(x_*-x_n)^2}{2f'(x_n)}
+\\x_{n+1} &= x_*+\frac{f''(x_n)(x_*-x_n)^2}{2f'(x_n)}
+\\x_{n+1}-x_* &= \frac{f''(x_n)(x_*-x_n)^2}{2f'(x_n)}
+\\\frac{x_{n+1}-x_*}{(x_n-x_*)^2} &= \frac{f''(x_n)}{2f'(x_n)}
+\end{align*}
+Y vemos que convergerá cuadráticamente con radio $\left| \frac{f''(x_n)}{2f'(x_n)} \right|$ siempre que dicho radio sea un número, osea, el método de Newton no converge cuadráticamente cuando:
+\begin{align*}
+\lim_{n\rightarrow \infty} f'(x_n)= f'(x_*) \rightarrow 0
+\end{align*}
+
+\section{Otras preguntas}
+\begin{enumerate}
+\item Demostrar que $1,2,3$ son puntos fijos de la siguiente función:
+\begin{align*}
+\frac{x^3+x-6}{6x-10}
+\end{align*}
+\item Encontrar la razón de convergencia lineal de las siguientes funciones para iteración de punto fijo:
+\begin{align*}
+g_1(x) = \frac{2x-1}{x^2} &\qquad \text{al punto fijo} x=1
+\\ g_2(x) = cos(x)+x+1 &\qquad \text{al punto fijo} x=\pi
+\\ g_3(x) = e^{2x}-1 &\qquad \text{al punto fijo} x=0
+\end{align*}
+\paragraph{Respuestas}: Para todas, se obtiene las derivada $g'(x)$:
+\begin{align*}
+g_1'(x) &= \frac{2(x^2)-(2x-1)(2x)}{x^4}
+\\ g_2'(x) &= -sin(x)+1
+\\ g_3'(x) &= 2 e^{2x}
+\end{align*}
+Y se evalúan en los puntos fijos respectivos...
+\begin{align*}
+g_1'(1) &= \frac{2(1^2)-(2-1)(2)}{1^4} = 0
+\\ g_2'(\pi) &= -sin(\pi)+1 = 1
+\\ g_3'(0) &= 2 e^{2\cdot 0} = 2
+\end{align*}
+Ni $g_2(x)$ ni $g_3(x)$ convergen linealmente, pues $M\geq 1$. Por otro lado, puesto que $M=0$ para $g_1(x)$, es candidata para un orden de convergencia mayor que lineal.
+\item Suponga que utiliza el método de la bisección para obtener una \emph{raíz} de $\frac{1}{x}$. ¿Qué sucede?
+\item Para calcular $\sqrt{2}$ los \emph{antiguos} babilonios utilizaban, sin saberlo, la siguiente iteración de punto fijo:
+\begin{align*}
+x &= \frac{x+\frac{2}{x}}{2}
+\end{align*}
+Y comenzaban con $x=1$, sabían que si $1\leq x<2$ la respuesta se encontraba entre $x$ y $\frac{2}{x}$, así que sacaban el promedio entre los dos números para obtener el siguiente $x$. Se puede ver la obtención de $g(x)$:
+\begin{align*}
+x^2 -2 &= 0
+\\ x^2 &= 2
+\\ 2x^2 &= x^2+2
+\\ 2x &= x+\frac{2}{x}
+\\ x &= \frac{x+\frac{2}{x}}{2}
+\end{align*}
+\begin{enumerate}
+\item Demuestre que este método converge cuadraticamente.
+\item ¿Puede expresar esta iteración de punto fijo como un método de Newton y calcular el radio de convergencia cuadrática?
+\item Expanda su método para encontrar la raíz de cualquier número $n$.
+\end{enumerate}
+\item El método \emph{regula-falsi} tiene un radio de convergencia dado por:
+\begin{align*}
+\frac{e_{n+1}}{e_n} = 1 - f'(x_*)\frac{e_0}{f(x_0)}
+\end{align*}
+donde $x_0$ corresponde al lado del \emph{bracketing} que se mantiene durante las últimas iteraciones (osea, se supone que entre $x_0$ y $x_*$ la función es convexa).
+\begin{enumerate}
+\item Identifique el radio de convergencia para la función $f(x)=x^2-1$ comenzando con el intervalo $[0,2]$.
+\item Demuestre que este método siempre converge cuando existe una raíz (y no más de una) en el intervalo entre $f(x_1)$ y $f(x_0)$.
+\item Identifique en qué condiciones converge más rápido que el método de la bisección.
+\end{enumerate}
+\paragraph{Respuesta a}: Si graficamos la función vemos que $x_0=2$, pues el \emph{braketing} siempre mantendrá ese lado fijo, podemos usar eso para encontrar $f(x_0)$ y $e_0$:
+\begin{align*}
+\left| \frac{e_{n+1}}{e_n} \right|
+&= \left| 1 - f'(x_*)\frac{e_0}{f(x_0)} \right|
+\\ &= \left| 1 - f'(1)\frac{2-1}{f(2)} \right|
+\\ &= \left| 1 - 2\frac{1}{3} \right|
+\\ &= \left| \frac{1}{3} \right|
+\end{align*}
+El radio de convergencia es $1/3$, mejor que usando bisección.
+\paragraph{Respuesta b}: \\ \textbf{Esta respuesta es experimental, requiere más desarrollo y aun no ha sido confirmada.} \\ Para resolver el problema hay que notar que la tasa de convergencia lineal es:
+\begin{align*}
+\left| 1 - f'(x_*)\frac{e_0}{f(x_0)} \right|
+\end{align*}
+Primero demostraremos que $0<f'(x_*)\frac{e_0}{f(x_0)}$, Eso es fácil si consideramos que $\frac{f(x_0)}{e_0} = \frac{f(x_0)-f(x_*)}{x_0-x_*}$ y $f'(x_*)$ deben tener el mismo signo, de otra manera, hay más de $1$ raíz si la función es continua (entre $x_*$ y $x_0$).
+
+Ahora demostramos que la expresión dentro del valor absoluto no puede \emph{darse vuelta} por el lado de los negativos (no es necesario el valor absoluto), ya que si:
+\begin{align*}
+f'(x_*)\frac{e_0}{f(x_0)} &> 1 \\
+f'(x_*) &> \frac{f(x_0)}{e_0} \\
+f'(x_*) &> \frac{f(x_0)-f(x_*)}{x_0-x_*}
+\end{align*}
+Lo que, gráficamente no puede ser (si consideramos que cuando $x\rightarrow \infty$ la función $f$ tiende a lineal, sin refutar que $x_0$ sea el lado del \emph{bracketing} que se mantiene.
+\paragraph{Respuesta c}: \\ \textbf{Esta respuesta es experimental, requiere más desarrollo y aun no ha sido confirmada.} \\ Ahora tenemos que encontrar los casos en que
+\begin{align*}
+1 - f'(x_*)\frac{e_0}{f(x_0)} &< \frac{1}{2}
+\\f'(x_*)\frac{e_0}{f(x_0)} &> \frac{1}{2}
+\end{align*}
+Sabiendo que $\frac{f(x_0)}{e_0}$ y $f'(x_*)$ tienen el mismo signo:
+\begin{align*}
+|f'(x_*)| &> \frac{1}{2}\left| \frac{f(x_0)}{e_0} \right|
+\end{align*}
+Ahora podemos dibujar un caso en que $f'(x_*)$ sea muy pequeño comparado con pendiente de la recta entre $(x_0,f(x_0))$ y $(x_*,0)$ para ver que aquí el método \emph{regula-falsi} converge más lento.
+\end{enumerate}
+
+\end{document}

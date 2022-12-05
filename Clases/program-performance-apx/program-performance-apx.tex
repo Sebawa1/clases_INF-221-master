@@ -1,0 +1,595 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Rendimiento de programas}
+\label{apx:rendimiento-programas}
+
+  Formalizaremos algunas técnicas que hemos usado
+  para evaluar rendimiento de programas.
+  Detalle exhaustivo de la idea da Knuth~%
+    \cite{knuth97:_fundam_algor},
+  una discusión más accesible y sistematizada es la de Rossmanith~%
+    \cite{rossmanith12:_analysis_algorithms}.
+
+\section{Número de veces que se ejecuta cada línea}
+\label{sec:ejecucion-lineas}
+
+  El primer paso para una evaluación rigurosa de los recursos gastados
+  es determinar cuántas veces se ejecuta cada línea del algoritmo.
+  Contando con costos precisos de cada una de ellas
+  puede calcularse el costo total.
+  Dividimos el programa en bloques básicos
+  (designados por letras mayúsculas, \(A, B, \dotsc\),
+  secuencias de instrucciones que siempre se ejecutan juntas,
+  y las unimos por arcos dirigidos \(e_i\) entre bloques
+  siempre que existe la posibilidad de que el control pase de un bloque a otro.
+  Habrá un bloque en el que comienza el programa,
+  y bloques en los cuales termina.
+  Los conectamos por arcos ficticios.
+  Llamaremos \(E_i\) al número de veces
+  que el control pasa por el arco \(e_i\).
+  La técnica se basa en lo siguiente,
+  resultado bastante evidente si se considera que el control
+  nunca se ve atrapado en un ciclo infinito:
+  \begin{theorem}[Ley de Kirchhoff]
+    \label{theo:Kirchhoff}
+    Sea \(X\) un bloque básico,
+    y sean \(\mathscr{I}\) el conjunto de \(i\) tales que el arco \(e_i\)
+    entra a \(X\)
+    y \(\mathscr{O}\) el conjunto de \(i\) tales que el arco \(e_i\)
+    sale de \(X\).
+    Entonces:
+    \begin{equation*}
+      \sum_{i \in \mathscr{I}} E_i
+        = \sum_{i \in \mathscr{O}} E_i
+    \end{equation*}
+    La suma es el número de veces que se ejecutan las instrucciones en \(X\).
+  \end{theorem}
+  El primer paso es descomponer en bloques básicos,
+  e identificar los arcos \(e_i\).
+  Luego se halla un árbol recubridor del grafo,
+  obviando que los arcos son dirigidos.
+  Arcos que no pertenecen al árbol recubridor crean ciclos,
+  que llamaremos \emph{ciclos fundamentales}.
+  Describimos los ciclos eligiendo un arco perteneciente al árbol recubridor
+  como positivo y recorremos el ciclo en esa dirección,
+  asignando signos positivo o negativo según si el arco
+  va en la dirección en que seguimos el ciclo o no.
+  Lo interesante es que cada ciclo da una solución a la ley de Kirchhoff,
+  si asignamos \(E_i = 0\) a los arcos que no pertenecen al ciclo
+  y \(E_i = 1\) a los que pertenecen.
+  Como las ecuaciones son lineales,
+  combinaciones lineales de soluciones nuevamente son soluciones.
+  Podemos expresar los flujos a través del ciclo \(C_i\) como \(\lambda_i\),
+  planteando un sistema de ecuaciones.
+  Esto nos permite expresar todos los flujos \(E_i\)
+  en términos de un subconjunto de ellos.
+
+\subsection{Descomposición en bloques básicos}
+\label{sec:bloques-basicos}
+
+  El primer paso es descomponer el programa en \emph{bloques básicos},
+  secuencias de instrucciones que se ejecutan siempre en orden.
+  Comienzan en el destino de control de flujo
+  y terminan con alguna instrucción que
+  (condicionalmente o no)
+  cambia el flujo de control.
+  Consideremos por ejemplo el algoritmo de Prim,
+  algoritmo~\ref{alg:apx:Prim},
+  para un árbol recubridor mínimo de grafo.
+  Datos de entrada son un grafo conexo \(G = (V, E)\),
+  una función de peso \(w \colon E \to \mathbb{R}\)
+  y un vértice inicial \(s \in V\)
+  (arbitrario).
+  Anotaremos \(N(v)\) para el conjunto de vértices vecinos a \(v\) en \(G\).
+
+  Representamos la solución mediante arreglos,
+  el arreglo \(\pi[v]\) contendrá el padre en el árbol recubridor mínimo
+  con \(s\) de raíz,
+  \(\mathrm{key}[v]\) es el costo del camino más corto conocido
+  entre el árbol actual y ese vértice.
+  Suponemos la operación \(\mathrm{min-from}(M)\)
+  que extrae un vértice del conjunto de vértices \(M\)
+  con mínimo valor de \(\mathrm{key}[v]\).
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \ForEach{\(u \in V\)}{
+      \(\mathrm{key}[u] \gets \infty\) \;
+      \(\pi[u] \gets \mathrm{\mathbf{nil}}\) \;
+    }
+    \(\mathrm{key}[s] \gets 0\) \;
+    \(M \gets V\) \;
+    \While{\(M \ne \varnothing\)}{
+      \(u \gets \mathrm{min-from}(M)\) \;
+      \ForEach{\(v \in N(u)\)}{
+        \If{\((v \in M) \wedge (w(u, v) < \mathrm{key}[v])\)}{
+          \(\pi[v] \gets u\) \;
+          \(\mathrm{key}[v] \gets w(u, v)\) \;
+        }
+      }
+    }
+    \caption{Algoritmo de Prim}
+    \label{alg:apx:Prim}
+  \end{algorithm}
+  Este programa se representa en forma de diagrama de flujo
+  (grafo de bloques básicos)
+  en la figura~\ref{fig:Prim}.
+  La convención es que flujos \textquote{hacia abajo}
+  representan salida con condición al final del bloque verdadera,
+  flujos \textquote{hacia el lado} representan condiciones falsas.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[block/.style = {rectangle, rounded corners, draw,
+                                        minimum width  = 10em,
+                                        minimum height =  2em,
+                                        text width     =  9em},
+                        flow/.style = {-latex'},
+                        stflow/.style ={thick, -latex'}]
+      \node	      (0) {};
+      \node[block, below of = 0, yshift = 1.5em, label = north west:{\(A\)}]
+                      (A) {\(M \leftarrow V\)};
+      \coordinate[below of = A, yshift = 2.5em]
+                      (AB) {};
+      \node[block, below of = AB, yshift = 2.5em, label = north west:{\(B\)}]
+                      (B) {\(M \ne \varnothing\)};
+      \node[block, below of = B, label = north west:{\(C\)}]
+                      (C) {\(u \leftarrow \mathrm{any-from}(M)\) \\
+                           \(\mathrm{key}[u] \leftarrow \infty\) \\
+                           \(\pi[u] \leftarrow \mathrm{\mathbf{nil}}\)};
+      \coordinate[below of = C, yshift = 2.5em]
+                      (CD) {};
+      \node[block, below of = CD, yshift = 2.5em, label = north west:{\(D\)}]
+                      (D) {\(\mathrm{key}[s] \leftarrow 0\) \\
+                           \(M \leftarrow V\)};
+      \node[below of = D, yshift = 2.5em]
+                      (DE) {};
+      \node[block, below of = DE, yshift = 2.5em, label = north west:{\(E\)}]
+                      (E) {\(M \ne \varnothing\)};
+
+      \node[block, below of = E, yshift = 0.5em, label = north west:{\(F\)}]
+                      (F) {\(u \leftarrow \mathrm{min-from}(M)\) \\
+                           \(N \leftarrow N(u)\)};
+      \node[below of = F, yshift = 2.5em]
+                      (FG) {};
+      \node[block, below of = FG, yshift = 2.5em, label = north west:{\(G\)}]
+                      (G) {\(N \ne \varnothing\)};
+      \node[block, below of = G, yshift = 0.5em, label = north west:{\(H\)}]
+                      (H) {\(v \leftarrow \mathrm{any-from}(N)\) \\
+                           \(v \in M\)};
+      \node[block, below of = H, yshift = 0.5em, label = north west:{\(I\)}]
+                      (I) {\(w(u, v) < \mathrm{key}[v]\)};
+      \node[block, below of = I, yshift = 0.5em, label = north west:{\(J\)}]
+                      (J) {\(\pi[v] \leftarrow v\) \\
+                           \(\mathrm{key}[v] \leftarrow w(u, v)\)};
+      \coordinate[below of = J, yshift = 2.5em]
+                      (N) {};
+
+      \coordinate[right of = AB, node distance =    8em] (ABR)	{};
+      \coordinate[right of = AB, node distance =  2.3em] (BA)	{};
+      \coordinate[left of  = B,	 node distance =    8em] (BL)	{};
+      \coordinate[left of  = CD, node distance =  2.2em] (DA)	{};
+      \coordinate[left of  = CD, node distance =    8em] (CDL)	{};
+      \coordinate[right of = CD, node distance =    8em] (CDR)	{};
+      \coordinate[right of = DE, node distance =  2.3em] (EA)	{};
+      \coordinate[right of = DE, node distance =    8em] (DER)	{};
+      \coordinate[left of  = E,	 node distance =   10em] (EL)	{};
+      \coordinate[left of  = FG, node distance =  2.3em] (GA)	{};
+      \coordinate[left of  = FG, node distance =    8em] (FGL1) {};
+      \coordinate[left of  = FG, node distance =   10em] (FGL2) {};
+      \coordinate[left of  = FG, node distance =   12em] (FGL3) {};
+      \coordinate[right of = G,	 node distance =    8em] (GR)	{};
+      \coordinate[left of  = H,	 node distance =    8em] (HL)	{};
+      \coordinate[left of  = I,	 node distance =   10em] (IL)	{};
+      \coordinate[left of  = N,	 node distance =   12em] (NL)	{};
+
+      \draw[flow]   (0)	   -- node [left]  {\(e_0\)}	(A);
+      \draw[stflow] (A)	   -- node [left]  {\(e_1\)}	(B);
+      \draw[stflow] (B)	   -- node [left]  {\(e_2\)}	(C);
+      \draw[flow]   (C)	   -- (CD) -- (CDR) -- node [right]  {\(e_3\)} (ABR)
+                           -- (BA) -- (BA|-B.north);
+      \draw[stflow] (B)	   -- (BL) -- node [left] {\(e_4\)} (CDL)
+                           -- (DA) -- (DA|-D.north);
+      \draw[stflow] (D)	   -- node [left]  {\(e_5\)}	(E);
+      \draw[stflow] (E)	   -- node [left]  {\(e_6\)}	(F);
+      \draw[stflow] (F)	   -- node [right] {\(e_7\)}	(G);
+      \draw[stflow] (G)	   -- node [left]  {\(e_8\)}	(H);
+      \draw[stflow] (H)	   -- node [left]  {\(e_9\)}	(I);
+      \draw[stflow] (I)	   -- node [left]  {\(e_{10}\)} (J);
+      \draw[flow]   (I)	   -- node [above] {\(e_{11}\)} (IL)
+                           -- (FGL2);
+      \draw[flow]   (J)	   -- (N) -- node [above, near end] {\(e_{12}\)} (NL)
+                           -- (FGL3) -- (GA) -- (GA|-G.north);
+      \draw[flow]   (H)	   -- (HL) -- node [right] {\(e_{13}\)} (FGL1);
+      \draw[flow]   (G)	   -- (GR)  -- node [right]  {\(e_{14}\)} (DER)
+                           -- (EA) -- (EA|-E.north);
+      \draw[flow]   (E)	   -- node [above, near end] {\(e_{15}\)} (EL);
+    \end{tikzpicture}
+    \caption{Diagrama de flujo del algoritmo de Prim}
+    \label{fig:Prim}
+  \end{figure}
+  Note que hemos separado la inicialización de los ciclos
+  de sus cuerpos,
+  se ejecutan aparte.
+  Para representar el elegir un vértice cualquiera
+  estamos usando la operación
+  \(\mathrm{any-from}(M)\),
+  que elige un elemento cualquiera del conjunto \(M\),
+  lo elimina de este y lo retorna.
+
+\subsection{Aplicar ley de Kirchhoff}
+\label{sec:aplicar-Kirchhoff}
+
+  En la figura~\ref{fig:Prim} hemos marcado los arcos
+  \(e_1, e_2, e_4, e_5, e_6, e_7, e_8, e_9\) y \(e_{10}\)
+  (estamos identificando \(e_0 = e_{15}\),
+   un flujo ficticio a través del \textquote{exterior})
+  del árbol recubridor elegido en negrita.
+  Esto da los ciclos fundamentales representados como:
+  \begin{align*}
+    C_0
+      &= e_0 + e_1 + e_4 + e_5 \\
+    C_1
+      &= e_2 + e_3 \\
+    C_2
+      &= e_6 + e_7 + e_{14} \\
+    C_3
+      &= e_8 + e_{13} \\
+    C_4
+      &= e_8 + e_9 + e_{11} \\
+    C_5
+      &= e_8 + e_9 + e_{10} + e_{12}
+  \end{align*}
+  Por la ley de Kirchhoff podemos representar los flujos como:
+  \begin{align*}
+    \begin{pmatrix}
+      E_0 \\
+      E_1 \\
+      E_2 \\
+      E_3 \\
+      E_4 \\
+      E_5 \\
+      E_6 \\
+      E_7 \\
+      E_8 \\
+      E_9 \\
+      E_{10} \\
+      E_{11} \\
+      E_{12} \\
+      E_{13} \\
+      E_{14}
+    \end{pmatrix}
+      &= \lambda_0
+           \begin{pmatrix}
+             1 \\
+             1 \\
+             0 \\
+             0 \\
+             1 \\
+             1 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0
+           \end{pmatrix}
+         + \lambda_1
+           \begin{pmatrix}
+             0 \\
+             0 \\
+             1 \\
+             1 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0
+           \end{pmatrix}
+         + \lambda_2
+           \begin{pmatrix}
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             1 \\
+             1 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             1
+           \end{pmatrix}
+         + \lambda_3
+           \begin{pmatrix}
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             1 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             1 \\
+             0
+           \end{pmatrix}
+         + \lambda_4
+           \begin{pmatrix}
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             1 \\
+             1 \\
+             0 \\
+             1 \\
+             0 \\
+             0 \\
+             0
+           \end{pmatrix}
+         + \lambda_5
+           \begin{pmatrix}
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             0 \\
+             1 \\
+             1 \\
+             1 \\
+             0 \\
+             1 \\
+             0 \\
+             0
+           \end{pmatrix} \\
+      &= \begin{pmatrix}
+           1 & 0 & 0 & 0 & 0 & 0 \\
+           1 & 0 & 0 & 0 & 0 & 0 \\
+           0 & 1 & 0 & 0 & 0 & 0 \\
+           0 & 1 & 0 & 0 & 0 & 0 \\
+           1 & 0 & 0 & 0 & 0 & 0 \\
+           1 & 0 & 0 & 0 & 0 & 0 \\
+           0 & 0 & 1 & 0 & 0 & 0 \\
+           0 & 0 & 1 & 0 & 0 & 0 \\
+           0 & 0 & 0 & 1 & 1 & 1 \\
+           0 & 0 & 0 & 0 & 1 & 1 \\
+           0 & 0 & 0 & 0 & 0 & 1 \\
+           0 & 0 & 0 & 0 & 1 & 0 \\
+           0 & 0 & 0 & 0 & 0 & 1 \\
+           0 & 0 & 0 & 1 & 0 & 0 \\
+           0 & 0 & 1 & 0 & 0 & 0
+         \end{pmatrix}
+           \cdot \begin{pmatrix}
+                   \lambda_0 \\
+                   \lambda_1 \\
+                   \lambda_2 \\
+                   \lambda_3 \\
+                   \lambda_4 \\
+                   \lambda_5
+                 \end{pmatrix}
+  \end{align*}
+  Interesa identificar un conjunto de seis flujos cuyas filas en la matriz
+  sean linealmente independientes,
+  y expresar las demás en términos de ellas.
+  Notamos que \(E_0 = E_1 = E_4 = E_5\),
+  \(E_2 = E_3\),
+  también \(E_6 = E_7 = E_{14}\)
+  y finalmente \(E_{10} = E_{12}\)
+  ya que sus filas son iguales.
+  Una mirada al diagrama de flujo~\ref{fig:Prim}
+  confirma estas igualdades.
+
+  Buscamos ahora expresar los demás flujos
+  en términos de un conjunto de flujos linealmente independientes.
+  Tenemos varias igualdades ya,
+  completando con las expresiones para \(E_8\) y \(E_9\)
+  todos quedan expresados en términos de
+  \(E_0, E_2, E_6, E_{10}, E_{11}\) y~\(E_{13}\):
+  \begin{align*}
+    E_1
+      &= E_0 \\
+    E_3
+      &= E_2 \\
+    E_4
+      &= E_0 \\
+    E_5
+      &= E_0 \\
+    E_7
+      &= E_6 \\
+    E_8
+      &= E_9 + E_{13} \\
+    E_9
+      &= E_{10} + E_{11} \\
+    E_{12}
+      &= E_{10} \\
+    E_{14}
+      &= E_6
+  \end{align*}
+
+  Sabemos que el programa se invoca una única vez,
+  por lo que \(E_0 = 1\).
+  Los números de veces que se repiten los demás ciclos
+  deberemos determinarlos.
+  Conociendo los flujos,
+  podemos calcular cuántas veces se ejecuta cada vértice
+  (bloque básico).
+  Llamando como el bloque en el diagrama de flujo
+  al número de veces que se le ejecuta resulta:
+  \begin{align*}
+    A
+      &= E_0 \\
+    B
+      &= E_0 + E_3 \\
+      &= E_0 + E_2 \\
+    C
+      &= E_2 \\
+    D
+      &= E_4 \\
+      &= E_0 \\
+    E
+      &= E_5 + E_{14} \\
+      &= E_0 + E_6 \\
+    F
+      &= E_6 \\
+    G
+      &= E_7 + E_{11} + E_{12} + E_{13} \\
+      &= E_6 + E_{10} + E_{11} + E_{13} \\
+    H
+      &= E_8 \\
+      &= E_9 + E_{13} \\
+    I
+      &= E_9 \\
+    J
+      &= E_{10}
+  \end{align*}
+  Del programa vemos que:
+  \begin{align*}
+    E_0
+      &= 1 \\
+    E_2
+      &= E_6 = \lvert V \rvert
+  \end{align*}
+  Los demás valores dependen del grafo,
+  del orden en que se eligen nodos
+  y de la función \(w\).
+
+\subsection{Llamadas a funciones}
+\label{sec:llamadas-funciones}
+
+  En el caso que el programa llame a una función,
+  simplemente el costo de esa línea será el costo de esa función
+  para esos argumentos específicos.
+  En caso que sea una llamada recursiva,
+  esto da lugar a una recurrencia.
+  Por ejemplo,
+  considere el programa~\ref{lst:apx-snapl}.
+  \lstinputlisting[language = C++,
+                   firstline = 3,
+                   xleftmargin = 3em,
+                   numbers = none,
+                   caption = {El programa \texttt{snapl}},
+                   label = lst:apx-snapl]
+                  {code/snapl.cc}
+  Nos interesa el número \(a_n\) de números
+  que escribe la llamada \lstinline[language = C++]!snapl(n)!.
+
+  Resulta la recurrencia:
+  \begin{equation*}
+    a_n
+      = 3 a_{n - 2} + 2 a_{n - 3}
+      \quad a_0 = 0, a_1 = 1, a_2 = 0
+  \end{equation*}
+  Técnicas estándar de solución de recurrencias dan:
+  \begin{equation*}
+    a_n
+      = \frac{2^{n + 1} - (-1)^n (3 n + 2)}{9}
+  \end{equation*}
+
+\section{Análisis probabilístico}
+\label{sec:analisis-probabilistico}
+
+  Analicemos el programa~\ref{lst:apx-maximo}.
+  \lstinputlisting[language = C,
+                   firstline = 6,
+                   xleftmargin = 3em,
+                   numbers = left, stepnumber = 1, numberstyle = {\small},
+                   caption = {Hallar el máximo},
+                   label = lst:apx-maximo]
+                   {code/maximum.c}
+  Es claro que\ldots{}
+
+  Nos interesa específicamente el número de asignaciones
+  a la variable \lstinline[language = C]!max!.
+  Al efecto,
+  supondremos que los elementos son todos distintos,
+  son una permutación elegida uniformemente al azar de \(n\) elementos.
+
+  El mínimo es \num{1}
+  (si \lstinline[language = C]!a[0]! es el máximo).
+  La probabilidad de este caso es \(1/n\)
+  (hay \(n\) valores posibles de \lstinline[language = C]!a[0]!,
+   todos igualmente probables,
+   solo uno de ellos corresponde al evento de interés).
+
+  El máximo es \(n\)
+  (si vienen en orden).
+  La probabilidad de este caso es \(1/n!\)
+  (hay \(n!\) permutaciones,
+   solo una de ellas con los elementos en orden).
+
+  Para el promedio,
+  consideremos el caso que para \(i\) se ejecuta la línea~9.
+  Podemos describirlo diciendo que elegimos \(i + 1\) elementos para
+  \lstinline[language = C]!a[0]! a \lstinline[language = C]!a[i]!
+  entre los \(n\),
+  uno de ellos es el máximo
+  (en \lstinline[language = C]!a[i]!).
+  Se permutan los demás,
+  \(i\) antes de \lstinline[language = C]!a[i]!
+  y \(n - i - 1\) después.
+  Como en total hay \(n!\) permutaciones
+  la probabilidad de este evento es:
+  \begin{align*}
+    \frac{\binom{n}{i + 1} i! (n - i - 1)!}{n!}
+      &= \frac{n!}{(i + 1)! (n - i - 1)!} \cdot \frac{i! (n - i - 1)!}{n!} \\
+      &= \frac{1}{i + 1}
+  \end{align*}
+  Por la linealidad del valor esperado,
+  el número esperado de veces que se ejecuta la línea~9 es:
+  \begin{align*}
+    \sum_{1 \le i < n} \Pr[\text{línea 9 se ejecuta para \(i\)}]
+      &= \sum_{1 \le i < n} \frac{1}{i + 1} \\
+      &= \sum_{2 \le i \le n} \frac{1}{i} \\
+      &= H_n - 1
+  \end{align*}
+  A las asignaciones de la línea~9
+  debemos sumar la asignación de la línea~4,
+  dando que el valor esperado del número total
+  de asignaciones a \lstinline[language = C]!max!
+  es \(H_n \sim \ln n\).
+
+  En resumen,
+  las líneas 6 y 10 se ejecutan siempre \num{1} vez,
+  las líneas 7 y 8 siempre se ejecutan \(n - 1\) veces,
+  mientras la línea 9 se ejecuta
+  mínimo \num{0}~veces,
+  máximo~\(n - 1\) veces,
+  en promedio \(H_n - 1\) veces.
+  Asignaciones en total son así
+  mínimo \num{1}~vez,
+  máximo \(n\)~veces,,
+  promedio \(H_n \sim \ln n\)~veces.
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  recubridor

@@ -1,0 +1,1015 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Symbolic Method for Dummies}
+\label{apx:symbolic-method-dummies}
+
+  La idea básica es usar funciones generatrices en forma sistemática
+  en combinatoria.
+  Lo que sigue es un condensado del apunte de Fundamentos de Informática~%
+    \cite[capítulo~21]{brand17:_fundamentos_informatica}.
+  Ver también Lumbroso y~Morcrette~%
+    \cite{lumbroso12:_gentle_intro_analy_combin}.
+  Mucho más detalle dan Flajolet y Sedgewick~%
+    \cite{flajolet09:_analy_combin},
+  Sedgewick y Flajolet~%
+    \cite{sedgewick13:_introd_anal_algor}
+  se concentran en aplicaciones al análisis de algoritmos.
+
+  La idea es tener una \emph{clase} de objetos,
+  que anotaremos mediante letras caligráficas,
+  como \(\mathscr{A}\).
+  La clase \(\mathscr{A}\) consta de \emph{objetos},
+  \(\alpha \in \mathscr{A}\).
+  Para el objeto \(\alpha\) hay una noción de \emph{tamaño},
+  que anotamos \(\lvert \alpha \rvert\)
+  (un número natural,
+   generalmente el número de \emph{átomos} que componen \(\alpha\)).
+  Al número de objetos de tamaño \(n\) lo anotaremos \(a_n\).
+  Usaremos \(\mathscr{A}_n\)
+  para referirnos al conjunto de objetos de la clase \(\mathscr{A}\)
+  de tamaño \(n\),
+  con lo que \(a_n = \lvert \mathscr{A}_n \rvert\).
+  Condición adicional es
+  que el número de objetos de cada tamaño sea finito.
+
+  A las funciones generatrices ordinaria y exponencial
+  correspondientes
+  les llamaremos \(A(z)\) y \(\widehat{A}(z)\),
+  respectivamente:
+  \begin{align*}
+    A(z)
+      &= \sum_{\alpha \in \mathscr{A}} z^{\lvert \alpha \rvert}
+       = \sum_{n \ge 0} a_n z^n \\
+    \widehat{A}(z)
+      &= \sum_{\alpha \in \mathscr{A}}
+           \frac{z^{\lvert \alpha \rvert}}{\lvert \alpha \rvert !}
+       = \sum_{n \ge 0} a_n \, \frac{z^n}{n!}
+  \end{align*}
+
+  Nuestro siguiente objetivo es construir nuevas clases
+  a partir de las que ya tenemos.
+  Debe tenerse presente que como lo que nos interesa
+  es contar el número de objetos de cada tamaño,
+  basta construir objetos con distribución de tamaños adecuada
+  (o sea,
+   relacionados con lo que deseamos contar por una biyección).
+  Comúnmente el tamaño de los objetos es el número de alguna clase de átomos
+  que lo componen.
+  Al combinar objetos para crear objetos mayores
+  los tamaños simplemente se suman.
+
+  Las clases más elementales son \(\varnothing\),
+  la clase que no contiene objetos;
+  \(\mathscr{E} = \{\epsilon\}\),
+  la clase que contiene únicamente el objeto vacío \(\epsilon\)
+  (de tamaño nulo);
+  y la clase que comúnmente llamaremos \(\mathscr{Z}\),
+  conteniendo un único objeto de tamaño uno
+  (que llamaremos \(\zeta\) por consistencia).
+  Luego definimos operaciones que combinan
+  las clases \(\mathscr{A}\) y \(\mathscr{B}\)
+  mediante \emph{unión combinatoria} \(\mathscr{A} + \mathscr{B}\),
+  en que aparecen los \(\alpha\) y los \(\beta\) con sus tamaños
+  (los objetos individuales se \textquote{decoran} con su proveniencia,
+   de forma que \(\mathscr{A}\) y  \(\mathscr{B}\)
+   no necesitan ser disjuntos;
+   pero generalmente nos preocuparemos
+   que \(\mathscr{A}\) y \(\mathscr{B}\)
+   sean disjuntos,
+   o podemos usar el principio de inclusión y exclusión
+   para contar los conjuntos de interés).
+  Ocasionalmente restaremos objetos de una clase,
+  lo que debe interpretarse sin decoraciones
+  (estamos dejando fuera ciertos elementos,
+   simplemente).
+  Usaremos \emph{producto cartesiano}
+  \(\mathscr{A} \times \mathscr{B}\),
+  cuyos elementos son pares \((\alpha, \beta)\)
+  y el tamaño del par
+  es \(\lvert \alpha \rvert + \lvert \beta \rvert\).
+  Otras operaciones son formar \emph{secuencias}
+  de elementos de \(\mathscr{A}\)
+  (se anota \(\Seq(\mathscr{A})\)),
+  formar \emph{conjuntos}
+  \(\Set(\mathscr{A})\)
+  y \emph{multiconjuntos}
+  \(\MSet(\mathscr{A})\)
+  de elementos de \(\mathscr{A}\).
+
+  De incluir objetos de tamaño cero
+  en estas construcciones pueden crearse infinitos objetos de un tamaño dado,
+  lo que no es una clase según nuestra definición.
+  Por ello estas construcciones son aplicables
+  solo si \(\mathscr{A}_0 = \varnothing\).
+
+  Es importante recalcar las relaciones y diferencias
+  entre las estructuras.
+  En una secuencia es central
+  el orden de las piezas que la componen.
+  Ejemplo son las palabras,
+  interesa el orden exacto de las letras
+  (y estas pueden repetirse).
+  En un conjunto solo interesa si el elemento está presente o no,
+  no hay orden.
+  En un conjunto un elemento en particular está o no presente,
+  a un multiconjunto puede pertenecer varias veces.
+
+  Hay dos grandes opciones:
+  Objetos rotulados y no rotulados.
+  Consideramos que el objeto \(\alpha\) es \emph{rotulado}
+  si sus átomos componentes tienen identidad,
+  cosa que se representa rotulándolos de \num{1} a \(\lvert \alpha \rvert\).
+  Si los átomos son libremente intercambiables,
+  son objetos \emph{no rotulados}.
+  Un punto que produce particular confusión
+  es que tiene perfecto sentido
+  hablar de secuencias de elementos sin rotular.
+  La secuencia impone un orden,
+  pero elementos iguales se consideran indistinguibles
+  (en una palabra interesa el orden de las letras,
+   pero al intercambiar dos letras iguales
+   la palabra sigue siendo la misma).
+  Estos dos casos requieren tratamiento separado,
+  y en algunos casos operaciones especializadas.
+
+\section{Objetos no rotulados}
+\label{sec:objetos-no-rotulados}
+
+  Nuestro primer teorema
+  relaciona las funciones generatrices ordinarias
+  respectivas para algunas de las operaciones entre clases
+  definidas antes.
+  Las funciones generatrices de las clases \(\varnothing\),
+  \(\mathscr{E}\) y \(\mathscr{Z}\)
+  son,
+  respectivamente,
+  \num{0}, \num{1} y \(z\).
+  En las derivaciones
+  de las transferencias de ecuaciones simbólicas
+  a ecuaciones para las funciones generatrices
+  lo que nos interesa es contar los objetos entre manos,
+  recurriremos a biyecciones para ello en algunos de los casos.
+  \begin{theorem}[Método simbólico, OGF]
+    \label{theo:ms-OGF}
+    Sean \(\mathscr{A}\) y \(\mathscr{B}\) clases de objetos,
+    con funciones generatrices ordinarias
+    respectivamente \(A(z)\) y \(B(z)\).
+    Entonces tenemos
+    las siguientes funciones generatrices ordinarias:
+    \begin{enumerate}
+    \item
+      Para enumerar \(\mathscr{A} + \mathscr{B}\):
+      \begin{equation*}
+        A(z) + B(z)
+      \end{equation*}
+    \item
+      Para enumerar \(\mathscr{A} \times \mathscr{B}\):
+      \begin{equation*}
+        A(z) \cdot B(z)
+      \end{equation*}
+    \item
+      Para enumerar \(\Seq(\mathscr{A})\):
+      \begin{equation*}
+        \frac{1}{1 - A(z)}
+      \end{equation*}
+    \item
+      Para enumerar \(\Set(\mathscr{A})\):
+      \begin{equation*}
+        \prod_{\alpha \in \mathscr{A}}
+           \left( 1 + z^{\lvert \alpha \rvert} \right)
+          = \prod_{n \ge 1} (1 + z^n)^{a_n}
+          = \exp \left(
+                   \sum_{k \ge 1} \frac{(-1)^{k + 1}}{k} \, A(z^k)
+                 \right)
+      \end{equation*}
+    \item
+      Para enumerar \(\MSet(\mathscr{A})\):
+      \begin{equation*}
+        \prod_{\alpha \in \mathscr{A}}
+           \frac{1}{1 - z^{\lvert \alpha \rvert}}
+          = \prod_{n \ge 1} \frac{1}{(1 - z^n)^{a_n}}
+          = \exp\left(
+                   \sum_{k \ge 1} \frac{A(z^k)}{k}
+                \right)
+      \end{equation*}
+    \item
+      Para enumerar \(\Cyc(\mathscr{A})\):
+      \begin{equation*}
+        \sum_{n \ge 1} \frac{\phi(n)}{n} \, \ln \frac{1}{1 - A(z^n)}
+      \end{equation*}
+    \end{enumerate}
+  \end{theorem}
+  \begin{proof}
+    Usamos libremente resultados sobre funciones generatrices,
+    ver~%
+      \cite[capítulo~14]{brand17:_fundamentos_informatica},
+    en las demostraciones de cada caso.
+    Usaremos casos ya demostrados en las demostraciones sucesivas.
+    \begin{enumerate}
+    \item % A + B
+      Si hay \(a_n\) elementos de \(\mathscr{A}\) de tamaño \(n\)
+      y \(b_n\) elementos de \(\mathscr{B}\) de tamaño \(n\),
+      habrán \(a_n + b_n\) elementos
+      de \(\mathscr{A} + \mathscr{B}\)
+      de tamaño \(n\).
+
+      Alternativamente,
+      usando la notación de Iverson
+      (ver~%
+        \cite[sección~1.4]{brand17:_fundamentos_informatica}):
+      \begin{equation*}
+        \sum_{\mathclap{\gamma \in \mathscr{A} + \mathscr{B}}}
+          z^{\lvert \gamma \rvert}
+          = \; \sum_{\mathclap{\gamma \in \mathscr{A}
+                                            + \mathscr{B}}}
+                 \left(
+                   [\gamma \in \mathscr{A}]
+                     z^{\lvert \gamma \rvert}
+                      + [\gamma \in \mathscr{B}]
+                          z^{\lvert \gamma \rvert}
+                 \right)
+          = \sum_{\alpha \in \mathscr{A}} z^{\lvert \alpha \rvert}
+              + \sum_{\beta \in \mathscr{B}}
+                  z^{\lvert \beta \rvert}
+          = A(z) + B(z)
+      \end{equation*}
+    \item % A x B
+      Hay:
+      \begin{equation*}
+        \sum_{0 \le k \le n} a_k b_{n - k}
+      \end{equation*}
+      maneras de combinar elementos de \(\mathscr{A}\)
+      con elementos de \(\mathscr{B}\) cuyos tamaños sumen \(n\),
+      y este es precisamente
+      el coeficiente de \(z^n\) en \(A(z) \cdot B(z)\).
+
+      Alternativamente:
+      \begin{align*}
+        \sum_{\mathclap{\gamma \in \mathscr{A} \times \mathscr{B}}}
+             z^{\lvert \gamma \rvert}
+          = \sum_{\mathclap{\substack{
+                              \alpha \in \mathscr{A} \\
+                              \beta \in \mathscr{B}
+                 }}} z^{\lvert (\alpha, \beta) \rvert}
+          = \sum_{\mathclap{\substack{
+                              \alpha \in \mathscr{A} \\
+                              \beta \in \mathscr{B}
+                 }}} z^{\lvert \alpha \rvert + \lvert \beta \rvert}
+          = \left(
+               \sum_{\alpha \in \mathscr{A}}
+                 z^{\lvert \alpha \rvert}
+             \right)
+               \cdot \left(
+                        \sum_{\beta \in \mathscr{B}}
+                          z^{\lvert \beta \rvert}
+                     \right)
+          = A(z) \cdot B(z)
+      \end{align*}
+    \item % Seq(A)
+      Hay una manera de obtener la secuencia de largo 0
+      (aporta el objeto vacío \(\epsilon\)),
+      las secuencias de largo \num{1}
+      son simplemente los elementos de \(\mathscr{A}\),
+      las secuencias de largo \num{2}
+      son elementos de \(\mathscr{A} \times \mathscr{A}\),
+      y así sucesivamente.
+      O sea,
+      las secuencias se representan mediante:
+      \begin{equation*}
+        \mathscr{E}
+          + \mathscr{A}
+          + \mathscr{A} \times \mathscr{A}
+          + \mathscr{A} \times \mathscr{A} \times \mathscr{A}
+          + \dotsb
+      \end{equation*}
+      Por la segunda parte
+      y la serie geométrica,
+      la función generatriz correspondiente es:
+      \begin{equation*}
+        1 + A(z) + A^2(z) + A^3(z) + \dotsb
+          = \frac{1}{1 - A(z)}
+      \end{equation*}
+    \item % Set(A)
+      La clase de los subconjuntos finitos de \(\mathscr{A}\)
+      queda representada por el producto simbólico:
+      \begin{equation*}
+        \prod_{\alpha \in \mathscr{A}} (\mathscr{E} + \{\alpha\})
+      \end{equation*}
+      ya que
+      al distribuir los productos de todas las formas posibles
+      aparecen todos los subconjuntos de \(\mathscr{A}\).
+      Directamente obtenemos entonces:
+      \begin{equation*}
+        \prod_{\alpha \in \mathscr{A}}
+            \left( 1 + z^{\lvert \alpha \rvert} \right)
+          = \prod_{n \ge 0} (1 + z^n)^{a_n}
+      \end{equation*}
+      Otra forma de verlo es que cada objeto de tamaño \(n\)
+      aporta un factor \(1 + z^n\),
+      si hay \(a_n\) de estos
+      el aporte total es \((1 + z^n)^{a_n}\).
+      Esta es la primera parte de lo aseverado.
+      Aplicando logaritmo:
+      \begin{align*}
+        \sum_{\alpha \in \mathscr{A}}
+            \ln \left(1 + z^{\lvert \alpha \rvert} \right)
+          &= -\sum_{\alpha \in \mathscr{A}}
+                \sum_{k \ge 1}
+                  \frac{(-1)^k z^{\lvert \alpha \rvert k}}{k}  \\
+          &= -\sum_{k \ge 1} \frac{(-1)^k}{k} \,
+                \sum_{\alpha \in \mathscr{A}}
+                  z^{\lvert \alpha \rvert k} \\
+          &= \sum_{k \ge 1} \frac{(-1)^{k + 1} \, A(z^k)}{k}
+      \end{align*}
+      Exponenciando lo último
+      resulta equivalente a la segunda parte.
+    \item % MSet(A)
+      Podemos considerar un multiconjunto finito
+      como la combinación de una secuencia
+      para cada tipo de elemento:
+      \begin{equation*}
+        \prod_{\alpha \in \mathscr{A}} \Seq(\{ \alpha \})
+      \end{equation*}
+      La función generatriz buscada es:
+      \begin{equation*}
+        \prod_{\alpha \in \mathscr{A}}
+          \frac{1}{1 - z^{\lvert \alpha \rvert}}
+          = \prod_{n \ge 0} \frac{1}{(1 - z^n)^{a_n}}
+      \end{equation*}
+      Esto provee la primera parte.
+      Nuevamente aplicamos logaritmo para simplificar:
+      \begin{align*}
+        \ln \prod_{\alpha \in \mathscr{A}}
+               \frac{1}{1 - z^{\lvert \alpha \rvert}}
+          &= - \sum_{\alpha \in \mathscr{A}}
+                 \ln \left( 1 - z^{\lvert \alpha \rvert} \right) \\
+          &= \sum_{\alpha \in \mathscr{A}}
+               \sum_{k \ge 1}
+                 \frac{z^{k \lvert \alpha \rvert}}{k} \\
+          &= \sum_{k \ge 1}
+               \frac{1}{k} \,
+                 \sum_{\alpha \in \mathscr{A}}
+                   z^{k \lvert \alpha \rvert} \\
+          &= \sum_{k \ge 1}
+               \frac{A(z^k)}{k}
+      \end{align*}
+    \item % Cyc(A)
+      Esta situación es más compleja de tratar,
+      vea la discusión en~%
+        \cite[sección~21.2.3]{brand17:_fundamentos_informatica}.
+      \qedhere
+    \end{enumerate}
+  \end{proof}
+
+\subsection{Algunas aplicaciones}
+\label{sec:ms-ogf-aplicaciones}
+
+  La clase de los árboles binarios \(\mathscr{B}\)
+  es por definición es la unión disjunta del árbol vacío
+  y la clase de tuplas de un nodo (la raíz)
+  y dos árboles binarios.
+  O sea:
+  \begin{equation*}
+    \mathscr{B}
+      = \mathscr{E}
+          + \mathscr{Z} \times \mathscr{B} \times \mathscr{B}
+  \end{equation*}
+  de donde directamente obtenemos:
+  \begin{equation*}
+    B(z)
+      = 1 + z B^2(z)
+  \end{equation*}
+  Con el cambio de variable \(u(z) = B(z) - 1\) queda:
+  \begin{equation*}
+    u(z)
+      = z (1 + u(z))^2
+  \end{equation*}
+  Es aplicable la fórmula de inversión de Lagrange~%
+    \cite[teorema~17.8]{brand17:_fundamentos_informatica}
+  con \(\phi(u) = (u + 1)^2\) y \(f(u) = u\):
+  \begin{align*}
+    \left[ z^n \right] u(z)
+      &= \frac{1}{n} \, \left[ u^{n - 1} \right] \, \phi(u)^n \\
+      &= \frac{1}{n} \, \left[ u^{n - 1} \right] \, (u + 1)^{2 n} \\
+      &= \frac{1}{n} \, \binom{2 n}{n - 1} \\
+      &= \frac{1}{n + 1} \, \binom{2 n}{n}
+  \end{align*}
+  Tenemos,
+  como \(u(z) = B(z) - 1\)
+  (sabemos que \([z^0] u(z) = 0\))
+  y de la condición inicial \(b_0 = 1\):
+  \begin{equation*}
+    b_n =
+    \begin{cases}
+      \displaystyle
+        \frac{1}{n + 1} \, \binom{2 n}{n}
+               & \text{si \(n \ge 1\)} \\
+      1
+               & \text{si \(n = 0\)}
+    \end{cases}
+  \end{equation*}
+  Casualmente la expresión simplificada para \(n \ge 1\)
+  da el valor correcto \(b_0 = 1\).
+  Estos son los números de Catalan,
+  es \(b_n = C_n\).
+
+  Sea ahora \(\mathscr{A}\)
+  la clase de \emph{árboles con raíz ordenados},
+  formados por un nodo raíz
+  conectado a las raíces de una secuencia de árboles ordenados.
+  La idea es que la raíz tiene hijos en un cierto orden.
+  Simbólicamente:
+  \begin{equation*}
+    \mathscr{A}
+      = \mathscr{Z} \times \Seq(\mathscr{A})
+  \end{equation*}
+  El método simbólico entrega directamente la ecuación:
+  \begin{equation*}
+    A(z)
+      = \frac{z}{1 - A(z)}
+  \end{equation*}
+  Nuevamente es aplicable la fórmula de inversión de Lagrange,
+  con \(\phi(A) = (1 - A)^{-1}\) y \(f(A) = A\):
+  \begin{align*}
+    \left[ z^n \right] A(z)
+      &= \frac{1}{n} \, \left[ A^{n - 1} \right] \, \phi(A)^n \\
+      &= \frac{1}{n} \, \left[ A^{n - 1} \right] \, (1 - A)^{-n} \\
+      &= \frac{1}{n} \, \binom{2 n - 2}{n - 1} \\
+      &= C_{n - 1}
+  \end{align*}
+  Otra vez números de Catalan.
+
+  La manera obvia de representar \(\mathbb{N}_0\)
+  es por secuencias de marcas,
+  como \(||||\) para 4;
+  simbólicamente \(\mathbb{N}_0 = \Seq(\mathscr{Z})\).
+  Para calcular el número de multiconjuntos de \(k\) elementos
+  tomados entre \(n\),
+  un multiconjunto queda representado
+  por las cuentas de cada uno los \(n\) elementos de que se compone,
+  y eso corresponde a:
+  \begin{equation*}
+    \mathbb{N}_0 \times \dotsb \times \mathbb{N}_0
+      = (\Seq(\mathscr{Z}))^n
+  \end{equation*}
+  Para obtener el número que nos interesa:
+  \begin{align*}
+    \multiset{n}{k}
+      &= \left[ z^k \right] (1 - z)^{-n} \\
+      &= (-1)^n \binom{-n}{k} \\
+      &= \binom{n + k - 1}{n}
+  \end{align*}
+  Una \emph{combinación} de \(n\) es expresarlo como una suma.
+  Por ejemplo,
+  hay \num{8} combinaciones de \num{4}:
+  \begin{equation*}
+      4
+        = 3 + 1
+        = 2 + 2
+        = 2 + 1 + 1
+        = 1 + 3
+        = 1 + 2 + 1
+        = 1 + 1 + 2
+        = 1 + 1 + 1 + 1
+  \end{equation*}
+  Sea \(c(n)\) el número de combinaciones de \(n\).
+  Como antes,
+  tenemos \(\mathbb{N} = \mathscr{Z} \times \Seq(\mathscr{Z})\),
+  que da:
+  \begin{equation*}
+    N(z)
+      = \frac{z}{1 - z}
+  \end{equation*}
+  A su vez,
+  una combinación no es más que una secuencia de naturales
+  (separados por \(+\)):
+  \begin{equation*}
+    \mathscr{C}
+      = \Seq(\mathbb{N})
+  \end{equation*}
+  Directamente resulta:
+  \begin{align*}
+    C(z)
+      &= \sum_{n \ge 0} c(n) z^n \\
+      &= \frac{1}{1 - N(z)} \\
+      &= \frac{1}{2} + \frac{1}{2} \cdot \frac{1}{1 - 2 z} \\
+    c(n)
+      &= [z^n] C(z) \\
+      &= \frac{1}{2} \, [n = 0] + \frac{1}{2} \cdot 2^n \\
+      &= \frac{1}{2} \, [n = 0] + 2^{n - 1}
+  \end{align*}
+  Esto es consistente con \(c(4) = 8\) obtenido arriba.
+
+\section{Objetos rotulados}
+\label{sec:objetos-rotulados}
+
+  En la discusión previa solo interesaba el tamaño de los objetos,
+  no su disposición particular.
+  Consideraremos ahora objetos rotulados,
+  donde importa cómo se compone el objeto de sus partes
+  (los átomos tienen identidades,
+   posiblemente porque se ubican en orden).
+
+  El objeto más simple con partes rotuladas son las permutaciones
+  (biyecciones \(\sigma \colon [n] \rightarrow [n]\),
+   podemos considerarlas secuencias de átomos numerados).
+  Para la función generatriz exponencial tenemos,
+  ya que hay \(n!\) permutaciones de \(n\) elementos:
+  \begin{equation*}
+    \sum_{\sigma}
+        \frac{z^{\lvert \sigma \rvert}}{\lvert \sigma \rvert !}
+      = \sum_{n \ge 0} n! \, \frac{z^n}{n!}
+      = \frac{1}{1 - z}
+  \end{equation*}
+
+  Lo siguiente más simple de considerar
+  es colecciones de ciclos rotulados.
+  Por ejemplo,
+  escribimos \((1\;3\;2)\) para el objeto
+  en que viene \num{3} luego de \num{1},
+  \num{2} sigue a \num{3},
+  y a su vez \num{1} sigue a \num{2}.
+  Así \((2\;1\;3)\) es solo otra forma de anotar el ciclo anterior,
+  que no es lo mismo que \((3\;1\;2)\).
+  Interesa definir formas consistentes
+  de combinar objetos rotulados.
+  Por ejemplo,
+  al combinar el ciclo \((1\;2)\) con el ciclo \((1\;3\;2)\)
+  resultará un objeto con \num{5} rótulos,
+  y debemos ver cómo los distribuimos entre las partes.
+  El cuadro~\ref{tab:ciclo+ciclo}
+  reseña las posibilidades al respetar
+  el orden de los elementos asignados a cada parte.
+  \begin{table}[htbp]
+    \centering
+    \begin{tabular}{*{4}{>{\(}l<{\)}}}
+      (1\;2) (3\;5\;4) & (2\;3) (1\;5\;4) & (3\;4) (1\;5\;2) &
+          (4\;5) (1\;3\;2) \\
+      (1\;3) (2\;5\;4) & (2\;4) (1\;5\;3) & (3\;5) (1\;4\;2) \\
+      (1\;4) (2\;5\;3) & (2\;5) (1\;4\;3) \\
+      (1\;5) (2\;4\;3)
+    \end{tabular}
+    \caption{Combinando los ciclos \((1\;2)\) y \((1\;3\;2)\)}
+    \label{tab:ciclo+ciclo}
+  \end{table}
+  Es claro que lo que estamos haciendo es elegir
+  un subconjunto de \num{2} rótulos
+  de entre los \num{5} para asignárselos al primer ciclo.
+  El combinar
+  dos clases de objetos \(\mathscr{A}\) y \(\mathscr{B}\)
+  de esta forma lo anotaremos \(\mathscr{A} \star \mathscr{B}\).
+
+  Otra operación común es la \emph{composición},
+  anotada \(\mathscr{A} \circ \mathscr{B}\).
+  La idea es elegir un elemento \(\alpha \in \mathscr{A}\),
+  luego elegir \(\lvert \alpha \rvert\) elementos
+  de \(\mathscr{B}\),
+  y reemplazar los \(\mathscr{B}\) por las partes de \(\alpha\),
+  en el orden que están rotuladas;
+  para finalmente asignar rótulos a los átomos
+  que conforman la.estructura completa
+  respetando el orden de los rótulos
+  al interior de los \(\mathscr{B}\)
+  (igual como lo hicimos para \(\star\)).
+
+  Ocasionalmente es útil \emph{marcar}
+  uno de los componentes del objeto,
+  operación que anotaremos \(\mathscr{A}^\bullet\).
+  Usaremos también la construcción \(\MSet(\mathscr{A})\),
+  que podemos considerar como una secuencia de elementos numerados
+  obviando el orden.
+  Cuidado,
+  muchos textos le llaman \(\Set()\) a esta operación.
+
+  Tenemos el siguiente teorema:
+  \begin{theorem}[Método simbólico, EGF]
+    \label{theo:ms-EGF}
+    Sean \(\mathscr{A}\) y \(\mathscr{B}\) clases de objetos rotulados,
+    con funciones generatrices exponenciales
+    \(\widehat{A}(z)\) y \(\widehat{B}(z)\),
+    respectivamente.
+    Entonces tenemos
+    las siguientes funciones generatrices exponenciales:
+    \begin{enumerate}
+    \item
+      Para enumerar \(\mathscr{A}^\bullet\):
+      \begin{equation*}
+        z \mathrm{D} \widehat{A}(z)
+      \end{equation*}
+    \item
+      Para enumerar \(\mathscr{A} + \mathscr{B}\):
+      \begin{equation*}
+        \widehat{A}(z) + \widehat{B}(z)
+      \end{equation*}
+    \item
+      Para enumerar \(\mathscr{A} \star \mathscr{B}\):
+      \begin{equation*}
+        \widehat{A}(z) \cdot \widehat{B}(z)
+      \end{equation*}
+    \item
+      Para enumerar \(\mathscr{A} \circ \mathscr{B}\):
+      \begin{equation*}
+        \widehat{A}(\widehat{B}(z))
+      \end{equation*}
+    \item
+      Para enumerar \(\Seq(\mathscr{A})\):
+      \begin{equation*}
+        \frac{1}{1 - \widehat{A}(z)}
+      \end{equation*}
+    \item
+      Para enumerar \(\MSet(\mathscr{A})\):
+      \begin{equation*}
+        \mathrm{e}^{\widehat{A}(z)}
+      \end{equation*}
+    \item
+      Para enumerar \(\Cyc(\mathscr{A})\):
+      \begin{equation*}
+        -\ln(1 - \widehat{A}(z))
+      \end{equation*}
+    \end{enumerate}
+  \end{theorem}
+  \begin{proof}
+    Usaremos casos ya demostrados en las demostraciones sucesivas.
+    \begin{enumerate}
+    \item % mark A
+      El objeto \(\alpha \in \mathscr{A}\)
+      da lugar a \(\lvert \alpha \rvert\) objetos
+      al marcar cada uno de sus átomos,
+      lo que da la función generatriz exponencial:
+      \begin{equation*}
+        \sum_{\alpha \in \mathscr{A}}
+          \lvert \alpha \rvert
+            \frac{z^{\lvert \alpha \rvert}}{\lvert \alpha \rvert !}
+      \end{equation*}
+      Esto es lo indicado.
+    \item % A + B
+      Nuevamente trivial.
+    \item % A x B
+      El número de objetos \(\gamma\) que se obtienen
+      al combinar \(\alpha \in \mathscr{A}\)
+      con \(\beta \in \mathscr{B}\) es:
+      \begin{equation*}
+        \binom{\lvert \alpha \rvert + \lvert \beta \rvert}
+              {\lvert \alpha \rvert}
+      \end{equation*}
+      y tenemos la función generatriz exponencial:
+      \begin{equation*}
+        \sum_{\gamma \in \mathscr{A} \star \mathscr{B}}
+            \frac{z^{\lvert \gamma \rvert}}{\lvert \gamma \rvert !}
+          = \sum_{\substack{
+                     \alpha \in \mathscr{A} \\
+                     \beta \in \mathscr{B}
+                 }}
+               \binom{\lvert \alpha \rvert + \lvert \beta \rvert}
+                     {\lvert \alpha \rvert}
+                  \frac{z^{\lvert \alpha \rvert
+                            + \lvert \beta \rvert}}
+                       {(\lvert \alpha \rvert
+                            + \lvert \beta \rvert)!}
+          = \left(
+              \sum_{\alpha \in \mathscr{A}}
+                \frac{z^{\lvert \alpha \rvert}}
+                     {\lvert \alpha \rvert !}
+            \right)
+              \cdot \left(
+                \sum_{\beta \in \mathscr{B}}
+                  \frac{z^{\lvert \beta \rvert}}
+                       {\lvert \beta \rvert !}
+                    \right)
+          = \widehat{A}(z) \cdot \widehat{B}(z)
+      \end{equation*}
+    \item % A circ B
+      Tomemos \(\alpha \in \mathscr{A}\),
+      de tamaño \(n = \lvert \alpha \rvert\),
+      y \(n\) elementos de \(\mathscr{B}\) en orden
+      a ser reemplazados por las partes de \(\alpha\).
+      Esa secuencia de \(\mathscr{B}\) es representada por:
+      \begin{equation*}
+        \mathscr{B}
+          \star \mathscr{B}
+          \star \dotsb
+          \star \mathscr{B}
+      \end{equation*}
+      con función generatriz exponencial:
+      \begin{equation*}
+        \widehat{B}^n (z)
+      \end{equation*}
+      Sumando sobre las contribuciones:
+      \begin{equation*}
+        \sum_{\alpha \in \mathscr{A}}
+           \frac{\widehat{B}^{\lvert \alpha \rvert}(z)}
+                {\lvert \alpha \rvert \, !}
+      \end{equation*}
+      Esto es lo prometido.
+    \item % Seq(A)
+      Primeramente,
+      podemos describir:
+      \begin{equation*}
+        \Seq(\mathscr{Z})
+          = \mathscr{E} + \mathscr{Z} \star \Seq(\mathscr{Z})
+      \end{equation*}
+      que lleva a ecuación:
+      \begin{equation*}
+        \widehat{S}(z)
+          = 1 + z \widehat{S}(z)
+      \end{equation*}
+      de donde:
+      \begin{equation*}
+        \widehat{S}(z)
+          = \frac{1}{1 - z}
+      \end{equation*}
+      Aplicando composición se obtiene lo indicado.
+    \item % MSet(A)
+      Hay un único multiconjunto de \(n\) elementos rotulados
+      (se rotulan simplemente de 1 a  \(n\)),
+      con lo que \(\MSet(\mathscr{Z})\) corresponde a:
+      \begin{equation*}
+        \sum_{n \ge 0} \frac{z^n}{n!}
+          = \exp(z)
+      \end{equation*}
+      Al aplicar composición resulta lo anunciado.
+
+      Otra demostración es considerar el multiconjunto de \(\mathscr{A}\),
+      descrito por \(\mathscr{M} = \MSet(\mathscr{A})\).
+      Si marcamos uno de los átomos de \(\mathscr{M}\)
+      estamos marcando uno de los \(\mathscr{A}\),
+      el resto sigue formando un multiconjunto de \(\mathscr{A}\):
+      \begin{equation*}
+        \mathscr{M}^\bullet
+          = \mathscr{A}^\bullet \star \mathscr{M}
+      \end{equation*}
+      Por lo anterior:
+      \begin{equation*}
+        z \widehat{M}'(z)
+          = z \widehat{A}'(z) \widehat{M}(z)
+      \end{equation*}
+      Hay un único multiconjunto de tamaño \num{0},
+      o sea \(\widehat{M}(0) = 1\);
+      y hemos impuesto la condición
+      que no hay objetos de tamaño \num{0} en \(\mathscr{A}\),
+      vale decir,
+      \(\widehat{A}(0) = 0\).
+      Así la solución a la ecuación diferencial es:
+      \begin{equation*}
+        \widehat{M}(z)
+          = \exp(\widehat{A}(z))
+      \end{equation*}
+    \item % Cyc(A)
+      Consideremos un ciclo de \(\mathscr{A}\),
+      o sea \(\mathscr{C} = \Cyc(\mathscr{A})\).
+      Si marcamos los \(\mathscr{C}\),
+      estamos marcando uno de los \(\mathscr{A}\),
+      y el resto es una secuencia:
+      \begin{equation*}
+        \mathscr{C}^\bullet
+          = \mathscr{A}^\bullet \star \Seq(\mathscr{A})
+      \end{equation*}
+      Esto se traduce en la ecuación diferencial:
+      \begin{equation*}
+        z \widehat{C}'(z)
+          = z \widehat{A}'(z) \frac{1}{1 - \widehat{A}(z)}
+      \end{equation*}
+      Integrando bajo el entendido \(\widehat{C}(0) = 0\)
+      con \(\widehat{A}(0) = 0\)
+      se obtiene lo indicado.
+    \end{enumerate}
+  \end{proof}
+
+\subsection{Algunas aplicaciones}
+\label{sec:ms-egf-aplicaciones}
+
+  Un ejemplo simple es el caso de permutaciones,
+  que son simplemente secuencias de elementos rotulados:
+  \begin{align*}
+    \mathscr{P}
+      &= \Seq(\mathscr{Z}) \\
+    \widehat{P}(z)
+      &= \frac{1}{1 - z} \\
+    P_n
+      &= n! [z^n] \widehat{P}(z) \\
+      &= n!
+  \end{align*}
+
+  Consideremos colecciones de ciclos:
+  \begin{equation*}
+    \MSet(\Cyc(\mathscr{Z}))
+  \end{equation*}
+  Vemos que esto corresponde a:
+  \begin{equation*}
+    \exp\left( \ln \frac{1}{1 - z} \right)
+      = \frac{1}{1 - z}
+  \end{equation*}
+  Hay tantas permutaciones de tamaño \(n\) como colecciones de ciclos.
+  Una biyección se da ordenando los ciclos
+  de manera que se inicien con su mayor elemento,
+  y listar los ciclos en orden de máximo elemento creciente.
+  Cualquier lista de elementos puede reinterpretarse como ciclos
+  de una única manera de esta forma.
+  En el fondo,
+  podemos representar permutaciones
+  como los ciclos ordenados para comenzar con sus elementos máximos.
+
+  Podemos describir permutaciones
+  como un conjunto de elementos que quedan fijos
+  combinado con otros elementos que están fuera de orden
+  (un \emph{desarreglo},
+   clase \(\mathscr{D}\)).
+  O sea:
+  \begin{align*}
+    \mathscr{P}
+      &= \MSet(\mathscr{Z}) \star \mathscr{D} \\
+    \frac{1}{1 - z}
+      &= \mathrm{e}^z \cdot \widehat{D}(z) \\
+    \widehat{D}(z)
+      &= \frac{\mathrm{e}^{-z}}{1 - z}
+  \end{align*}
+  De acá,
+  por propiedades de las funciones generatrices vemos que:
+  \begin{equation*}
+    [z^n] \widehat{D}(z)
+      = \sum_{0 \le k \le n} \frac{(-1)^k}{k!}
+  \end{equation*}
+  y tenemos,
+  usando la notación común para el número de desarreglos de tamaño \(n\):
+  \begin{equation*}
+    D_n
+      = n! \sum_{0 \le k \le n} \frac{(-1)^k}{k!}
+  \end{equation*}
+
+  Una \emph{involución} es una permutación \(\pi\)
+  tal que \(\pi \circ \pi\) es la identidad.
+  Es claro que una involución
+  es una colección de ciclos de largos \num{1} y \num{2},
+  o sea:
+  \begin{equation*}
+    \mathscr{I}
+      = \MSet(\Cyc_{\le 2}(\mathscr{Z}))
+  \end{equation*}
+  Revisando la derivación,
+  vemos que \(\Cyc_{\le 2}(\mathscr{Z})\) corresponde a:
+  \begin{equation*}
+    \frac{z}{1} + \frac{z^2}{2}
+  \end{equation*}
+  y tenemos para la función generatriz:
+  \begin{equation*}
+    \widehat{I}(z)
+      = \exp\left( \frac{z}{1} + \frac{z^2}{2} \right)
+  \end{equation*}
+  Un paquete de álgebra simbólica da:
+  \begin{equation*}
+    \widehat{I}(z)
+      = 1 +    1 \cdot \frac{z}{1!}
+          +    2 \cdot \frac{z^2}{2!}
+          +    4 \cdot \frac{z^3}{3!}
+          +   10 \cdot \frac{z^4}{4!}
+          +   26 \cdot \frac{z^5}{5!}
+          +   76 \cdot \frac{z^6}{6!}
+          +  232 \cdot \frac{z^7}{7!}
+          +  764 \cdot \frac{z^8}{8!}
+          + 2620 \cdot \frac{z^9}{9!}
+%	  + 9496 \cdot \frac{z^{10}}{10!}
+          + \dotsm
+  \end{equation*}
+
+  Un \emph{desarreglo} es una permutación sin puntos fijos,
+  vale decir,
+  sin ciclos de largo \num{1}.
+  O sea:
+  \begin{equation*}
+    \mathscr{D}
+      = \MSet(Cyc_{> 1}(\mathscr{Z}))
+  \end{equation*}
+  Revisando las derivaciones para las operaciones,
+  esto corresponde a:
+  \begin{align*}
+    \widehat{D}(z)
+      &= \exp \left( \sum_{k \ge 2} \frac{z^k}{k} \right) \\
+      &= \exp \left( \sum_{k \ge 1} \frac{z^k}{k} - z \right) \\
+      &= \exp \left( \ln \frac{1}{1 - z} - z \right) \\
+      &= \frac{1}{1 - z} \cdot e^{-z}
+  \end{align*}
+  Igual que obtuvimos antes.
+
+\section{Funciones generatrices cumulativas}
+\label{sec:gf-cumulativa}
+
+  Para precisar,
+  consideremos una clase de objetos \(\mathscr{A}\).
+  Como siempre el número de objetos de tamaño \(n\)
+  lo anotaremos \(a_n\),
+  con función generatriz:
+  \begin{align}
+    A(z)
+      &= \sum_{\alpha \in \mathscr{A}} z^{\lvert \alpha \rvert}
+            \label{eq:A-def} \\
+      &= \sum_{n \ge 0} a_n z^n
+            \label{eq:A-an}
+  \end{align}
+  Consideremos no solo el número de objetos,
+  sino alguna característica,
+  cuyo valor para el objeto \(\alpha\) anotaremos \(\chi(\alpha)\).
+  Es natural definir la \emph{función generatriz cumulativa}:
+  \begin{equation}
+    \label{eq:cogf-def}
+    C(z)
+      = \sum_{\alpha \in \mathscr{A}} \chi(\alpha) z^{\lvert \alpha \rvert}
+  \end{equation}
+  Vale decir,
+  los coeficientes son la suma de la medida \(\chi\)
+  para un tamaño dado:
+  \begin{equation}
+    \label{eq:cogf-coefficient}
+    [z^n] C(z)
+      = \sum_{\lvert \alpha \rvert = n} \chi(\alpha)
+  \end{equation}
+  Así tenemos el valor promedio para objetos de tamaño \(n\):
+  \begin{equation}
+    \label{eq:chi-expected}
+    \Exp_n[\chi]
+      = \frac{[z^n] C(z)}{[z^n] A(z)}
+  \end{equation}
+
+  La discusión precedente es aplicable
+  si tenemos objetos no rotulados entre manos.
+  Si corresponden objetos rotulados,
+  podemos definir las respectivas funciones generatrices exponenciales:
+  \begin{align}
+    \widehat{A}(z)
+      &= \sum_{\alpha \in \mathscr{A}}
+           \frac{z^{\lvert \alpha \rvert}}{\lvert \alpha \rvert !}
+                \label{eq:Ahat-def} \\
+      &= \sum_{n \ge 0} a_n \frac{z^n}{n!}
+                \label{eq:Ahat-an} \\
+    \widehat{C}(z)
+      &= \sum_{\alpha \in \mathscr{A}}
+           \chi(\alpha) \frac{z^{\lvert \alpha \rvert}}{\lvert \alpha \rvert !}
+                \label{eq:Chat-def}
+  \end{align}
+  Nuevamente,
+  como los factoriales en los coeficientes se cancelan:
+  \begin{equation}
+    \label{eq:chi-expected-hat}
+    \Exp_n[\chi]
+      = \frac{[z^n] \widehat{C}(z)}{[z^n] \widehat{A}(z)}
+  \end{equation}
+
+\section{Funciones generatrices bivariadas}
+\label{sec:gf-bivariada}
+
+  Consideremos una clase \(\mathscr{A}\),
+  con objetos \(\alpha \in \mathscr{A}\) de tamaño \(\lvert \alpha \rvert\);
+  y a su vez un parámetro,
+  cuyo valor para \(\alpha\) es \(\chi(\alpha)\).
+  Si los átomos que componen \(\alpha\) son indistinguibles,
+  es natural definir la función generatriz bivariada ordinaria:
+  \begin{equation}
+    \label{eq:obgf-def}
+    A(z, u)
+      = \sum_{\alpha \in \mathscr{A}} z^{\lvert \alpha \rvert} u^{\chi(\alpha)}
+  \end{equation}
+  De la misma forma,
+  si los átomos son distinguibles
+  es apropiada la función generatriz exponencial:
+  \begin{equation}
+    \label{eq:ebgf-def}
+    \widehat{A}(z, u)
+      = \sum_{\alpha \in \mathscr{A}}
+          \frac{z^{\lvert \alpha \rvert}}{\lvert \alpha \rvert !}
+             u^{\chi(\alpha)}
+  \end{equation}
+  Es común que nos interese el valor promedio de \(\chi(\alpha)\)
+  para objetos de tamaño dado.
+  Note que:
+  \begin{equation}
+    \label{eq:obgf-partial}
+    \frac{\partial A}{\partial u}
+      = \sum_{\alpha \in \mathscr{A}}
+          \chi(\alpha) u^{\chi(\alpha) - 1} z^{\lvert \alpha \rvert}
+  \end{equation}
+  Así podemos calcular los valores promedios a partir de
+  los coeficientes de las siguientes sumas:
+  \begin{align}
+    \sum_{\alpha \in \mathscr{A}} z^{\lvert \alpha \rvert}
+      &= A(z, 1)
+          \label{eq:obgf|u=1} \\
+    \sum_{\alpha \in \mathscr{A}} \chi(\alpha) z^{\lvert \alpha \rvert}
+      &= \left. \frac{\partial A}{\partial u} \right\rvert_{u = 1}
+          \label{eq:obgf_u|u=1}
+  \end{align}
+  Vemos que~\eqref{eq:obgf|u=1}
+  no es más que la función generatriz del número de objetos,
+  mientras~\eqref{eq:obgf_u|u=1}
+  es la función generatriz cumulativa.
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Symbolic Method for Dummies proveniencia multiconjunto
+% LocalWords:  multiconjuntos biyecciones Exponenciando Cyc bivariada
+% LocalWords:  reinterpretarse cumulativas cumulativa bivariadas eq
+% LocalWords:  obgf

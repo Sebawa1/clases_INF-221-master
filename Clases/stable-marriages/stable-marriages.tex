@@ -1,0 +1,376 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Matrimonios Estables}
+\label{cha:gale-shapley}
+
+  Nuestro interés principal es algoritmos que operan con objetos discretos,
+  de los que estudia la combinatoria.
+  Un primer ejemplo muestra que situaciones a primera vista simples
+  pueden tener profundidades insospechadas.
+
+\section{El problema}
+\label{sec:stable-marriage-problem}
+
+  El problema a resolver es el de matrimonios estables
+  (\emph{\foreignlanguage{english}{stable marriage problem}}):
+  Dados un conjunto de mujeres \(\mathscr{X}\)
+  y otro de hombres \(\mathscr{Y}\),
+  donde \(\lvert \mathscr{X} \rvert = \lvert \mathscr{Y} \rvert\),
+  cada mujer define un orden de deseabilidad para los hombres,
+  y similarmente los hombres con las mujeres,
+  donde suponemos que no hay empates.
+  \begin{definition}
+    Un conjunto de matrimonios se dice \emph{inestable}
+    si incluye parejas \(u v\) y \(x y\),
+    tales que \(u\) prefiere a \(y\) frente a \(v\)
+    y \(y\) prefiere a \(u\) frente a \(x\).
+  \end{definition}
+  Si el conjunto es inestable,
+  \(u\) y \(x\) pueden mejorar sus elecciones divorciándose
+  y volviéndose a casar.
+  Buscamos matrimonios estables.
+  Este problema y variantes aparece en un amplio rango de situaciones,
+  resumidas por Iwama y Miyazaki~%
+    \cite{iwama08:_stable_marriage_probl_survey}.
+
+  Hallar un conjunto estable de matrimonios parece ser simplemente
+  \textquote{cumpla las preferencias},
+  pero reflexión más profunda muestra que ni siquiera es obvio
+  que tal conjunto existe.
+  Es claro que no todos pueden obtener su mejor opción,
+  si hay un hombre que es el preferido de dos o más mujeres,
+  una de ellas al menos deberá conformarse con otro.
+
+  Una posibilidad es asignar parejas al azar,
+  y en caso de que cambiando parejas se pueda mejorar,
+  permitir divorcios y nuevos matrimonios.
+  Sin embargo,
+  el siguiente ejemplo
+  (adaptado de Knuth~%
+     \cite{knuth96:_stable_marriage})
+  muestra que esto no siempre termina.
+  Considere las preferencias del cuadro~\ref{tab:sm-divorces-remarriages},
+  donde simplemente damos las mujeres en orden de preferencia para cada hombre
+  y viceversa.
+  \begin{table}[ht]
+    \centering
+    \subfloat[Hombres]{
+      \begin{tabular}{>{\(}c<{\):}*{3}{>{\(}c<{\)}}}
+        1 & 2 & 1 & 3 \\
+        2 & \multicolumn{3}{c}{arbitrario} \\
+        3 & 1 & 2 & 3
+      \end{tabular}
+      \label{subtab:sm-dr-men}
+    }
+    \hspace*{3em}
+    \subfloat[Mujeres]{
+      \begin{tabular}{>{\(}c<{\):}*{3}{>{\(}c<{\)}}}
+        1 & 1 & 3 & 2 \\
+        2 & 3 & 1 & 2 \\
+        3 & \multicolumn{3}{c}{arbitrario}
+      \end{tabular}
+      \label{subtab:sm-dr-women}
+    }
+    \caption{Contraejemplo para divorcios y matrimonios}
+    \label{tab:sm-divorces-remarriages}
+  \end{table}
+  Una secuencia de divorcios y matrimonios entra en un ciclo;
+  pero hay soluciones estables,
+  como \(((x_1, y_2), (x_2, y_3), (x_3, y_1))\)
+  o \(((x_1, y_1), (x_2, y_3), (x_3, y_2))\).
+
+  Una solución puede hallarse mediante un algoritmo bastante sencillo,
+  y este algoritmo muestra incidentalmente
+  que los matrimonios estables siempre existen.
+  El algoritmo fue
+  discutido formalmente por primera vez por Gale y Shapley~%
+    \cite{gale62:_stable_marriage}.
+  \begin{theorem}
+    \label{theo:stable-marriage-exists}
+    Siempre hay un conjunto de matrimonios estable.
+  \end{theorem}
+  \begin{proof}
+    Consideremos el modelo tradicional,
+    en el cual los hombres proponen matrimonio a las mujeres,
+    y estas aceptan o no.
+    Efectuamos varias rondas,
+    en cada ronda los hombres sin pareja proponen matrimonio
+    a la mujer más alta en su preferencia que no lo ha rechazado aún,
+    cada mujer elige entre las propuestas que recibe
+    al hombre más alto en sus preferencias
+    y se compromete provisoriamente.
+    Si una mujer provisoriamente comprometida recibe una mejor oferta,
+    disuelve el compromiso
+    y se compromete con el nuevo pretendiente.
+
+    Note que una vez que una mujer recibe una propuesta,
+    nunca más queda libre
+    (puede cambiar de novio,
+     claro).
+    En cada ronda un hombre propone a mujeres
+    hasta hallar una que lo acepte,
+    el número de mujeres no comprometidas disminuye.
+    Los hombres pueden proponer siempre en orden de preferencia decreciente
+    (las mujeres que ya lo rechazaron solo pueden mejorar su pretendiente,
+     no lo aceptarán después).
+    El número total de propuestas es a lo más \(n^2 - 2 n + 2\) propuestas,
+    si \(\lvert \mathscr{X} \rvert = \lvert \mathscr{Y} \rvert = n\).
+    Una vez que todas las mujeres han recibido propuestas
+    el noviazgo se declara terminado
+    y los compromisos se formalizan.
+
+    El resultado es estable,
+    cosa que demostramos por contradicción.
+    Supongamos que \(x\) tiene a \(y\) de pareja,
+    pero prefiere a \(y'\),
+    quien a su vez prefiere a \(x\) sobre su marido \(x'\).
+    Entonces \(x\) propuso matrimonio a \(y'\) antes que a \(y\),
+    y fue rechazado a cambio de alguien a quien \(y'\) prefiere a \(x\).
+    Si \(y'\) cambió su compromiso en el intertanto,
+    fue por alguien a quien prefiere aún más que a \(x\).
+    O sea,
+    \(y'\) prefiere a \(x'\),
+    no hay inestabilidad.
+  \end{proof}
+  Podemos extender trivialmente al caso
+  \(\lvert \mathscr{X} \rvert \ne \lvert \mathscr{Y} \rvert\),
+  simplemente sobrarán hombres o mujeres que no encuentran pareja,
+  y por el mismo razonamiento los matrimonios acordados son estables.
+
+  Una pregunta obvia es si la solución es única,
+  y la relación entre esta
+  y la que da el algoritmo simétrico en que proponen las mujeres.
+  Resulta que pueden haber muchas soluciones,
+  como demuestra Knuth~%
+    \cite{knuth96:_stable_marriage}
+  con el ejemplo del cuadro~\ref{tab:sm-example-many}.
+  Se muestran solo las dos primeras preferencias de los hombres
+  y las últimas de las mujeres
+  (las demás no importan,
+   no entran en soluciones estables).
+  \begin{table}[ht]
+    \centering
+    \subfloat[Hombres]{
+      \begin{tabular}{>{\(}r<{\)}@{:\;}*{2}{>{\(}c<{\)}}@{\;\({} \cdots {}\)}}
+        1     & 1     & 2    \\
+        2     & 2     & 1    \\
+        \multicolumn{1}{r}{\(\vdots\)\phantom{:}} &
+          \multicolumn{1}{c}{\(\vdots\)} &
+          \multicolumn{1}{c}{\(\vdots\)} \\
+        n - 1 & n - 1 & n     \\
+        n     & n     & n - 1
+      \end{tabular}
+      \label{subtab:sm-ex-men}
+    }
+    \hspace*{5em}
+    \subfloat[Mujeres]{
+      \begin{tabular}{>{\(}r<{\)}@{:\;\({} \cdots {}\)\;}>{\(}c<{\)}}
+        1     & 1    \\
+        2     & 2    \\
+        \multicolumn{1}{r}{\(\vdots\)\phantom{:\;\({} \cdots {}\)}} &
+          \multicolumn{1}{c}{\(\vdots\)} \\
+        n - 1 & n - 1 \\
+        n     & n
+      \end{tabular}
+      \label{subtab:sm-ex-women}
+    }
+    \caption{Preferencias para muchas soluciones,
+             \(n\) par}
+    \label{tab:sm-example-many}
+  \end{table}
+  Vemos que el hombre \num{1} puede formar parejas estables
+  con las mujeres \num{1} o \num{2},
+  mientras el hombre \num{2} queda con \num{2} o \num{1};
+  el hombre \num{3} con \num{3} o \num{4},
+  dejando la otra para \num{4};
+  y así sucesivamente.
+  Ambas posibilidades son estables,
+  si dos hombres se conforman con sus segundas opciones,
+  son la última preferencia para su primera opción
+  y ella nunca lo preferirá.
+  Esto da \(2^{n/2}\) soluciones posibles.
+
+  Incidentalmente,
+  si se permiten preferencias incompletas
+  (\textquote{prefiero muerto que casado con\ldots}),
+  puede no haber solución estable.
+  Nuevamente Knuth~%
+    \cite{knuth96:_stable_marriage}
+  plantea un ejemplo.
+  \begin{table}[ht]
+    \centering
+    \subfloat[Hombres]{
+      \begin{tabular}{>{\(}c<{\)}@{:\;}*{3}{>{\(}c<{\)}}}
+        1 & 1 &	&     \\
+        2 & 3 & 2 & 1 \\
+        3 & 3 & 1 &
+      \end{tabular}
+      \label{subtab:sm-inc-men}
+    }
+    \hspace*{3em}
+    \subfloat[Mujeres]{
+      \begin{tabular}{>{\(}c<{\)}@{:\;}*{3}{>{\(}c<{\)}}}
+        1 & 3 & 1 & 2 \\
+        2 & 2 & 1 & 3 \\
+        3 & 1 & 2 & 3
+      \end{tabular}
+      \label{subtab:sm-inc-women}
+    }
+    \caption{Preferencias incompletas}
+    \label{tab:sm-incomplete}
+  \end{table}
+  En el cuadro~\ref{tab:sm-incomplete} la única posibilidad es
+  \(((x_1, y_1), (x_2, y_2), (x_3, y_3))\),
+  pero esta es inestable por \(x_2\) e \(y_3\).
+
+  En realidad,
+  se da:
+  \begin{theorem}
+    \label{theo:sm-optimal}
+    La solución dada por el algoritmo de Gale-Shapley
+    es la mejor posible para los hombres.
+  \end{theorem}
+  \begin{proof}
+    Llame a una mujer \emph{posible} para \(x\)
+    si hay una solución estable que la da como pareja para \(x\).
+    Demostraremos que cada hombre se casa
+    con su mujer posible más alta en sus preferencias
+    por inducción.
+    Supongamos que en un cierto punto del algoritmo
+    ningún hombre ha sido rechazado por una mujer posible.
+    Al inicio esto se cumple vacuamente;
+    si siempre se cumple durante la ejecución del algoritmo
+    se cumple al final,
+    y cada hombre se casa con su pareja posible preferida.
+    Suponga que en este punto \(y\),
+    habiendo recibido una propuesta mejor,
+    rechaza a \(x\).
+    Debemos demostrar que \(y\) es imposible para \(x\).
+    Si \(y\) elige a \(x'\),
+    es porque prefiere a \(x'\) sobre \(x\);
+    y \(x'\) se propuso a \(y\) porque todas sus mejores opciones
+    lo rechazaron.
+    Por inducción,
+    \(x'\) es imposible para esas otras opciones.
+    Si se casara \(x\) con \(y\),
+    \(x'\) deberá conformarse con \(y'\),
+    que considera menos deseable.
+    Pero esta configuración es inestable,
+    \(x'\) e \(y\) estarían dispuestos a intercambiar parejas.
+    En resumen,
+    \(x\) es imposible para \(y\).
+  \end{proof}
+  Solo si la solución es única
+  los resultados de propuestas de hombres y propuestas de mujeres coinciden.
+  Gusfield~%
+    \cite{gusfield87:_three_fast_algor_four_probl_stabl_marriag}
+  da algoritmos eficientes para hallar todas las combinaciones estables
+  (¡pueden ser muchas!)
+  y otros problemas afines.
+
+\section{Postulación a carreras}
+\label{sec:postulacion-carreras}
+
+  Una extensión es considerar estudiantes \(\mathscr{A}\)
+  que postulan a universidades \(\mathscr{U}\),
+  donde la universidad \(u \in \mathscr{U}\) ofrece \(q_u\) vacantes.
+  Nuevamente,
+  cada estudiante tiene una lista de prioridades de las universidades
+  y cada universidad una lista de preferencias de postulantes.
+  Todos postulan a su universidad preferida
+  entre las que aún no lo han rechazado,
+  y la universidad con \(q\) cupos elige los \(q\) mejores
+  entre los que tiene en la lista actualmente y los nuevos llegados
+  (posiblemente rechazando a quienes no cumplen requisitos mínimos,
+   con lo que la lista podría tener menos de \(q\) postulantes).
+  El proceso termina cuando todos los estudiantes
+  o están en una lista de espera
+  o han sido rechazados por todas las universidades
+  a las que pueden postular.
+  En forma similar al teorema~\ref{theo:stable-marriage-exists}
+  se demuestra que el resultado es estable
+  (ningún estudiante se cambiaría de universidad con otro),
+  como en el teorema~\ref{theo:sm-optimal}
+  los postulantes obtienen sus mejores cupos posibles.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-07-previa}
+
+  \begin{enumerate}
+  \item
+    Encuentre las soluciones que entrega el algoritmo
+    orientado a hombres y a mujeres
+    para las preferencias del cuadro~\ref{tab:sm-exercise}.
+    \begin{table}[ht]
+      \centering
+      \subfloat[Hombres]{
+        \begin{tabular}{>{\(}c<{\)}@{:}*{8}{@{\;\;}>{\(}c<{\)}}}
+          1 & 5 & 7 & 1 & 2 & 6 & 8 & 4 & 3 \\
+          2 & 2 & 3 & 7 & 5 & 4 & 1 & 8 & 6 \\
+          3 & 8 & 5 & 1 & 4 & 6 & 2 & 3 & 7 \\
+          4 & 3 & 2 & 7 & 5 & 1 & 6 & 8 & 4 \\
+          5 & 7 & 2 & 5 & 1 & 3 & 6 & 8 & 4 \\
+          6 & 1 & 6 & 7 & 5 & 8 & 4 & 2 & 3 \\
+          7 & 2 & 5 & 7 & 6 & 3 & 4 & 8 & 1 \\
+          8 & 3 & 8 & 4 & 5 & 7 & 2 & 6 & 1
+        \end{tabular}
+        \label{subtab:sm-exer-men}
+      }
+      \hspace*{2em}
+      \subfloat[Mujeres]{
+        \begin{tabular}{>{\(}c<{\)}@{:}*{8}{@{\;\;}>{\(}c<{\)}}}
+          1 & 5 & 3 & 7 & 6 & 1 & 2 & 8 & 4 \\
+          2 & 8 & 6 & 3 & 5 & 7 & 2 & 1 & 4 \\
+          3 & 1 & 5 & 6 & 2 & 4 & 8 & 7 & 3 \\
+          4 & 8 & 7 & 3 & 2 & 4 & 1 & 5 & 6 \\
+          5 & 6 & 4 & 7 & 3 & 8 & 1 & 2 & 5 \\
+          6 & 2 & 8 & 5 & 3 & 4 & 6 & 7 & 1 \\
+          7 & 7 & 5 & 2 & 1 & 8 & 6 & 4 & 3 \\
+          8 & 7 & 4 & 1 & 5 & 2 & 3 & 6 & 8
+        \end{tabular}
+        \label{subtab:sm-exer-women}
+      }
+      \caption{Preferencias para ejercicio}
+      \label{tab:sm-exercise}
+    \end{table}
+  \item
+    Acote el número de propuestas de matrimonio aceptadas,
+    como menciona la demostración
+    del teorema~\ref{theo:stable-marriage-exists}.
+  \item
+    Demuestre que a lo más un hombre
+    recibe su última elección con el algoritmo dado.
+    En consecuencia,
+    si hay una asignación estable en la cual varios hombres
+    se deben conformar con sus últimas preferencias,
+    hay varias soluciones.
+  \item
+    El algoritmo esbozado en el teorema~\ref{theo:stable-marriage-exists}
+    no especifica el orden en que los hombres se proponen.
+    Demuestre que cualquiera sea este orden,
+    la asignación resultante es la misma.
+  \item
+    Demuestre que el algoritmo
+    como esbozado en teorema~\ref{theo:stable-marriage-exists}
+    a cada mujer le asigna la peor de sus preferencias
+    entre todas las soluciones estables.
+  \item
+    Demuestre que el algoritmo de llenado de cupos en universidades
+    cumple lo enunciado.
+  \end{enumerate}
+
+% To do:
+% - Related problems: Roommate
+% - Other algorithms cited by Knuth
+% - Complete bibliography
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: ../INF-221_clases
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  english stable marriage problem deseabilidad
+% LocalWords:  intertanto

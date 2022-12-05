@@ -1,0 +1,477 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Error de Interpolación}
+\label{cha:interpolacion-error}
+
+  La clase pasada vimos cómo obtener la interpolación
+  dado los pares de puntos \((x_k, f(x_k))\) con \(k \in \{0, \dotsc, n \}\)
+  que nos daban.
+  Nuestro tema de interés ahora es obtener
+  el error de esas interpolaciones
+  (figura \ref{05::ErrorEjemplo}).
+  En particular,
+  nos interesa ver cómo depende el error de los puntos elegidos.
+  Usaremos algunos resultados del análisis real,
+  refiérase a sus apuntes,
+  al apéndice~\ref{apx:analysis}
+  o a textos como el de Chen~%
+    \cite{chen08:_fundam_analy}
+  para demostraciones de los teoremas del caso.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                    xmin = 0,	 xmax = 3,
+                    ymin = -0.6, ymax = 2.3,
+                    xtick = {0},
+                    xticklabels = {},
+                    ytick = {0},
+                    yticklabels = {},
+                    height = 6cm, width = 9cm
+                  ]
+
+        \addplot [black!30!blue!90, samples = 100, domain = 0.15:2.4]
+          {ln(2 * x + 0.8) + 0.2} node [xshift = 10] (f) {\(f(x)\)};
+        \addplot [black!10!red!90, smooth, tension = 0.8]
+          coordinates {(0.2, 0.2) (0.55, 1.3) (0.9, 0.6) (1.2, 1.7)
+                       (1.5, 0.8) (1.9, 1.9)}
+          node [yshift = 5pt, xshift = 4pt] (p) {\(Q_n(x)\)};
+
+        \draw [fill = black!30] (axis cs:0.257, 0.47) circle (0.7mm);
+        \draw [fill = black!30] (axis cs:0.72, 1) circle (0.7mm);
+        \draw [fill = black!30] (axis cs:1.315, 1.43) circle (0.7mm);
+        \draw [fill = black!30] (axis cs:1.85, 1.7) circle (0.7mm);
+        \draw [fill = black!30] (axis cs:1.85, 1.7) circle (0.7mm);
+
+        \draw [latex'-latex', thick, green!60!black!90]
+          (axis cs:0.888, 1.15) -- (axis cs:0.888, 0.595);
+        \draw [fill = black!30] (axis cs:0.888, 0.595) circle (0.7mm);
+      \end{axis}
+    \end{tikzpicture}
+    \caption{El error es la diferencia
+             entre \(Q_n(x)\) y \(f(x)\) en cada punto (flecha verde).}
+    \label{05::ErrorEjemplo}
+  \end{figure}
+  \begin{theorem}
+    \label{theo:interpolation-error}
+    Sea \(f \in C^{n+1}[a, b]\)
+    (vale decir,
+     \(f\) tiene \(n + 1\) derivadas continuas en el intervalo).
+    Sea \(Q_n(x)\) el polinomio de grado \(n\)
+    que interpola \(f\)
+    en los puntos distintos \(x_0, \dotsc, x_n \in[a, b]\).
+    Entonces para todo \(x \in [a, b]\)
+    hay \(\zeta \in [a, b]\) tal que
+    \begin{equation}
+      \label{05::Teo2}
+      f(x) - Q_n(x)
+        = \underbrace{\frac{1}{(n + 1)!} f^{(n+1)}(\zeta)
+              \prod_{0 \le j \le n}(x - x_j)}_{\text{Error}}
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    Fijemos \(x \in [a, b]\).
+    Si \(x = x_j\) para algún \(j\),
+    el lado izquierdo y derecho de~\eqref{05::Teo2} se anulan
+    para todo \(\zeta\)
+    y estamos listos.
+
+    En caso contrario,
+    sea
+    \begin{equation}
+      \omega(x)
+        = \prod_{0\leq j\leq n}(x-x_j)
+    \end{equation}
+    Notamos para referencia futura
+    que \(\omega(x)\) es mónico%
+      \footnote{Para un polinomio de grado \(n\),
+                el coeficiente de \(x^n\) es \num{1}.},
+    con lo que \(\omega^{(n+1)}(x) = (n + 1)!\).
+
+    Definamos:
+    \begin{equation}
+      F(y)
+        = f(y)-Q_n(y) - \lambda \omega(y)
+    \end{equation}
+    donde elegimos \(\lambda\) tal que \(F(x) = 0\).
+
+    La función \(F(y)\) está en \(C^{n+1}[a, b]\),
+    y tiene \(n + 2\) ceros distintos en \([a, b]\),
+    a saber \(x, x_0, \dotsc, x_n\).
+    Por el teorema de Rolle extendido
+    (teorema~\ref{theo:Rolle-extended})
+    \(F^{(n + 1)}(y)\) tiene un cero en \([a, b]\),
+    llamémosle \(\zeta\).
+    O sea:
+    \begin{align*}
+      F^{(n + 1)}(\zeta)
+        &= f^{(n + 1)}(\zeta)
+             - \cancelto{\scriptstyle 0}{Q_n^{(n + 1)}(\zeta)}
+             - \lambda
+          \quad \cancelto{\scriptstyle(n + 1)!}{\omega^{(n + 1)}(\zeta)}
+         = 0 \\
+    \intertext{Vale decir:}
+      f^{(n + 1)}(\zeta)
+        &= \lambda(n + 1)! \\
+    \intertext{Con esto:}
+      \lambda
+        &= \frac{f^{(n + 1)}(\zeta)}{(n + 1)!} \\
+      F(y)
+        &= f(y) - Q_n(y) - \frac{f^{(n + 1)}(\zeta)}{(n + 1)!} \omega(y)
+    \end{align*}
+    El error en el punto \(x\) es:
+    \begin{equation*}
+      f(x) - Q_n(x)
+        = \frac{f^{(n + 1)}(\zeta)}{(n + 1)!} \omega(x)
+    \end{equation*}
+  \end{proof}
+  Acá \(n\) lo elegimos nosotros
+  y corresponde al grado de la interpolación.
+  Es claro que mientras mayor sea el grado de nuestra interpolación,
+  en general menor será el error
+  (vea el \((n + 1)!\) como denominador).
+  Claro que intervienen las características de la función
+  y los puntos elegidos también.
+
+\section{El fenómeno de Runge}
+\label{sec:Runge-phenomenon}
+
+  En 1901 Runge~%
+    \cite{runge01:_ueber_aequidistante_interpolation}
+  observó el fenómeno que lleva su nombre.
+  Lo ilustramos con la función que el mismo usó de ejemplo:
+  \begin{equation}
+    \label{eq:Runge-function}
+    f(x)
+      = \frac{1}{1 + 25 x^2}
+  \end{equation}
+  Se grafica~\eqref{eq:Runge-function}
+  en el rango \([-1, 1]\) en la figura~\ref{fig:Runge-function}.
+  \begin{figure}[ht]
+    \centering
+    \pgfimage[width = 0.8\textwidth]{images/runge}
+    \caption{La función de Runge}
+    \label{fig:Runge-function}
+  \end{figure}
+  Se aprecia que parece ser bastante mansa,
+  pero las figuras~\ref{fig:Runge-function-equiespaciados}
+  muestran lo que ocurre al interpolar
+  con 5, 7, 9 y~11 puntos igualmente espaciados
+  entre \(-1\) y~\num{1}.
+  \begin{figure}[ht]
+    \centering
+    \subfloat[\num{5} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/runge-4}
+      \label{fig:Runge-function-4}
+    }
+    \subfloat[\num{7} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/runge-6}
+      \label{fig:Runge-function-6}
+    } \\
+    \subfloat[\num{9} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/runge-8}
+      \label{fig:Runge-function-8}
+    }
+    \subfloat[\num{11} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/runge-10}
+      \label{fig:Runge-function-10}
+    }
+    \caption{Interpolando la función de Runge, puntos equiespaciados}
+    \label{fig:Runge-function-equiespaciados}
+  \end{figure}
+  Se aprecia que alrededor de \num{0},
+  el polinomio interpolante se acerca a la función,
+  como esperábamos;
+  sin embargo,
+  en los extremos el error
+  (la diferencia absoluta máxima entre la función y el polinomio)
+  aumenta.
+  La figura~\ref{fig:Ruge-error} muestra cómo evoluciona el error máximo
+  con el número de puntos igualmente espaciados.
+  \begin{figure}[ht]
+    \centering
+    \pgfimage[width = 0.8\textwidth]{images/runge-error}
+    \caption{Error al interpolar la función de Runge}
+    \label{fig:Ruge-error}
+  \end{figure}
+  Una explicación clara del fenómeno,
+  aunque un tanto simplificada para efectos didácticos,
+  es la de Epperson~%
+    \cite{epperson87:_runge_example}.
+  Resulta que depende de las singularidades de la función
+  en el plano complejo,
+  que no se aprecian en la línea real.
+
+\section{Puntos de Chebyshev}
+\label{sec:puntos-de-chebyshev}
+
+  Nace entonces la pregunta de elegir los puntos
+  de manera de evitar este comportamiento indeseable.
+  Del teorema~\ref{theo:interpolation-error}
+  el error de interpolación para los puntos distintos
+  \(x_0, \dotsc, x_n \in[a, b]\)
+  cumple:
+  \begin{equation}
+    \label{eq:interpolation-error}
+          f(x) - Q_n(x)
+        = \frac{1}{(n + 1)!} f^{(n+1)}(\zeta)
+            \prod_{0 \le j \le n}(x - x_j)
+  \end{equation}
+  donde \(a < \zeta < b\).
+  Debe destacarse que \(\zeta\)
+  depende de los puntos \(x_0, \dotsc, x_n\) además de \(x\),
+  minimizar el máximo valor absoluto de esta expresión
+  en algún intervalo no es fácil.
+  Nos contentaremos con minimizar el polinomio dado por la productoria.
+  Para ello emplearemos una secuencia de polinomios especiales.
+
+  Los \emph{polinomios de Chebyshev}
+  se definen mediante:
+  \begin{equation}
+    \label{eq:Chebyshev-recurrence}
+    \begin{split}
+      T_0(x)
+        &= 1 \\
+      T_1(x)
+        &= x \\
+      T_{n + 1}(x)
+        &= 2 x T_n(x) - T_{n - 1}(x)
+          \quad n \ge 1
+    \end{split}
+  \end{equation}
+
+  En vez de la recurrencia~\eqref{eq:Chebyshev-recurrence}
+  es posible derivar una fórmula explícita para \(T_n(x)\).
+  \begin{lemma}
+    \label{lem:Chebyshev-explicit}
+    Para \(x \in [-1, 1]\):
+    \begin{equation}
+      \label{eq:Chebyshev-explicit}
+      T_n(x)
+        = \cos(n \arccos x)
+    \end{equation}
+  \end{lemma}
+  \begin{proof}
+    La identidad para el coseno de suma de ángulos da:
+    \begin{align*}
+      \cos (n + 1) \theta
+        &= \cos \theta \cos n \theta - \sin \theta \sin n \theta \\
+      \cos (n - 1) \theta
+        &= \cos \theta \cos n \theta + \sin \theta \sin n \theta
+    \end{align*}
+    de donde:
+    \begin{equation*}
+      \cos (n + 1) \theta
+        = 2 \cos \theta \cos n \theta - \cos (n - 1) \theta
+    \end{equation*}
+    Sea \(\theta = \arccos x\),
+    vale decir,
+    \(x = \cos \theta\).
+    Si definimos:
+    \begin{equation*}
+      t_n(x)
+        = \cos (n \arccos x)
+        = \cos n \theta
+    \end{equation*}
+    Resulta así:
+    \begin{align*}
+      t_0(x)
+        &= 1 \\
+      t_1(x)
+        &= x \\
+      t_{n + 1}(x)
+        &= 2 x t_n(x) - t_{n - 1}(x)
+          \quad n \ge 1
+    \end{align*}
+    Esta es exactamente la recurrencia~\eqref{eq:Chebyshev-recurrence}.
+  \end{proof}
+  De la ecuación~\eqref{eq:Chebyshev-recurrence}
+  vemos que:
+  \begin{equation*}
+    T_n(x)
+      = 2^{n - 1} x^n + \dotsb
+  \end{equation*}
+  Conocemos los ceros de \(T_n(x)\) por el lema~\ref{lem:Chebyshev-explicit}:
+  \begin{equation*}
+    x_k
+      = \cos \frac{(2 k - 1) \pi}{2 n}, k = 1, \dotsc, n
+  \end{equation*}
+  así que:
+  \begin{equation*}
+    T_n(x)
+      = 2^{n - 1} \prod_{1 \le k \le n} (x - x_k)
+  \end{equation*}
+
+  ¿Qué tienen de especial estos polinomios?
+  Veremos primero un resultado general sobre polinomios mónicos.
+  \begin{theorem}
+    \label{theo:maxima-monic-polynomial}
+    Si \(p_n(x)\) es un polinomio mónico de grado \(n\),
+    entonces:
+    \begin{equation}
+      \label{eq:maxima-monic-polynomial}
+      \max_{-1 \le x \le 1} \lvert p_n(x) \rvert
+        \ge 2^{1 - n}
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    Demostramos~\eqref{eq:maxima-monic-polynomial} por contradicción.
+    Supongamos que para el polinomio mónico \(p_n\) de grado \(n\)
+    y para todo \(\lvert x \rvert \le 1\) siempre es:
+    \begin{equation*}
+      \lvert p_n(x) \rvert
+        < 2^{1 - n}
+    \end{equation*}
+    Sea
+    \begin{equation*}
+      q_n(x)
+        = 2^{1 - n} T_n(x)
+    \end{equation*}
+    con lo que \(q_n\) es mónico,
+    y sean \(u_j\) los siguientes \(n + 1\) puntos:
+    \begin{equation*}
+      u_j
+        = \cos \frac{j \pi}{n}
+          \quad 0 \le j \le n
+    \end{equation*}
+    Como por el lema~\ref{lem:Chebyshev-explicit}:
+    \begin{align*}
+      T_n \left( \cos \frac{j \pi}{n} \right)
+        &= \cos \left( n \arccos \left( \cos \frac{j \pi}{n} \right) \right) \\
+        &= \cos \left( n \cdot \frac{j \pi}{n} \right) \\
+        &= \cos j \pi \\
+        &= (-1)^j
+    \end{align*}
+    tenemos que:
+    \begin{equation*}
+      (-1)^j q_n(u_j)
+        = 2^{1 - n}
+    \end{equation*}
+    Por lo tanto:
+    \begin{equation*}
+      (-1)^j p_n(u_j)
+        \le \lvert p_n(u_j) \rvert
+        < 2^{1 - n}
+        = (-1)^j q_n(u_j)
+    \end{equation*}
+    Concluimos que:
+    \begin{equation*}
+      (-1)^j (q_n(u_j) - p_n(u_j)) > 0
+        \quad 0 \le j \le n
+    \end{equation*}
+    lo que significa que el polinomio \(q_n(x) - p_n(x)\)
+    cambia de signo \(n + 1\) veces en el intervalo.
+    Vale decir,
+    tiene al menos \(n\) ceros en el intervalo.
+    Pero \(p_n\) y \(q_n\) son mónicos,
+    por lo que \(q_n(x) - p_n(x)\) tiene grado a lo más \(n - 1\),
+    y no puede tener más de \(n - 1\) ceros
+    a menos que sea el polinomio cero,
+    o sea,
+    \(p_n = q_n\).
+    Como el máximo de \(p_n\) es menor al máximo de \(q_n\),
+    son polinomios distintos y esto es imposible.
+  \end{proof}
+  Volvamos a nuestro problema de interpolación.
+  Queremos hallar los puntos \(x_j\) que minimicen:
+  \begin{equation*}
+    \max_{-1 \le x \le 1}
+      \left\lvert \prod_{0 \le j \le n} (x - x_j) \right\rvert
+  \end{equation*}
+  Notamos que este polinomio es mónico de grado \(n + 1\),
+  por lo que por el teorema~\ref{theo:maxima-monic-polynomial}:
+  \begin{equation*}
+    \max_{-1 \le x \le 1}
+      \left\lvert \prod_{0 \le j \le n} (x - x_j) \right\rvert
+      \ge 2^{- n}
+  \end{equation*}
+  y podemos obtener el mínimo de esto
+  si el polinomio es \(2^{-n} T_{n + 1}(x)\),
+  o sea,
+  los \(x_j\) son los ceros del polinomio de Chebyshev \(T_{n + 1}(x)\).
+  Por el lema~\ref{lem:Chebyshev-explicit}
+  vemos que:
+  \begin{equation}
+    \label{eq:Chebyshev-points}
+    x_j
+      = \cos \frac{2 j + 1}{2 n + 2} \pi
+        \quad 0 \le j \le n
+  \end{equation}
+  Para estos puntos nuestra cota~\eqref{05::Teo2} para el error
+  da:
+  \begin{align}
+    \lvert f(x) - p_n(x) \rvert
+      &=   \left\lvert
+             2^{-n} T_{n + 1}(x) \frac{f^{(n + 1)}(\zeta(x))}{(n + 1)!}
+           \right\rvert \notag \\
+      &\le \frac{B_{n + 1}}{2^n (n + 1)!}
+             \label{eq.Chebyshev-error}
+  \end{align}
+  donde:
+  \begin{equation}
+    \label{eq:Chebyshev-error-coeff}
+    B_{n + 1}
+      = \max_{x \in [-1, 1]} \lvert f^{(n + 1)}(x) \rvert
+  \end{equation}
+  Es claro que mediante una transformación lineal
+  podemos cambiar el rango de integración.
+
+  Si repetimos el ejercicio de interpolación anterior,
+  pero ahora interpolando la función de Runge en los puntos de Chebyshev
+  resultan las figuras~\ref{fig:Chebyshev-Runge-function}.
+  \begin{figure}[ht]
+    \centering
+    \subfloat[\num{5} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/chebyshev-4}
+      \label{fig:Chebyshev-Runge-function-4}
+    }
+    \subfloat[\num{7} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/chebyshev-6}
+      \label{fig:Chebyshev-Runge-function-6}
+    } \\
+    \subfloat[\num{9} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/chebyshev-8}
+      \label{fig:Chebyshev-Runge-function-8}
+    }
+    \subfloat[\num{11} puntos]{
+      \pgfimage[width = 0.475\textwidth]{images/chebyshev-10}
+      \label{fig:Chebyshev-Runge-function-10}
+    }
+    \caption{Interpolando la función de Runge, puntos de Chebyshev}
+    \label{fig:Chebyshev-Runge-function}
+  \end{figure}
+  La figura~\ref{fig:Chebyshev-error} muestra cómo evoluciona el error máximo
+  con el número de puntos de Chebyshev.
+  Se ve que las máximas magnitudes de los errores son bastante parejos
+  (cabe esperar que lo sean,
+   por la forma sinusoidal de \(T_n(x)\) en nuestro rango,
+   y siendo el error una función
+   --que esperamos varíe lentamente con \(x\)--
+   multiplicada por un polinomio de Chebyshev).
+  \begin{figure}[ht]
+    \centering
+    \pgfimage[width = 0.8\textwidth]{images/chebyshev-error}
+    \caption{Error al interpolar la función de Runge
+             en puntos de Chebyshev}
+    \label{fig:Chebyshev-error}
+  \end{figure}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  grafica eq function width images runge equiespaciados
+% LocalWords:  recurrence maxima monic polynomial

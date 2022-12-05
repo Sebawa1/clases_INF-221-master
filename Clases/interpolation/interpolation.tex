@@ -1,0 +1,469 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Interpolación}
+\label{cha:interpolacion}
+
+  Hay situaciones en las cuales se conoce el valor de una función
+  solo en algunos puntos dados,
+  y queremos calcular valores en puntos intermedios.
+  Por ejemplo,
+  contamos solo con algunos valores medidos,
+  o hay una tabla de valores numéricos.
+  Este es el problema de interpolación.
+
+  Nos dan los valores exactos de una función desconocida
+  en \(n + 1\) puntos \(f(x_0), \ldots, f(x_n)\),
+  queremos hallar una función que tome esos valores
+  (para calcular valores intermedios).
+  El caso más común es utilizar \emph{polinomios}.
+  Para esta ocasión veremos
+  que hay exactamente \emph{un} polinomio de grado a lo más \(n\)
+  que pasa por \(n + 1\) puntos.
+
+  Entre las cosas que podemos hacer
+  para hallar la interpolación de \(f(x)\) tenemos:
+  \begin{itemize}
+  \item
+    Obtener los coeficientes
+    del polinomio en forma canónica de un sistema de ecuaciones.
+  \item
+    De forma implícita,
+    dando el polinomio en forma no canónica.
+  \end{itemize}
+
+\section{Por sistema de ecuaciones}
+
+  Suponiendo \(p(x) = a_0 + a_1 x + \dotsb + a_n x^n\),
+  creamos un sistema de ecuaciones de la forma:
+  \begin{align*}
+    p(x_0)
+       = f(x_0)
+      &= a_0 + a_1 x_0 + a_2 x_0^2 + \dotsb a_n x_0^n \\
+    p(x_1)
+       = f(x_1)
+      &= a_0 + a_1 x_1 + a_2 x_1^2 + \dotsb a_n x_1^n \\
+      &\vdots \\
+    p(x_n)
+       = f(x_n)
+      &= a_0 + a_1 x_n + a_2 x_n^2 + \dotsb a_n x_n^n
+  \end{align*}
+  que en forma de matriz se escribe como:
+  \begin{equation}
+    \label{04::Sistema:de:ecuaciones:1}
+    \begin{pmatrix}
+      1 & x_0 & x_0^2 & \cdots & x_0^n \\
+      1 & x_1 & x_1^2 & \cdots & x_1^n \\
+      \vdots & \vdots & \vdots & \ddots & \vdots & \\
+      1 & x_n & x_n^2 & \cdots & x_n^n
+    \end{pmatrix}
+    \begin{pmatrix}
+      a_0 \\
+      a_1 \\
+      \vdots \\
+      a_n
+    \end{pmatrix} =
+    \begin{pmatrix}
+      f(x_0) \\
+      f(x_1) \\
+      \vdots \\
+      f(x_n)
+    \end{pmatrix}
+  \end{equation}
+  Con igual cantidad de ecuaciones e incógnitas,
+  el sistema de ecuaciones~\eqref{04::Sistema:de:ecuaciones:1}
+  tiene solución única si y solo si
+  el determinante es distinto de cero
+  (ver por ejemplo Treil~%
+    \cite{treil17:_linear_algeb_done_wrong}):
+  \begin{equation}
+    \label{04::Determinante:de:Vandermonde = 0}
+    \left\lvert
+      \begin{matrix}
+        1 & \cdots & x_0^n\\
+        \vdots & \ddots & \vdots \\
+        1 & \cdots & x_n^n
+      \end{matrix}
+    \right\rvert
+      \ne 0
+  \end{equation}
+
+  El determinante de la ecuación \eqref{04::Determinante:de:Vandermonde = 0}
+  resulta ser el \emph{determinante de Vandermonde}.
+  \begin{theorem}
+    El determinante de Vandermonde vale:
+    \begin{equation*}
+      \begin{vmatrix}
+        1 & a_1 & a_1^2 & \cdots & a_1^{n - 1} \\
+        1 & a_2 & a_2^2 & \cdots & a_2^{n - 1} \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        1 & a_n & a_n^2 & \cdots & a_n^{n - 1}
+      \end{vmatrix}
+        = \prod_{1 \le i < j \le n} (a_j - a_i)
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Por inducción sobre \(n\).
+    Para abreviar,
+    llamaremos:
+    \begin{equation*}
+      V_n
+        = \begin{vmatrix}
+            1 & a_1 & a_1^2 & \cdots & a_1^{n - 1} \\
+            1 & a_2 & a_2^2 & \cdots & a_2^{n - 1} \\
+            \vdots & \vdots & \vdots & \ddots & \vdots \\
+            1 & a_n & a_n^2 & \cdots & a_n^{n - 1}
+          \end{vmatrix}
+    \end{equation*}
+    \begin{description}
+    \item[Base:]
+      El caso \(n = 1\) es trivial,
+      es simplemente:
+      \begin{equation*}
+        \begin{vmatrix}
+          1
+        \end{vmatrix}
+          = 1
+      \end{equation*}
+    \item[Inducción:]
+      Supongamos que vale para \(k\),
+      y consideremos el determinante:
+      \begin{equation*}
+        \begin{vmatrix}
+          1 & a_1 & a_1^2 & \cdots & a_1^k \\
+          1 & a_2 & a_2^2 & \cdots & a_2^k \\
+          \vdots & \vdots & \vdots & \ddots & \vdots \\
+          1 & a_k & a_k^2 & \cdots & a_k^k \\
+          1 & x	  & x^2	  & \cdots & x^k \\
+        \end{vmatrix}
+      \end{equation*}
+      Expandiendo por la última fila,
+      vemos que es un polinomio en \(x\) de grado a lo más \(k\),
+      llamémosle \(f(x)\).
+      Como determinantes con filas iguales son cero,
+      sabemos que \(f(a_i) = 0\) para \(1 \le i \le k\),
+      o sea:
+      \begin{align*}
+        f(x)
+          &= c (x - a_1) (x - a_2) \dotsm (x - a_k) \\
+          &= c \prod_{1 \le i \le k} (x - a_i)
+      \end{align*}
+      Como el grado de \(f\) es a lo más \(k\),
+      y tenemos \(k\) factores lineales en \(x\),
+      \(c\) es independiente de \(x\).
+
+      La expansión por la última fila,
+      nuevamente,
+      muestra que el coeficiente de \(x^k\) es \(V_k\),
+      con lo que \(c = V_k\).
+      Reemplazando \(x \mapsto a_{k + 1}\)
+      con nuestra hipótesis de inducción entrega:
+      \begin{align*}
+        V_{k + 1}
+          &= V_k \cdot \prod_{1 \le i \le k} (a_{k + 1} - a_i) \\
+          &= \prod_{1 \le i < j \le k} (a_j - a_i)
+               \cdot \prod_{1 \le i \le k} (a_{k + 1} - a_i) \\
+          &= \prod_{1 \le i < j \le k + 1} (a_j - a_i)
+      \end{align*}
+    \end{description}
+    Por inducción, vale para todo \(n \in \mathbb{N}\).
+  \end{proof}
+
+\section{De forma implícita}
+
+  Para encontrar la interpolación de \(f\) de manera implícita
+  simplemente inventamos un polinomio que pase por los puntos.
+
+\subsection{Forma de Lagrange}
+
+  Consiste en usar el polinomio:
+  \begin{align}
+    p(x)
+      &= f(x_0) \frac{(x - x_1) (x - x_2) \dotsm (x - x_n)}
+                     {(x_0 - x_1) (x_0 - x_2) \dotsm (x_0 - x_n)}
+           + f(x_1) \frac{(x -x_0) (x - x_2) \dotsm (x - x_n)}
+                         {(x_1 - x_0) (x_1 - x_2) \dotsm (x_1 - x_n)}
+           + \dotsb \notag \\
+      & \qquad {} + f(x_n) \frac{(x - x_0) \dotsm (x - x_{n - 1})}
+                               {(x_n - x_0) \dotsm (x_n - x_{n - 1})}
+              \notag \\
+     &= \sum_{0 \le k \le n} f(x_k)
+          \prod_{\substack{0 \le j \le n \\ j \ne k}}
+            \frac{x - x_j}{x_k - x_j}
+              \label{04::Lagrange:2}
+  \end{align}
+  como interpolación de \(f\).
+  Es claro que si evalúa \(p\)
+  en alguno de los \(x_k\) con \(k \in \{ 0, 1, \dotsc, n\}\) que nos entregan,
+  se tiene que \(p(x_k) = f(x_k)\),
+  y el polinomio es de grado \(n\).
+
+  Para referencia futura,
+  llamaremos:
+  \begin{equation}
+    \label{eq:Lagrange-bases}
+    \ell_i(x)
+      = \prod_{\substack{0 \le j \le n \\ j \ne i}}
+            \frac{x - x_j}{x_i - x_j}
+  \end{equation}
+  Estos polinomios de grado \(n\),
+  los \emph{polinomios base de Lagrange},
+  dependen de los puntos \(x_i\),
+  y tienen la particularidad que:
+  \begin{equation*}
+    \ell_i(x_j)
+      = [i = j]
+  \end{equation*}
+  Acá usamos la convención de Iverson:
+  \begin{equation*}
+    [\text{condición}]
+      = \begin{cases}
+          0 & \text{si la condición es falsa} \\
+          1 & \text{si la condición es verdadera}
+        \end{cases}
+  \end{equation*}
+  En resumen,
+  son linealmente independientes siempre que los \(x_i\) son todos distintos
+  (básicamente,
+   el determinante de Vandermonde es cero solo si algún \(x_i\) se repite).
+
+  En la práctica,
+  la fórmula~\eqref{04::Lagrange:2} es poco deseable,
+  requiere \(O(n^2)\) computación para calcular \(p(x)\).
+  Una forma alternativa es la \emph{fórmula baricéntrica}
+  que recomienda Winrich~%
+    \cite{winrich69:_compar_evaluat_schem_interp_polyn}
+  al comparar varias alternativas en términos de números de operaciones:
+  \begin{equation}
+    \label{eq:formula-baricentrica}
+    p(x)
+      = \frac{\sum_{0 \le j \le n} \frac{w_j f(x_j)}{x - x_j}}
+             {\sum_{0 \le j \le n} \frac{w_j}{x - x_j}}
+  \end{equation}
+  donde:
+  \begin{equation}
+    \label{eq:wj-Lagrange}
+    w_j
+      = \left(
+          \prod_{\substack{0 \le k \le n \\ k \ne j}} (x_j -x_k)
+        \right)^{-1}
+  \end{equation}
+  (claro que la expresión~\eqref{eq:formula-baricentrica}
+   es indefinida cuando \(x = x_i\),
+   hay que manejar ese caso en forma separada).
+  Berrut y Trefethen~%
+    \cite{berrut04:_bary_lagrange_interp} discuten esta fórmula en detalle.
+  Higham~%
+    \cite{higham04:_numer_stab_baryc_lagrange_interp}
+  analiza esta técnica,
+  concluyendo que es numéricamente estable
+  y recomendable para uso general.
+  Por ejemplo,
+  es la técnica que emplea SciPy~%
+    \cite{2020SciPy-NMeth}
+  para interpolación por polinomios.
+
+\subsection{Forma de Newton}
+\label{sec:Newton-interpolation}
+
+  Podemos escribir:
+  \begin{alignat}{2}
+    a_0
+     &= f(x_0)
+     &\qquad&
+     Q_0(x)
+       = a_0 \notag \\
+  \intertext{Luego para \(k > 0\):}
+     a_k
+      &= \frac{f(x_k) - Q_{k - 1}(x_k)}
+              {\prod_{0 \le i \le k - 1}(x_k - x_i)}
+      &&
+      Q_k(x)
+        = Q_{k - 1}(x) + a_k \prod_{0 \le i \le k - 1} (x - x_i)
+           \label{eq:interpolacion-Newton}
+  \end{alignat}
+  donde \(Q_k\) corresponde a la interpolación de grado \(k\).
+
+\subsubsection{Diferencias divididas}
+\label{divided-differences}
+
+  La forma de Newton es engorrosa.
+  Una alternativa se obtiene con \emph{diferencias divididas},
+  que para los puntos \(x_0, \dotsc, x_n\) se definen mediante:
+  \begin{align*}
+    f[x_0]
+      &= f(x_0) \\
+    f[x_0, \dotsc, x_j]
+      &= \frac{f(x_j) - Q_{j - 1}(x_j)}{\prod_{0 \le k \le j - 1} (x_j - x_k)}
+  \end{align*}
+  Con esta notación~\eqref{eq:interpolacion-Newton}
+  se escribe:
+  \begin{equation}
+    \label{eq:interpolacion-diferencias-divididas}
+    Q_n(x)
+      = f[x_0]
+          + f[x_0, x_1] (x - x_0)
+          + \dotsb
+          + f[x_0, x_1, \dotsc, x_n] \prod_{0 \le k < n}(x - x_k)
+  \end{equation}
+  La utilidad de la forma~\eqref{eq:interpolacion-diferencias-divididas}
+  es por el siguiente resultado:
+  \begin{lemma}
+    Las diferencias divididas cumplen:
+    \begin{equation}
+      \label{eq:divided-differences-recurrence}
+      f[x_0, \dotsc, x_n]
+        = \frac{f[x_1, \dotsc, x_n] - f[x_0, \dotsc, x_{n - 1}]}
+               {x_n - x_0}
+    \end{equation}
+  \end{lemma}
+  \begin{proof}
+    Para cualquier \(k\),
+    sea \(Q_k\) el polinomio de grado a lo más \(k\)
+    que interpola \(f\) en los puntos \(x_0, \dotsc, x_k\),
+    o sea:
+    \begin{equation*}
+      Q_k(x_j)
+        = f(x_j)
+           \quad \text{para \(0 \le j \le k\)}
+    \end{equation*}
+    Consideremos el polinomio \(P(x)\) único de grado a lo más \(n - 1\)
+    que interpola \(f\) en los puntos \(x_1, \dotsc, x_n\).
+    Es simple verificar que:
+    \begin{equation}
+      \label{eq:QvsP}
+      Q_n(x)
+        = P(x) + \frac{x - x_n}{x_n - x_0} (P(x) - Q_{n - 1}(x))
+    \end{equation}
+    En~\eqref{eq:QvsP} el coeficiente de \(x^n\) al lado izquierdo
+    es \(f[x_0, \dotsc, x_n]\).
+    El coeficiente de \(x^{n - 1}\) en \(P(x)\)
+    es \(f[x_1, \dotsc, x_n]\),
+    y en \(Q_{n - 1}(x)\)
+    es \(f[x_0, \dotsc, x_{n - 1}]\).
+    O sea,
+    el coeficiente de \(x^n\) al lado derecho de~\eqref{eq:QvsP}
+    es:
+    \begin{equation*}
+      \frac{f[x_1, \dotsc, x_n] - f[x_0, \dotsc, x_{n - 1}]}
+           {x_n - x_0}
+    \end{equation*}
+    como aseveramos.
+  \end{proof}
+
+\paragraph{Nota:}
+
+  Algunos textos definen:
+  \begin{equation*}
+      f[x_0, \dotsc, x_n]
+        = f[x_1, \dotsc, x_n] - f[x_0, \dotsc, x_{n - 1}]
+  \end{equation*}
+  en cuyo caso las fórmulas deben ajustarse
+  para compensar por los denominadores faltantes.
+
+  Un ejemplo
+  (la función es la de Runge,
+   ecuación~\eqref{eq:Runge-function})
+  es la tabla del cuadro~\ref{tab:interpolacion}.
+% Table created by divided-differences script
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{*{ 8 }{>{\(}l<{\)}}}
+      \multicolumn{1}{c}{\boldmath\(x\)\unboldmath} &
+         \multicolumn{1}{c}{\boldmath\(y\)\unboldmath} &
+         \multicolumn{ 6 }{c}{\textbf{Diferencias divididas}} \\
+      \hline
+      0,10 & 0,8000 \\
+           &	    & -2,4615 \\
+      0,30 & 0,3077 &	      & 4,3140 \\
+           &	    & -0,9516 &	       & -5,6441 \\
+      0,45 & 0,1649 &	      & 2,0564 &	 & 4,7074 \\
+           &	    & -0,5403 &	       & -3,5258 &	  & -0,4531 \\
+      0,50 & 0,1379 &	      & 1,1749 &	 & 4,4355 &	    & -4,6852\\
+           &	    & -0,4229 &	       & -1,7516 &	  & -4,2013 \\
+      0,55 & 0,1168 &	      & 0,7371 &	 & 1,9148 \\
+           &	    & -0,2754 &	       & -0,8899 \\
+      0,70 & 0,0755 &	      & 0,3811 \\
+           &	    & -0,1421 \\
+      0,90 & 0,0471
+    \end{tabular}
+    \caption{Tabla para interpolación}
+    \label{tab:interpolacion}
+  \end{table}
+  Las entradas
+  (diferencias divididas)
+  se obtienen restando los elementos inmediatamente a la izquierda
+  divididas por la diferencia de los valores de \(x\) en las diagonales.
+  Para interpolar,
+  se usa la primera fila diagonal.
+  Por ejemplo,
+  calculemos las aproximaciones a \(y\) para \(x = 0,47\)
+  de los datos del cuadro~\ref{tab:interpolacion}.
+  \begin{align*}
+    Q_0(0,47)
+      &= 0,80000 \\
+    Q_1(0,47)
+      &= Q_0(0,47) - 2,4315 (0,47 - 0,1) \\
+      &= -0,11077 \\
+    Q_2(0,47)
+      &= Q_1(0,47) + 4,3140 (0,47 - 0,1) (0,47 - 0,3) \\
+      &= 0,16058 \\
+    Q_3(0,47)
+      &= Q_2(0,47) - 5,6441 (0,47 - 0,1) (0,47 - 0,3) (0,47 - 0.45) \\
+      &= 0,15348 \\
+    Q_4(0,47)
+      &= Q_3(0,47)
+           + 4,7074 (0,47 - 0,1) (0,47 - 0,3) (0,47 - 0.45) (0,47 - 0,50) \\
+      &= 0,15331 \\
+    Q_5(0,47)
+      &= 0,15330 \\
+    Q_6(0,47)
+      &= 0,15331
+  \end{align*}
+  El valor correcto es \num{0,15446}.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-04}
+
+  \begin{enumerate}
+  \item
+    Demuestre la fórmula baricéntrica~\eqref{eq:formula-baricentrica}.
+    Defina:
+    \begin{equation*}
+      \ell(x)
+        = \prod_{0 \le j \le n} (x - x_j)
+    \end{equation*}
+    escriba~\eqref{04::Lagrange:2} como:
+    \begin{equation*}
+      p(x)
+        = \ell(x) \sum_{0 \le j \le n} \frac{w_j f(x_j)}{x - x_j}
+    \end{equation*}
+    Use esta forma de~\eqref{04::Lagrange:2} para interpolar la función \num{1},
+    divida y simplifique.
+  \item
+    Plantee algoritmos eficientes
+    para evaluar el polinomio interpolador en \(x\)
+    dados los puntos \(x_0, \dotsc, x_n\)
+    usando las fórmulas~\eqref{04::Lagrange:2},
+    \eqref{eq:formula-baricentrica}
+    y~\eqref{eq:interpolacion-Newton}.
+    Separe inicialización que depende de los \(x_j\)
+    de cálculos que dependen de \(x\)
+    (o sea,
+     maneje el caso en que dados los \(x_j\)
+     interesa evaluar para varios \(x\)).
+    Calcule el número de operaciones de punto flotante
+    (\emph{flops})
+    para evaluar el polinomio interpolador en \(x\) en cada caso.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Interpolación interpolación llamémosle baricéntrica c
+% LocalWords:  SciPy flops eq baricentrica sec interpolation QvsP
+% LocalWords:  interpolacion function

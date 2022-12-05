@@ -1,0 +1,205 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Algoritmo de Kruskal, Union-Find}
+\label{cha:algoritmo-de-kruskal}
+
+  Un problema recurrente es hallar el árbol recubridor mínimo
+  (\emph{\foreignlanguage{english}{Minimal Spanning Tree}} en inglés,
+    abreviado MST)
+  de un grafo rotulado conexo.
+  En detalle,
+  dado un grafo \(G = (V, E)\) conexo,
+  con arcos rotulados por \(w \colon E \to \mathbb{R}^{+}\)
+  (el rótulo representa costo del arco),
+  hallar un árbol recubridor de costo total
+  (suma de los costos de los arcos)
+  mínimo.
+  Una solución a este problema da el algoritmo de Kruskal~%
+    \cite{kruskal56:_MST},
+  (algoritmo~\ref{alg:Kruskal},
+   que ya discutimos en el capítulo~\ref{cha:greedy-algorithm}).
+  La idea es ir construyendo un bosque
+  (conjunto de árboles),
+  uniendo sucesivamente árboles
+  mediante arcos de costo mínimo.
+  Inicialmente el bosque es simplemente cada vértice por separado,
+  al final es un árbol recubridor mínimo.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    Sort \(E\) by increeaing cost \;
+    \(S \gets \varnothing\) \;
+    \For{\(v \in V\)}{
+      Add \(\{v\}\) to \(S\) \;
+    }
+    \(T \gets \varnothing\) \;
+    \For{\(u v \in E\)}{
+      \If{\(u\) and \(v\) don't belong to the same set of \(S\)}{
+        Add \(u v\) to \(T\) \;
+        Join the sets to which \(u\) and \(v\) belong in \(S\) \;
+      }
+    }
+    \Return (V, T) \;
+
+    \caption{Algoritmo de Kruskal}
+    \label{alg:Kruskal}
+  \end{algorithm}
+  Este es un ejemplo clásico de algoritmo voraz.
+  Nos interesa derivar un programa eficiente
+  (y deducir su complejidad).
+  Es claro que la manipulación del conjunto \(S\)
+  es crucial.
+  Parte de la discusión que sigue viene de Erickson~%
+    \cite[clase~17]{erickson19:_algorithms}.
+
+\section{Una estructura de datos
+       para \emph{\foreignlanguage{english}{union-find}}}
+\label{sec:union-find-estructura}
+
+  Abstrayendo las operaciones empleadas,
+  vemos que requerimos una estructura de datos
+  que representa una partición de un conjunto universo \(V\),
+  con operaciones de inicializar con elementos solitarios,
+  hallar
+  (\emph{\foreignlanguage{english}{find}})
+  la partición a la que pertenece un elemento,
+  y unir particiones disjuntas
+  (\emph{\foreignlanguage{english}{union}}).
+  Por ellas se le llama
+  problema de \emph{\foreignlanguage{english}{union-find}}.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[edge from parent/.style = {draw, latex'-}]
+      \node (a) at (0, 0) {\num{3}}
+        child {node {\num{10}}
+          child {node{\num{15}}}
+          child {node{\num{17}}}};
+      \path[-latex'] (a) edge [loop above] (a);
+
+      \node (b) at (3, 0) {\num{11}}
+        child {node {\num{4}}};
+      \path[-latex'] (b) edge [loop above] (b);
+
+      \node (c) at (6, 0) {\num{13}}
+        child {node {\num{5}}}
+        child {node {\num{6}}}
+        child {node {\num{14}}
+          child {node {\num{9}}
+            child {node {\num{8}}}
+            child {node {\num{16}}}
+            child {node {\num{20}}
+              child {node {\num{18}}}
+              child {node {\num{19}}}}}};
+      \path[-latex'] (c) edge [loop above] (c);
+    \end{tikzpicture}
+    \caption{Esquema de la estructura para
+             \emph{\foreignlanguage{english}{union-find}}.}
+    \label{fig:union-find-estructura}
+  \end{figure}
+  La manera de identificar a un subconjunto de \(V\) es irrelevante,
+  podemos elegir un elemento cualquiera como representante.
+  Para hallar el representante del conjunto al que pertenece \(v\)
+  podemos hacer que cada elemento apunte a un elemento padre,
+  siguiendo la lista hasta el final hallamos el representante.
+  Unir dos conjuntos es hacer que el representante de uno
+  quede como padre del representante del otro,
+  ver la figura~\ref{fig:union-find-estructura}.
+  Para simplificar algunos de los algoritmos,
+  hacemos que las raíces de los árboles apunten a ellas mismas.
+  En diagramas sucesivos omitiremos las flechas
+  y los bucles en las raíces.
+
+  La operación \(\mathrm{find}\) depende de la altura
+  de los árboles que se construyan,
+  interesa construir árboles bajos.
+  Nos conviene hacer que el representante con el árbol menor
+  dependa del representante con el árbol más alto,
+  ya que esto no aumenta la altura.
+  Si mantenemos un arreglo \(\mathrm{rank}\) con la altura del árbol
+  de cada representante,
+  basta poner de hijo al representante de altura menor.
+  Solo en caso de empate la altura aumenta,
+  elegimos uno de los dos como nuevo representante
+  con \(\mathrm{rank}\) uno mayor.
+  Inicialmente \(\mathrm{rank}\) es cero para todos los vértices.
+  Note que solo cuando se unen dos árboles de la misma altura
+  se ajusta \(\mathrm{rank}\) del nuevo representante.
+  Es un simple ejercicio de inducción demostrar que de esta manera
+  si \(v\) es representante de una clase,
+  esta contiene al menos \(2^{\mathrm{rank}[v]}\) elementos.
+  En consecuencia,
+  el máximo camino posible de un vértice a su representante en la clase \(C\)
+  es de largo \(\log_2 \lvert C \rvert\).
+  El costo para cada operación es \(O(\log n)\).
+  Esta estructura y su manipulación fueron propuestas por
+  Galler y Fisher~%
+    \cite{galler64:_improved_equiv_algorithm},
+  aunque su análisis tomó años.
+  La idea se basa en arreglos globales \(\mathrm{rank}\)
+  (la altura del árbol con raíz en el vértice)
+  y \(\mathrm{parent}\)
+  (el padre del vértice,
+   para la raíz es el mismo para simplificar el código).
+  Vea los algoritmos
+  para \(\mathrm{MakeSets}\)
+  (crea la estructura inicial),
+  \(\mathrm{union}\)
+  (une las clases de \(u\) y \(v\))
+  y \(\mathrm{find}\)
+  (halla el representante para la clase de \(v\)),
+  respectivamente~\ref{alg:union-find-MakeSets},
+  \ref{alg:union-find-union},
+  y~\ref{alg:union-find-find}.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\operatorname{MakeSets}(V)\)}{
+      \For{\(v \in V\)}{
+        \(\mathrm{rank}[v] \gets 0\) \;
+        \(\mathrm{parent}[v] \gets v\) \;
+      }
+    }
+    \caption{Algoritmo para crear conjuntos}
+    \label{alg:union-find-MakeSets}
+  \end{algorithm}
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\operatorname{find}(v)\)}{
+      \While{\(v \ne \mathrm{parent}[v]\)}{
+        \(v \gets \mathrm{parent}[v]\) \;
+      }
+      \Return \(v\) \;
+    }
+    \caption{Algoritmo para encontrar representante}
+    \label{alg:union-find-find}
+  \end{algorithm}
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\operatorname{union}(u, v)\)}{
+      \uIf{\(\mathrm{rank}[u] > \mathrm{rank}[v]\)}{
+        \(\mathrm{parent}[v] \gets u\) \;
+      }
+      \Else{
+        \(\mathrm{parent}[u] \gets v\) \;
+        \If{\(\mathrm{rank}[u] = \mathrm{rank}[v]\)}{
+          \(\mathrm{rank}[v] \gets \mathrm{rank}[v] + 1\) \;
+        }
+      }
+    }
+    \caption{Algoritmo para unir conjuntos dados representantes}
+    \label{alg:union-find-union}
+  \end{algorithm}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Union Find recubridor english Spanning Tree MST Sort
+% LocalWords:  by increeaing cost Add to and belong the same set of
+% LocalWords:  Join sets which in union find

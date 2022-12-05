@@ -1,0 +1,795 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{icomma}
+\usepackage{csquotes}
+
+\usepackage{tikz}
+\usepackage{listings}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Algoritmos combinatorios}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        tabsize = 4,
+        frame = lines, numbers = none,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+
+\renewcommand{\lstlistingname}{Listado}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Lo que interesa}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos que manipulan objetos discretos}
+
+  \uncover<+->{
+    Buscamos diseñar técnicas que permitan deducir su rendimiento,
+    con miras a elegir el mejor entre las alternativas.
+  }
+  \uncover<+->{
+    Interesa determinar si un algoritmo es el mejor posible
+    (o cerca).
+    Esto implica conocer cotas de rendimiento.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Estrategias generales que permitan diseñar buenos algoritmos
+    serían bienvenidas.
+  }
+\end{frame}
+
+\section{Rendimiento}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Rendimiento}
+
+  \uncover<+->{
+    Es posible determinar cuántas veces se ejecuta
+    (en promedio,
+     en el peor caso)
+    cada instrucción en un programa.
+  }
+  \uncover<+->{
+    Esto da medidas muy precisas de rendimiento.
+  }
+  \uncover<+->{
+    ¡Pero es mucho trabajo!
+    Hay que escribir un programa bien hecho,
+    compilarlo en la máquina de interés,
+    y analizarlo en detalle.
+  }
+  \uncover<+->{
+    Cambia el compilador,
+    la máquina,
+    algún cambio en el programa,
+    ¡a partir de nuevo!
+  }
+  \\ \medskip
+  \uncover<+->{
+    Por lo demás,
+    procesadores modernos no son realmente predecibles:
+    extenso uso de memoria caché,
+    reordenar (sub)instrucciones dinámicamente,
+    múltiples instrucciones en ejecución simultánea,
+    interacción con procesos en núcleos vecinos,
+    \ldots
+  }
+  \\ \medskip
+  \uncover<+->{
+    Para situaciones muy críticas puede valer la pena este nivel de detalle.
+    Generalmente no es necesario.
+  }
+\end{frame}
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Rendimiento}
+
+  \uncover<+->{
+    Generalmente basta definir algunas \emph{operaciones clave}
+    (se ejecutan frecuentemente,
+     son de costo significativo;
+     las demás operaciones son de importancia menor,
+     a lo más se ejecutan en número proporcional a las anteriores).
+  }
+  \uncover<+->{
+    Frecuentemente es posible contar operaciones de interés
+    solo con una descripción muy somera del algoritmo.
+    Esto da una primera aproximación al rendimiento.
+  }
+\end{frame}
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Rendimiento}
+
+  \uncover<+->{
+    Lo anterior nos dará tiempos de ejecución en \(\Theta(\cdot)\)
+    (dentro de un factor constante).
+    Suele ser suficiente para comparar algoritmos,
+    con las advertencias propias de las estimaciones asintóticas:
+    válidas para \textquote{instancias grandes},
+    los factores constantes pueden ser gigantescos,
+    \ldots
+  }
+  \\ \medskip
+  \uncover<+->{
+    Rara vez los algoritmos tienen tiempos de ejecución
+    dependiendo solo del tamaño del problema.
+  }
+  \uncover<+->{
+    A veces solo se pueden dar cotas superiores
+    (\(O(\cdot)\)) para el peor caso.
+  }
+  \uncover<+->{
+    Dar promedios es delicado:
+    requiere conocer la distribución de los datos de entrada,
+    calcular el costo en cada instancia,
+    y promediar.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas}
+
+  \uncover<+->{
+    Obtener cotas al rendimiento es relevante
+    para saber qué tanto espacio de mejora hay.
+  }
+  \uncover<+->{
+    En el caso ideal,
+    la cota teórica y el rendimiento de un algoritmo coinciden.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Generalmente no es tan simple:
+    buscamos mejores algoritmos
+    (mayor rendimiento)
+    a la vez de cotas más ajustadas
+    (mejorar el modelo de lo que debe hacer el algoritmo),
+    buscando acortar la brecha.
+  }
+\end{frame}
+
+\subsection{Ordenamiento}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas --- ordenamiento}
+
+  \uncover<+->{
+    Tomemos el ejemplo de ordenar un arreglo de \(n\)~elementos,
+    todos distintos.
+    Las operaciones que permitimos son comparar dos elementos,
+    y mover elementos según el resultado de la comparación.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Tiene sentido tomar como operación clave
+    la comparación entre dos elementos.
+    Se mueve un elemento
+    (o no)
+    dependiendo del resultado de una comparación.
+    Habrán operaciones auxiliares,
+    como incrementar índices de elementos,
+    también en número más o menos proporcional al de comparaciones.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas --- ordenamiento}
+
+  \uncover<+->{
+    Una cota obvia es que es imposible ordenar
+    con menos de \(n - 1\)~comparaciones:
+    si se ejecutan menos,
+    hay al menos un elemento que no se compara jamás,
+    podría ser el menor o el mayor.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Una cota más ajustada resulta de considerar que el ordenamiento
+    (a través de sus comparaciones)
+    debe clasificar \(n!\)~permutaciones
+    y esta tarea la efectúa en forma de un árbol binario.
+  }
+  \uncover<+->{
+    Un árbol binario de altura~\(h\) tiene a lo más \(2^h\)~hojas,
+    o sea,
+    si tiene \(n!\)~hojas tiene altura
+    (máximo número de comparaciones)
+    al menos \(\log_2 n! = \Theta(n \log n)\).
+  }
+
+  \uncover<+->{
+    Conocemos métodos de ordenamiento que ejecutan
+    \(\Theta(n \log n)\)~comparaciones,
+    son óptimos
+    (dentro de un factor constante,
+     claro).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas --- ordenamiento}
+
+  \uncover<+->{
+    Lo anterior indica que si se busca un método de ordenamiento
+    que use menos operaciones,
+    debe usarse otra operación base.
+  }
+  \uncover<+->{
+    Hay métodos de ordenamiento especializados más eficientes.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis de algoritmo}
+
+  Analizaremos el algoritmo obvio para hallar el máximo
+  de un arreglo de \(n\)~elementos,
+  dado como una función C.
+  \\ \medskip
+  \lstinputlisting[firstline = 6, frame = none]{maximum.c}
+\end{frame}
+
+\subsection{Máximo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo -- comparaciones}
+
+  \uncover<+->{
+    Es razonable considerar como medida de costo
+    el número de comparaciones
+  }
+  \\ \bigskip
+  \uncover<+->{
+    Es claro que el número de comparaciones es \(n - 1\),
+    independiente de los datos de entrada.
+    Esto es óptimo,
+    si se hacen menos comparaciones
+    hay al menos un elemento que no se compara nunca,
+    no podemos saber si es el mayor o no.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Cada comparación entre dos elementos da un \emph{ganador}
+    y un \emph{perdedor};
+    para hallar el máximo debemos identificar \(n - 1\)~perdedores,
+    lo que da otra demostración de que se requieren \(n - 1\)~comparaciones
+    como mínimo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo -- asignaciones}
+
+  \uncover<+->{
+    Otra medida de interés es el número de asignaciones
+    a la variable \lstinline!max!.
+  }
+  \uncover<+->{
+    Esta medida claramente varía con los datos de entrada.
+  }
+  \\ \bigskip
+  \uncover<+->{
+    El mínimo de asignaciones ocurre
+    si el primer elemento es el mayor de todos,
+    en este caso hay una única asignación.
+  }
+  \\ \medskip
+  \uncover<+->{
+    El máximo número de asignaciones
+    se efectúa si el arreglo viene ordenado de menor a mayor,
+    haciendo \(n\) asignaciones en total.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo -- asignaciones}
+
+  \uncover<+->{
+    Al considerar el elemento \lstinline!a[i]!,
+    se asigna a \lstinline!max! exactamente si este es el máximo
+    de los elementos \lstinline!a[0, ..., i]!.
+  }
+
+  \uncover<+->{
+    Si queremos un número promedio de asignaciones a \lstinline!max!,
+    debemos acordar una distribución de los datos de entrada.
+  }
+  \uncover<+->{
+    Un modelo simple
+    \alert<.>{(para nada realista)}
+    es suponer que todos los elementos son diferentes
+    y que las \(n!\)~permutaciones de los datos de entrada
+    son igualmente probables.
+  }
+  \uncover<+->{
+    En la práctica,
+    son comunes \textquote{datos más o menos ordenados},
+    frecuentemente hay repeticiones,
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo -- asignaciones}
+
+  \uncover<+->{
+    En nuestro modelo
+    los elementos están ordenados al azar,
+    en particular,
+    lo están los primeros elementos.
+    La probabilidad de que el elemento \lstinline!a[i]!
+    sea el mayor hasta ese punto es \(1\) en \(i + 1\).
+  }
+  \uncover<+->{
+    Sumando,
+    el número promedio de asignaciones \(s\) cumple:
+  }
+  \begin{align*}
+    \uncover<+->{
+      s
+        &= \sum_{0 \le i < n} \frac{1}{i + 1} \\
+    }
+    \uncover<+->{
+        &= \sum_{1 \le i \le n} \frac{1}{i} \\
+    }
+    \uncover<+->{
+        &= H_n \\
+    }
+    \uncover<+->{
+        &= \ln n + \gamma + \frac{1}{2 n} + O(n^{-2})
+    }
+  \end{align*}
+  \uncover<+->{
+    Acá \(\gamma = 0,5772156649\)
+    es la constante de Euler-Mascheroni.
+  }
+\end{frame}
+
+\subsection{Máximo y segundo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Dos mayores}
+
+  \uncover<+->{
+    Un problema relacionado es obtener los dos mayores elementos.
+  }
+  \uncover<+->{
+    La solución obvia es obtener el mayor como antes,
+    y luego buscar el segundo mayor
+    (por ejemplo,
+     registrar la posición donde hallamos el mayor
+     y omitirla en la segunda revisión
+     para el segundo mayor).
+  }
+  \uncover<+->{
+    Son \(n - 1\) comparaciones para hallar el mayor,
+    \(n -2\)~para el segundo mayor,
+    total \(2 n - 3\)~comparaciones.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Pero esto no aprovecha el trabajo hecho en el primer recorrido.
+    ¿Podemos hacerlo mejor?
+  }
+  \uncover<+->{
+    (Nunca efectuar comparaciones cuyo resultado podemos deducir
+     de lo que ya sabemos.)
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Dos mayores -- discusión}
+
+  \uncover<+->{
+    En nuestro algoritmo para el máximo
+    hacemos uso del hecho que la comparación define un orden total:
+    dos elementos diferentes cualquiera cumplen
+    \(a < b\) o \(b < a\).
+  }
+  \uncover<+->{
+    Es natural representar una relación de orden
+    mediante un grafo dirigido acíclico
+    (DAG),
+    con un arco de cada elemento al inmediatamente mayor.
+  }
+  \uncover<+->{
+    Un orden total es un camino dirigido.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Dos mayores -- discusión}
+
+  \uncover<+->{
+    Lo que sabemos
+    luego de efectuar una colección cualquiera de comparaciones
+    puede describirse mediante un \emph{orden parcial}:
+    para un par de elementos sabemos que \(a < b\),
+    \(b < a\)
+    o ninguna de las anteriores
+    (en nuestro caso,
+     no podemos concluir un orden de las comparaciones efectuadas).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Dos mayores -- discusión}
+
+  \uncover<+->{
+    Podemos entonces ver el problema como ir construyendo un orden parcial
+    (DAG)
+    que nos permita identificar al mayor y al segundo mayor,
+    nunca comparando elementos cuyo orden ya podemos deducir.
+  }
+  \\ \medskip
+  \uncover<+->{
+    La discusión previa,
+    vista para obtener el máximo,
+    permite clasificar elementos como \emph{maximales}
+    (son mayores que los con los que conocemos su orden)
+    y \emph{perdedores}
+    (se compararon y resultaron menores).
+  }
+  \uncover<+->{
+    Para hallar el máximo,
+    no tiene sentido más que comparar elementos maximales.
+    Inicialmente todos son maximales
+    (no sabemos su relación con ninguno de los demás).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Árboles binomiales}
+
+  \uncover<+->{
+    Definimos los \emph{árboles binomiales}
+    como árboles con raíz
+    construidos como sigue:
+  }
+  \begin{itemize}
+ \item
+    El árbol binomial \(B_0\) consta de un único vértice.
+  \item
+    Para \(n \ge 0\),
+    el árbol binomial \(B_{n + 1}\) se construye
+    haciendo que la raíz de un \(B_n\) sea hijo de la raíz de otro \(B_n\).
+  \end{itemize}
+  \uncover<+->{
+    Es claro que \(B_n\) tiene \(2^n\)~vértices,
+    y que su raíz tiene \(n\)~hijos.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Árboles binomiales}
+
+  \begin{center}
+    \begin{tikzpicture}[scale = 0.6,
+                        every node/.style = {shape = circle, fill,
+                                             minimum size = 4pt,
+                                             inner sep = 0pt,
+                                             outer sep = 0pt,
+                                             draw}
+                       ]
+      \node (a0) at (0, 4) {};
+      \node [draw = none, fill = none, below] at (0, -0.2) {\(B_0\)};
+
+      \node (b0) at (1.5, 3) {};
+      \node (b1) at (1.5, 4) {};
+      \draw (b0) -- (b1);
+      \node [draw = none, fill = none, below] at (1.5, -0.2) {\(B_1\)};
+
+      \node (c0) at (3.0, 2) {};
+      \node (c1) at (3.0, 3) {};
+      \node (c2) at (4.0, 3) {};
+      \node (c3) at (4.0, 4) {};
+      \draw (c0) -- (c1)
+            (c1) -- (c3)
+            (c2) -- (c3);
+      \node [draw = none, fill = none, below] at (3.5, -0.2) {\(B_2\)};
+
+      \node (d0) at (5.5, 1) {};
+      \node (d1) at (5.5, 2) {};
+      \node (d2) at (6.5, 2) {};
+      \node (d3) at (6.5, 3) {};
+      \node (d4) at (7.5, 2) {};
+      \node (d5) at (7.5, 3) {};
+      \node (d6) at (8.5, 3) {};
+      \node (d7) at (8.5, 4) {};
+      \draw (d0) -- (d1)
+            (d1) -- (d3)
+            (d2) -- (d3)
+            (d4) -- (d5)
+            (d6) -- (d7)
+            (d3) -- (d7)
+            (d5) -- (d7);
+      \node [draw = none, fill = none, below] at (7, -0.2) {\(B_3\)};
+
+      \node (e0)  at (10, 0) {};
+      \node (e1)  at (10, 1) {};
+      \node (e2)  at (11, 1) {};
+      \node (e3)  at (11, 2) {};
+      \node (e4)  at (12, 1) {};
+      \node (e5)  at (12, 2) {};
+      \node (e6)  at (13, 2) {};
+      \node (e7)  at (13, 3) {};
+      \node (e8)  at (14, 1) {};
+      \node (e9)  at (14, 2) {};
+      \node (e10) at (15, 2) {};
+      \node (e11) at (15, 3) {};
+      \node (e12) at (16, 2) {};
+      \node (e13) at (16, 3) {};
+      \node (e14) at (17, 3) {};
+      \node (e15) at (17, 4) {};
+      \draw (e0) -- (e1)
+            (e1) -- (e3)
+            (e2) -- (e3)
+            (e4) -- (e5)
+            (e6) -- (e7)
+            (e3) -- (e7)
+            (e5) -- (e7)
+            (e8) -- (e9)
+            (e9) -- (e11)
+            (e10) -- (e11)
+            (e12) -- (e13)
+            (e13) -- (e15)
+            (e14) -- (e15)
+            (e11) -- (e15)
+            (e7) -- (e15);
+      \node [draw = none, fill = none, below] at (13.5, -0.2) {\(B_4\)};
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Hallar el máximo -- árboles binomiales}
+
+  \uncover<+->{
+    Un algoritmo óptimo para hallar el máximo
+    parte considerando el arreglo como \(2^h\) árboles binomiales \(B_0\),
+    va comparando raíces de árboles binarios \(B_k\) en cada paso,
+    uniéndolos para crear un \(B_{k + 1}\) según el resultado,
+    hasta construir un \(B_h\).
+  }
+  \uncover<+->{
+    Como un árbol de \(n\)~vértices tiene \(n - 1\)~arcos,
+    y cada arco en lo anterior corresponde a una comparación efectuada,
+    vemos nuevamente que se efectúan \(n - 1\)~comparaciones en total.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estrategia}
+
+  \uncover<+->{
+    Una estrategia para hallar el máximo es entonces
+    comparar pares,
+    comparar los ganadores de la ronda anterior,
+    y continuar de la misma manera hasta tener dos ganadores
+    y compararlos.
+  }
+  \uncover<+->{
+    Esto usa \(n - 1\) comparaciones en total para hallar el máximo,
+    lo que es óptimo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estrategia}
+
+  \uncover<+->{
+    En el árbol resultante,
+    si el máximo tiene \(k\) descendientes
+    completamos la tarea comparando éstos
+    (que solo han perdido contra el máximo)
+    para determinar el segundo mayor,
+    para \(k - 1\) comparaciones adicionales.
+  }
+  \uncover<+->{
+    En total,
+    \(n + k - 2\)~comparaciones.
+  }
+  \uncover<+->{
+    Pero el árbol es binomial,
+    tiene entre \(2^{k - 1}\) y \(2^k\)~vértices,
+    con lo que \(k = \lceil \log_2 n \rceil\),
+    y ejecutamos un total de \(n + \lceil \log_2 n \rceil - 2\) comparaciones.
+  }
+  \uncover<+->{
+    Mejor que la versión ingenua.
+    ¿Es mejor posible?
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y segundo -- óptimo}
+
+  \uncover<+->{
+    Modelamos el avance mediante un DAG que representa el orden (parcial)
+    que podemos deducir.
+    No suponemos que es un árbol binomial,
+    es uno cualquiera.
+    Buscamos hallar cotas para el mejor.
+  }
+  \uncover<+->{
+    Hay \(n - 1\)~elementos que perdieron al menos una comparación,
+    y hay \(k\) de ellos que se compararon con el mayor y perdieron.
+    En nuestro DAG,
+    son los hijos de la raíz,
+    debemos hallar el máximo entre ellos para identificar al segundo.
+  }
+  \uncover<+->{
+    Son al menos \(n + k - 2\)~comparaciones en total.
+    ¿Qué tan pequeño podemos hacer \(k\)?
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y segundo -- óptimo}
+
+  \uncover<+->{
+    Para demostrar un óptimo,
+    suele ser útil imaginar un adversario que guía los pasos del algoritmo.
+  }
+  \uncover<+->{
+    Llamamos \emph{poder} de \lstinline!a[i]!
+    al número de elementos que sabemos son menores que él.
+  }
+  \uncover<+->{
+    Si \lstinline!a[i]! tiene poder \(u\)
+    y \lstinline!a[j]! tiene poder \(v\),
+    el ganador de una comparación entre ellos tiene poder
+    \(u + v + 1\).
+  }
+  \uncover<+->{
+    Nuestro algoritmo conoce los poderes actuales de todos los elementos,
+    y debe decidir cuáles comparar a continuación.
+  }
+  \uncover<+->{
+    El adversario decide el resultado,
+    y busca entregar el mínimo de información posible.
+    Esto es minimizar el aumento de poder del ganador,
+    dar de ganador al que tiene mayor poder.
+  }
+  \uncover<+->{
+    Esto corresponde a construir el peor caso para el algoritmo.
+  }
+  \uncover<+->{
+    Garantizar máximo aumento de poder
+    es comparar siempre elementos con el mismo poder.
+  }
+  \uncover<+->{
+    Esto significa que si hay \(k\)~rondas,
+    \(2^{k - 1} < n \le 2^k\),
+    o sea \(k = \lceil \log_2 n \rceil\),
+    nuestro algoritmo es óptimo.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Nos interesan algoritmos que manipulan objetos discretos.
+  \item
+    Para simplificar análisis del rendimiento,
+    definimos \emph{operaciones clave} y nos concentramos en contar solo éstas.
+    \uncover<+->{
+      Muchas veces podemos deducir esto de una descripción muy general
+      del algoritmo.
+    }
+  \item
+    Para comparar algoritmos suelen bastar estimaciones \(\Theta(\cdot)\),
+    aunque hay quienes insisten en tener estimaciones \(\sim\).
+  \item
+    A veces solo podemos dar cotas al peor caso, \(O(\cdot)\).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Costos generalmente no dependen solo del tamaño,
+    tiene sentido hablar del \emph{mejor caso} y \emph{peor caso}.
+    \uncover<+->{
+      Generalmente interesa el \emph{caso promedio}.
+      Pero esto requiere conocer la distribución de las entradas.
+    }
+  \item
+    El \emph{mejor caso posible}
+    sirve para determinar si nuestro algoritmo es óptimo
+    (espacio de posible mejora).
+  \item
+    Buscamos mejores algoritmos
+    (menor costo)
+    y también cotas mejores
+    (demostrar que se requiere más trabajo).
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Modelo de datos de entrada para promedio.
+  \item
+    Razonar contra un adversario para obtener cotas teóricas.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode sub DAG

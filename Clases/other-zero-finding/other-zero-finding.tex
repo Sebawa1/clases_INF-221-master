@@ -1,0 +1,668 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Otros métodos para encontrar ceros}
+\label{cha:otros-metodos-ceros}
+
+  Discutiremos algunos métodos adicionales para hallar ceros,
+  junto con analizar su convergencia.
+
+\section{Ceros múltiples}
+\label{sec:multiple-zeros}
+
+  Uno de los problemas con que se debe lidiar
+  es el caso de ceros múltiples.
+  La figura~\ref{fig:multiple-zero-even}
+  muestra una función con un cero doble,
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[axis x line = middle, axis y line = left,
+                   xlabel = {\(x\)},
+                   ylabel ={\(f(x) = x (\mathrm{e}^{0,6 x} - 1)\)},
+                   xmin = -1, xmax = 1,
+                   ymin = -0.2, ymax = 1]
+
+        \addplot [mark = none, smooth, red] {x * (exp(0.6 * x) - 1)};
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Un ejemplo de cero de multiplicidad par}
+    \label{fig:multiple-zero-even}
+  \end{figure}
+  la figura~\ref{fig:multiple-zero-odd}
+  muestra una función con un cero triple.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[axis x line = middle, axis y line = left,
+                   xlabel = {\(x\)},
+                   ylabel ={\(f(x) = x^2 (\mathrm{e}^{x/2 - 1)} \sin x\)},
+                   xmin = -1.5, xmax = 1.2,
+                   ymin = -0.5, ymax = 0.8]
+
+        \addplot [mark = none, smooth, red]
+                 {x^2 * (exp(0.5 * x - 1) * sin(deg(x))};
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Un ejemplo de cero de multiplicidad impar}
+    \label{fig:multiple-zero-odd}
+  \end{figure}
+  Se ve que lo que tienen en común
+  es que en el cero la función es tangente al eje \(X\).
+  Esto producirá problemas
+  para métodos que se basan en la pendiente de la curva,
+  como son el método de Newton o de la secante.
+  El hecho que si el cero es de multiplicidad par
+  éste es a su vez un mínimo
+  hace inútiles métodos como el de bisección
+  o \emph{\foreignlanguage{latin}{regula falsi}}
+  que se basan en cambios de signo de la función.
+
+  En el caso particular de polinomios
+  tenemos una salida simple.
+  Si el polinomio \(p(x)\) tiene un cero de multiplicidad \(m\) en \(a\),
+  quiere decir que para algún polinomio \(q(x)\) tal que \(q(a) \ne 0\):
+  \begin{align*}
+    p(x)
+      &= (x - a)^m q(x) \\
+    p'(x)
+      &= (x - a)^{m - 1} (m q(x) + (x - a) q'(x))
+  \end{align*}
+  Vale decir,
+  en este caso podemos calcular:
+  \begin{equation*}
+    k(x)
+      = \frac{p(x)}{\gcd(p(x), p'(x)}
+    \end{equation*}
+    el polinomio \(k(x)\) tiene los mismos ceros que \(p(x)\),
+    pero son todos simples.
+
+\subsection{Método de Newton modificado}
+\label{sec:Newton-modificado}
+
+  Si \(f\) tiene un cero múltiple en \(x^*\),
+  digamos \(f(x) = (x - x^*)^m g(x)\)
+  con \(g(x^*) \ne 0\)
+  (\(x^*\) es un cero de multiplicidad \(m\)),
+  podemos escribir por el teorema de Taylor:
+  \begin{equation*}
+    g(x)
+      = g(x^*) + O(x - x^*)
+  \end{equation*}
+  Tenemos además:
+  \begin{align*}
+    f(x)
+      &= (x - x^*)^m (g(x^*) + O(x - x^*)) \\
+      &= (x - x^*)^m g(x^*) + O((x - x^*)^{m + 1})) \\
+    f'(x)
+      &= m (x - x^*)^{m - 1} g(x) + (x - x^*)^m g'(x) \\
+      &= m (x - x^*)^{m - 1} (g(x^*) + O(x - x^*))
+           + (x - x^*)^m O(x - x^*) \\
+      &= m (x - x^*)^{m - 1} g(x^*) + O((x - x^*)^m)
+  \end{align*}
+  Expandiendo nuevamente la fórmula para el método de Newton:
+  \begin{align*}
+    e_{n + 1}
+      &= e_n - \frac{e_n^m g(x^*) (1 + O(e_n))}
+                    {m e_n^{m - 1} g(x^*) (1 + O(e_n))} \\
+      &= e_n - \frac{e_n}{m} (1 + O(e_n)) \\
+      &= \frac{m - 1}{m} e_n + O(e_n^2)
+  \end{align*}
+  Vale decir,
+  la convergencia es lineal si \(m > 1\).
+
+  Podemos corregir esto,
+  notando que si \(f\) tiene un cero múltiple en \(x^*\),
+  \(\mu(x) = f(x) / f'(x)\) tiene un cero simple,
+  y se recupera la convergencia cuadrática:
+  \begin{align}
+    x_{n + 1}
+      &= x_n - \frac{\mu(x_n)}{\mu'(x_n)} \notag \\
+      &= x_n
+           - \frac{f(x_n)}{f'(x_n)}
+               \left( 1 - \frac{f(x_n) f''(x_n)}{f'(x_n)^2} \right)^{-1}
+        \label{eq:modified-Newton}
+  \end{align}
+  Analizamos la convergencia,
+  extendiendo las series:
+  \begin{align*}
+    f(x)
+      &= (x - x^*)^m
+           \left(
+             g(x^*)
+               + g'(x^*) (x - x^*)
+               + \frac{1}{2} g''(x^*) (x - x^*)^2
+           \right)
+           + O((x - x^*)^{m + 3}) \\
+    \begin{split}
+      f'(x)
+        &= m (x - x^*)^{m - 1}
+             \left(
+               g(x^*)
+                 + \frac{m + 1}{m} g'(x^*) (x - x^*)
+                 + \frac{m + 2}{2 m} g''(x^*) (x - x^*)^2)
+             \right) \\
+        &\qquad
+             + O((x - x^*)^{m + 2})
+    \end{split} \\
+    \begin{split}
+      f''(x)
+        &= m (m - 1) (x - x^*)^{m - 2}
+             \left(
+               g(x^*)
+                 + \frac{m + 1}{m - 1} g'(x^*) (x - x^*)
+                 + \frac{(m + 2) (m + 1)}{2 m (m - 1)} g''(x^*) (x - x^*)^2
+             \right) \\
+        &\qquad
+             + O((x - x^*)^{m + 1})
+    \end{split}
+  \end{align*}
+  substituyendo en la ecuación~\eqref{eq:modified-Newton} tenemos:
+  \begin{equation}
+    \label{eq:modified-Newton-error}
+    e_{n + 1}
+      = - \frac{g'(x^*)}{m g(x^*)} e_n^2 + O(e_n^3)
+  \end{equation}
+  Como propusimos,
+  el método de Newton modificado siempre tiene convergencia cuadrática.
+  Su índice de eficiencia sique siendo \(\sqrt{2} = \num{1,4142}\).
+
+  Resulta de interés el límite:
+  \begin{equation}
+    \label{eq:modified-Newton-limit}
+    \lim_{x \to x^*}
+      \left(
+        1 - \frac{f(x) f''(x)}{f'(x)^2}
+      \right)
+      = \frac{1}{m}
+  \end{equation}
+  Por lo tanto,
+  si \(f\) tiene un cero de multiplicidad \(m\) en \(x^*\),
+  la iteración:
+  \begin{equation}
+    \label{eq:modified-Newton-constant-iteration}
+    x_{n + 1}
+      = x_n - m \frac{f(x_n)}{f'(x_n)}
+  \end{equation}
+  converge cuadráticamente a \(x^*\).
+
+  Claro que en general no sabemos cuánto es \(m\).
+  Una estrategia es estimar \(m\)
+  usando la expresión del límite~\eqref{eq:modified-Newton-limit}
+  al comienzo,
+  y verificar el valor regularmente luego.
+
+\section{Métodos de Householder}
+\label{sec:metod-de-householder}
+
+  Una familia de métodos de orden de convergencia arbitrario
+  son los de Householder\cite{householder70:_num_single_nonlin_equation}.
+  La idea es partir con una aproximación de Padé
+  (la razón entre dos polinomios)
+  a la función,
+  en nuestro caso:
+  \begin{equation}
+    \label{eq:Pade}
+    f(x + h)
+      = \frac{a_0 + h}{b_0 + b_1 h + \dotsb + b_{d - 1} h^{d - 1}}
+          + O(h^d)
+  \end{equation}
+  Puede demostrarse que la aproximación~\eqref{eq:Pade} es única.
+
+  La derivación del método de Householder de orden~\(d\)
+  parte con la aproximación~\eqref{eq:Pade},
+  y considera la serie de Taylor de \(1/f\):
+  \begin{equation*}
+    \left( \frac{1}{f} \right)(x + h)
+      = \left(\frac{1}{f} \right)(x)
+          + \left(\frac{1}{f} \right)'(x) h
+          + \frac{1}{2!} \left(\frac{1}{f} \right)''(x) h^2
+          + \dotsb
+          + \frac{1}{d!} \left(\frac{1}{f} \right)^{(d)}(x) h^d
+          + O(h^{d + 1})
+  \end{equation*}
+  Esto debe coincidir con la fracción~\eqref{eq:Pade},
+  en particular,
+  el coeficiente de \(h^d\) se anula;
+  al multiplicar por \(a_0 + h\) este es:
+  \begin{equation*}
+    0
+      = a_0 \frac{\left(\frac{1}{f}\right)^{(d)}(x)}{d!}
+          + \frac{\left(\frac{1}{f}\right)^{(d - 1)}(x)}{(d - 1)!}
+  \end{equation*}
+  de donde despejamos \(a_0\),
+  y sabemos que la aproximación~\eqref{eq:Pade} a \(f\)
+  se anula para \(h = -a_0\),
+  o sea la siguiente aproximación a \(x\) se calcula:
+  \begin{equation}
+    x_{n + 1}
+      = x_n + d \frac{\left( \frac{1}{f} \right)^{(d - 1)}(x_n)}
+                     {\left( \frac{1}{f} \right)^{(d)}(x_n)}
+  \end{equation}
+  Por su derivación,
+  es claro que el método de Householder de orden~\(d\)
+  converge de orden~\(d + 1\).
+  Requiere evaluar la función y \(d\)~derivadas,
+  su índice de eficiencia es \((d + 1)^{1 / (d + 1)}\).
+  Para \(d = 1\)
+  resulta el método de Newton,
+  \(d = 2\) da el método de Halley:
+  \begin{align}
+    \label{eq:Halley-iteration}
+    x_{n + 1}
+      = x_n
+          - \frac{f(x_n)}{f'(x_n)}
+              \left(
+                1 - \frac{f(x_n) f''(x_n)}{2 f'(x_n)^2}
+              \right)^{-1}
+  \end{align}
+  Para el método de Halley nuestras técnicas para estimar el error dan:
+  \begin{equation}
+    \label{eq:Halley-iteration-error}
+    e_{n + 1}
+      = - \frac{2 f'(x^*) f'''(x^*) - 3 f''(x^*)^2}{12 f'(x^*)^2} e_n^3
+            + O(e_n^4)
+  \end{equation}
+  El método de Halley es cúbico,
+  como esperábamos.
+
+\section{Otro método cúbico}
+\label{sec:metodo-cubico}
+
+  La instructiva derivación siguiente es de Sebah y Gourdon~%
+    \cite{sebah01:_newton_method_higher_order_iterations}.
+  Podemos extender el método de Newton,
+  aproximando la función
+  mediante la serie de Taylor hasta el término cuadrático:
+  \begin{equation*}
+    f(x + h)
+      = f(x) + f'(x) h + \frac{1}{2} f''(x) h^2 + O(h^3)
+  \end{equation*}
+  y buscar \(h\) más cercano a cero que anula el polinomio:
+  \begin{equation*}
+    h
+      = - \frac{f'(x)}{f''(x)}
+            \left(
+              1 - \sqrt{1 - \frac{2 f(x) f''(x)}{f'(x)^2}}
+            \right)
+  \end{equation*}
+  Podemos ahorrarnos la raíz cuadrada
+  expandiendo para \(\alpha\) pequeño
+  (buscamos \(f(x) = 0\))
+  por el teorema del binomio:
+  \begin{align*}
+    1 - \sqrt{1 - \alpha}
+      &= \frac{\alpha}{2} + \frac{\alpha^2}{8} + O(\alpha^3) \\
+      &= \frac{\alpha}{2}
+           \left(
+             1 + \frac{\alpha}{4}
+           \right)
+           + O(\alpha^3)
+  \end{align*}
+  al retener hasta el término cuadrático:
+  \begin{align*}
+    h
+      &\approx - \frac{f'(x)}{f''(x)}
+                   \cdot \frac{f(x) f''(x)}{f'(x)^2}
+                           \left(
+                             1 + \frac{f(x) f''(x)}{2 f'(x)^2}
+                           \right) \\
+      &=       - \frac{f(x)}{f'(x)}
+                   \left(
+                     1 + \frac{f(x) f''(x)}{2 f'(x)^2}
+                   \right)
+  \end{align*}
+  queda:
+  \begin{equation}
+    \label{eq:cubic-iteration}
+    x_{n + 1}
+      = x_n
+          - \frac{f(x_n)}{f'(x_n)}
+              \left(
+                1 + \frac{f(x_n) f''(x_n)}{2 f'(x_n)^2}
+              \right)
+  \end{equation}
+  Nuestras técnicas para estimar el error dan:
+  \begin{equation}
+    \label{eq:cubic-iteration-error}
+    e_{n + 1}
+      = - \frac{f'(x^*) f'''(x^*) - 3 f''(x^*)^2}{6 f'(x^*)^2} e_n^3
+            + O(e_n^4)
+  \end{equation}
+  Como esperábamos,
+  el método es cúbico siempre que el cero sea simple,
+  y resulta comparable al método de Halley.
+
+\section{Método de Muller}
+\label{sec:metodo-de-muller}
+
+  Una extensión del método de la secante es el método de Muller~%
+    \cite{muller56:_method_solvin_algeb_equat_using_autom_comput}.
+  La idea es tomar los últimos tres puntos,
+  interpolar mediante un polinomio de segundo grado
+  y elegir el siguiente punto como una intersección con el eje.
+  En detalle,
+  dados puntos
+  \((x_n, y_n), (x_{n + 1}, y_{n + 1}), (x_{n + 2}, y_{n + 2})\),
+  buscamos \(x_{n + 3} = x_{n + 2} + h\)
+  que anula la función cuadrática que interpola entre esos puntos.
+  La función cuadrática que interpola puede escribirse en la forma de Newton
+  (lo veremos más adelante,
+   sección~\ref{sec:Newton-interpolation}):
+  \begin{align*}
+    f(x)
+      &= f[x_{n + 2}]
+           + f[x_{n + 1}, x_{n + 2}] (x - x_{n + 1})
+           + f[x_n, x_{n + 1}, x_{n + 2}]
+                (x - x_{n + 2}) (x - x_{n + 1}) \\
+      &= f[x_{n + 2}]
+           + w (x - x_{n + 2})
+           + f[x_n, x_{n + 1}, x_{n + 2}] (x - x_{n + 2})^2 \\
+       &= f[x_{n + 2}]
+           + w h
+           + f[x_n, x_{n + 1}, x_{n + 2}] h^2
+  \end{align*}
+  Acá usamos diferencias divididas:
+  \begin{align*}
+    f[x_0]
+      &= f(x_0) \\
+    f[x_0, x_1]
+      &= \frac{f[x_1] - f[x_0]}{x_1 - x_0} \\
+    f[x_0, x_1, x_2]
+      &= \frac{f[x_1, x_2] - f[x_0, x_1]}{x_2 - x_0}
+  \end{align*}
+  junto con:
+  \begin{equation*}
+    w
+      = f[x_{n + 1}, x_{n + 2}] + f[x_n, x_{n + 2}] - f[x_n, x_{n + 1}]
+  \end{equation*}
+  Nos interesa el cero de menor valor absoluto de la cuadrática en \(h\).
+  Pero eso lleva a cancelación en la fórmula cerca del cero
+  (valor pequeño de \(f(x_{n + 2})\)).
+  Dividiendo la cuadrática por \(h^2\) obtenemos una cuadrática en \(1 / h\),
+  que resolvemos para el cero de mayor magnitud obteniendo:
+  \begin{equation}
+    h
+      = - \frac{2 f(x_{n + 2})}
+               {w + \sgn(w)
+                      \sqrt{w^2
+                              - 4 f(x_{n + 2}) f[x_n, x_{n + 1}, x_{n + 2}]}}
+  \end{equation}
+  donde usamos la función signo:
+  \begin{equation*}
+    \sgn(x)
+      = \begin{cases}
+          -1 & x < 0 \\
+           0 & x = 0 \\
+           1 & x > 0
+        \end{cases}
+  \end{equation*}
+  O sea,
+  la iteración es:
+  \begin{equation}
+    \label{eq:Muller-iteration}
+    x_{n + 3}
+      = x_{n + 2}
+         - \frac{f(x_{n + 2})}
+               {w + \sgn(w)
+                      \sqrt{w^2
+                              - 4 f(x_{n + 2}) f[x_n, x_{n + 1}, x_{n + 2}]}}
+  \end{equation}
+  Sospechando que el método es superlineal,
+  pero no más que cuadrático,
+  usamos:
+  \begin{equation*}
+    f(x^* + h)
+      = f'(x^*) h
+          + \frac{1}{2} f''(x^*) h^2
+          + \frac{1}{6} f'''(x^*) h^3
+          + O(h^4)
+  \end{equation*}
+  y bajo el supuesto:
+  \begin{equation*}
+    \lvert e_{n + 1} \rvert
+      = C \rvert e_n \lvert^p
+  \end{equation*}
+  de la iteración~\eqref{eq:Muller-iteration}
+  después de simplificar
+  resulta \(p^3 - p^2 - p - 1 = 0\),
+  cuyo cero real es \num{1,8392867552}.
+  Como hay una única evaluación de \(f\) por iteración,
+  el índice de eficiencia es \num{1,8393}.
+  Tenemos:
+  \begin{equation}
+    C
+      = \left\lvert \frac{f'''(x^*)}{6 f'(x^*)} \right\rvert^{(p - 1) / 2}
+  \end{equation}
+
+  Un problema del método de Muller
+  es que aún si todos los valores son reales
+  la siguiente estimación del cero puede ser compleja.
+
+\section{Interpolación inversa}
+\label{sec:interpolacion-inversa}
+
+  En vez de interpolar los \(f(x)\)
+  y buscar el punto donde la interpolación se anula,
+  podemos interpolar la función inversa y evaluar para \(y = 0\).
+  Esto tiene la ventaja de no requerir raíces
+  (y no lleva a complejos).
+  Si usamos una función cuadrática,
+  de la forma de Lagrange evaluada en \(y = 0\) tenemos:
+  \begin{equation}
+    \label{eq:inverse-interpolation-iteration}
+    x_{n + 3}
+      = \frac{y_{n + 1} y_{n + 2}}
+             {(y_n - y_{n + 1}) (y_n - y_{n + 2})} x_n
+          + \frac{y_n y_{n + 2}}
+                 {(y_{n + 1} - y_n) (y_{n + 1} - y_{n + 2})} x_{n + 1}
+          + \frac{y_n y_{n + 1}}
+                 {(y_{n + 2} - y_n) (y_{n + 2} - y_{n + 1})} x_{n + 2}
+  \end{equation}
+
+  Substituyendo \(x = x^* + e\),
+  evaluando~\eqref{eq:inverse-interpolation-iteration}
+  para \(x_0\), \(x_1\) y \(x_2\) para obtener \(x_3\),
+  es claro de la fórmula que el término más significativo
+  es proporcional a \(e_0 e_1 e_2\),
+  calculamos el límite:
+  \begin{equation*}
+    \lim_{\substack{e_0 \to 0 \\
+                    e_1 \to 0 \\
+                    e_2 \to 0}} \frac{e_3}{e_0 e_1 e_2}
+      = - \frac{f'(x^*) f'''(x^*) - 3 f''(x^*)^2}{6 f'(x^*)}
+  \end{equation*}
+  Bajo el supuesto \(\lvert e_{n + 1} \rvert = C \lvert e_n \rvert^p\)
+  obtenemos la ecuación:
+  \begin{equation*}
+    C^{p^2 + p + 1} \lvert e_n \rvert^{p^3}
+      = \frac{f'(x^*) f'''(x^*) - 3 f''(x^*)^2}{6 f'(x^*)}
+           C^{p + 2} \lvert e_n \rvert^{p^2 + p + 1}
+  \end{equation*}
+  El orden de convergencia es el cero real de \(p^3 - p^2 - p - 1\),
+  cuyo valor es \num{1,8392867552},
+  y nuevamente este el índice de eficiencia.
+  Obtenemos además:
+  \begin{equation*}
+    C
+      = \left\lvert
+          \frac{f'(x^*) f'''(x^*) - 3 f''(x^*)^2}{6 f'(x^*)}
+        \right\rvert^{1/(p^2 - 1)}
+  \end{equation*}
+
+  Un problema de este método es que si resultan dos puntos iguales,
+  falla.
+
+\section{El método de Brent}
+\label{sec:metodo-Brent}
+
+  Un método híbrido muy popular es el de Brent~%
+    \cite[capítulo~4]{brent73:_algo_min_no_derivatives}.
+  La idea es usar un método de interpolación
+  (interpolación cuadrática inversa o secante)
+  si se puede,
+  recurriendo a bisección si lo anterior falla
+  o se ve que converge lentamente.
+  Exige iniciar con puntos que acotan el cero,
+  elige el tercer punto por bisección,
+  de allí usa interpolación cuadrática inversa si se puede
+  (los tres puntos son diferentes)
+  o secante,
+  y cada cierto número de pasos fuerza usar al menos un paso de bisección
+  para asegurar que el rango de búsqueda se encoja con rapidez.
+  Garantiza convergencia razonable,
+  incluso para funciones de muy mal comportamiento;
+  y aprovecha la convergencia rápida de los métodos de interpolación
+  cuando son aplicables.
+
+  La versión definitiva es el programa~\ref{lst:Brent} en Algol~60~%
+    \cite{backus76:_modif_report_Algol60}
+  como dado por Brent~%
+    \cite[sección~4.6]{brent71:_algor_guaran_conver_findin_zero_funct},
+  reindentado para gustos modernos.
+  Brent lo discute en detalle,
+  incluyendo consideraciones
+  de error de redondeo en cálculo en punto flotante.
+  El algoritmo usa el valor \(\varepsilon\)
+  (argumento \lstinline[language = {Algol}]!macheps!)
+  de precisión relativa de punto flotante,
+  y retorna un cero con tolerancia \(6 \varepsilon \lvert b \rvert + 2 t\),
+  donde \(t\) es una tolerancia positiva.
+  Supone que \(f(a)\) y \(f(b)\) tienen signo opuesto.
+  \lstinputlisting[float,
+                   language = {Algol},
+                   caption = {El algoritmo de Brent},
+                   label = lst:Brent]{code/Brent.alg}
+  En un paso típico,
+  tenemos tres puntos  \(a\), \(b\) y \(c\),
+  tales que \(f(b) f(c) < 0\),
+  \(\lvert f(b) \rvert \le \lvert f(c) \rvert\),
+  y \(a\) puede coincidir con \(c\).
+  \(b\) es la mejor aproximación hasta el momento al cero \(x^*\),
+  \(a\) es el valor previo de \(b\)
+  y \(x^*\) está entre \(b\) y \(c\).
+  Inicialmente \(a = c\).
+
+  Si \(f(b) = 0\),
+  estamos listos.
+  Esto puede ocurrir por calcular \(f\) en forma aproximada.
+
+  Si \(f(b) \ne 0\),
+  sea \(m = \frac{1}{2} (c - b)\).
+  No se retorna \(\frac{1}{2} (b + c)\)
+  en cuanto \(\lvert m \rvert \le 2 \delta\),
+  ya que si tenemos convergencia superlineal
+  probablemente \(b\) sea mucho mejor aproximación a \(x^*\).
+  Si \(\lvert m \rvert \le \delta\),
+  retornamos \(b\)
+  (sabemos que el error es a lo más \(\delta\) en tal caso).
+
+  Si no se dan las anteriores,
+  interpolamos (o extrapolamos) linealmente entre \(a\) y \(b\),
+  dando un nuevo punto \(i\).
+  Más adelante discutimos la interpolación cuadrática.
+  Para evitar problemas de rebalse o división por cero,
+  buscamos números \(p\) y \(q\) tales que \(i = b + p / q\),
+  y omitimos la división si \(2 \lvert p \rvert \ge 3 \lvert m q \rvert\)
+  (no se requiere en tal caso).
+  Como \(0 < \lvert f(b) \rvert \le \lvert f(a) \rvert\)
+  (vea más adelante),
+  podemos calcular \(s = f(a) / f(b)\),
+  \(p \pm (a - b) s\) y \(q \mp (1 - s)\)
+  sin meternos en problemas.
+  Ahora definimos:
+  \begin{align*}
+    b''
+      &= \begin{cases}
+           i	 & \text{si \(i\) está entre \(b\) y  \(b + m\)
+                          (interpolación)} \\
+           b + m	 & \text{caso contrario
+                          (bisección)}
+         \end{cases} \\
+    b'
+      &= \begin{cases}
+           b''		      & \lvert b - b'' \rvert > \delta \\
+           b + \delta \sgn(m)  & \text{caso contrario
+                                       (paso \(\delta\))}
+         \end{cases}
+  \end{align*}
+  Aún evitando pasos \(\delta\) la convergencia puede ser muy lenta,
+  el algoritmo fuerza ocasionales bisecciones:
+  sea \(e\) el valor de \(p / q\) el penúltimo paso,
+  si \(\lvert e \rvert < \delta\)
+  o \(\lvert p / q \rvert \ge \frac{1}{2} \delta\),
+  haga una bisección.
+  O sea,
+  \(e\) se reduce al menos en un factor de \num{2} cada segundo paso,
+  y si \(\lvert e \rvert < \delta\) damos un paso de bisección.
+  Luego de una bisección el avance es \(e = m\).
+  Experimentos mostraron que el criterio más simple
+  de usar \(p / q\) del último paso
+  frena la convergencia para funciones de buen comportamiento.
+
+  Si los puntos \(a\), \(b\) y \(c\) son diferentes,
+  podemos recurrir a interpolación cuadrática inversa,
+  que debiera dar una mejor estimación de \(x^*\).
+  En este proceso hay que tener cuidado
+  de no caer en rebalse o división por cero.
+  Como \(b\) es la aproximación más reciente
+  y \(a\) es el valor previo de \(b\),
+  si \(\lvert f(b) \rvert \ge \lvert f(a) \rvert\)
+  damos un paso de bisección.
+  En caso contrario,
+  es \(\lvert f(b) \rvert < \lvert f(a) \rvert \le \lvert f(c) \rvert\),
+  una forma segura de hallar \(i\) es calcular:
+  \begin{align*}
+    r_1
+      &= \frac{f(a)}{f(c)} \\
+    r_2
+      &= \frac{f(b)}{f(c)} \\
+    r_3
+      &= \frac{f(b)}{f(a)} \\
+    p
+      &= \pm r_3 ((c - b) r_1 (r_1 - r_2) - (b - a) (r_2 - 1)) \\
+    q
+      &= \mp (r_1 - 1) (r_2 - 1) (r_3 - 1)
+  \end{align*}
+  con lo que \(i = b + p / q\),
+  pero
+  (igual que antes)
+  no efectuamos la división a menos que resulte útil.
+  Pero si entre \((b, f(b))\) y \((c, f(c))\)
+  no estamos en la misma rama de la parábola,
+  esta no es una buena aproximación a \(f\),
+  aceptamos \(i\) solo si está entre \(b\) y \(c\),
+  y hasta tres cuartas partes del camino de \(b\) a \(c\)
+  (considere el caso extremo de \(f(b) = - f(c)\),
+   con la parábola con una tangente vertical en \((c, f(c))\)).
+  O sea,
+  rechazamos \(i\) si \(2 \lvert p \rvert \ge 3 \lvert m q \rvert\).
+
+\section*{Ejercicios}
+\label{sec:ejercicios-other-zeros}
+
+  \begin{enumerate}
+  \item
+    Una forma alternativa
+    de derivar la iteración de Halley~\eqref{eq:Halley-iteration}
+    es aplicar el método de Newton a la función:
+    \begin{equation*}
+      \mu(x)
+        = \frac{f(x)}{\sqrt{\lvert f'(x) \rvert}}
+    \end{equation*}
+    lo que es válido siempre que el cero sea simple
+    (\(f'(x^*) \ne 0\)).
+  \item
+    Analice la convergencia de los métodos cúbicos para ceros múltiples.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  cuadráticamente superlineal Interpolación bisección eq
+% LocalWords:  interpolación Algol reindentado bisecciones modified
+% LocalWords:  limit Pade iteration inverse interpolation latin falsi

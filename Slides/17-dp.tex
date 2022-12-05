@@ -1,0 +1,1031 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{siunitx}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{enumitem}
+\usepackage{dcolumn, colortbl}
+\usepackage{complexity}
+\usepackage{listings}
+\usepackage[noline, noend]{algorithm2e}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{[ANSI] C, Python}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Programación dinámica}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        tabsize = 4,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Idea general}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Idea general}
+
+  \uncover<+->{
+    Vimos que algoritmos voraces son aplicables
+    en problemas que podemos dividir en etapas,
+    siempre que contemos con un criterio
+    que en cada etapa nos dice cuál es la elección correcta.
+  }
+  \uncover<+->{
+    Una alternativa cuando eso no se da es alguna búsqueda exhaustiva,
+    analizando todas las posibles elecciones.
+    Eso lleva directamente
+    a algoritmos como \emph{\foreignlanguage{english}{backtracking}}
+    o \emph{\foreignlanguage{english}{branch and bound}}.
+  }
+  \uncover<+->{
+    En muchos casos esta idea
+    lleva a resolver repetidas veces el mismo (sub)problema.
+    Obtenemos un algoritmo mucho más eficiente
+    si guardamos el resultado de resolver el subproblema en vez de recalcular.
+  }
+  \uncover<+->{
+    Hay varias maneras de organizar esto.
+  }
+\end{frame}
+
+\section{Programación dinámica}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Variaciones de programación dinámica}
+
+  \uncover<+->{
+    Una idea es plantear un programa
+    (probablemente recursivo)
+    para resolver el problema,
+    y reemplazar las llamadas recursivas
+    por una consulta a alguna estructura adecuada
+    que registra valores calculados
+    antes de efectuar el cálculo.
+  }
+  \uncover<+->{
+    A esto le llaman \emph{memorización},
+    o más comúnmente,
+    \emph{memoización}.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Otra idea es calcular sistemáticamente las soluciones a subproblemas,
+    de forma que estén disponibles cuando se requieren.
+    Las soluciones se organizan en alguna estructura de datos apropiada,
+    comúnmente llamada \textquote{tabla}.
+    Esto es propiamente \emph{programación dinámica}.
+  }
+  \uncover<+->{
+    A veces puede ahorrarse memoria
+    reteniendo únicamente las soluciones que se usarán.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Fibonacci}
+
+  \uncover<+->{
+    Para clarificar ideas,
+    consideremos el cálculo de números de Fibonacci,
+    definidos por la recurrencia:
+    \begin{equation*}
+      F_{n + 2}
+        = F_{n + 1} + F_n
+        \qquad F_0 = 0, F_1 = 1
+    \end{equation*}
+  }
+  \\ \medskip
+  \uncover<+->{
+    Ilustraremos las distintas estrategias con el problema de calcular \(F_n\)
+    (admitimos que es de juguete).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Fibonacci}
+
+  \uncover<+->{
+    Sabemos que:
+    \begin{align*}
+      F_n
+       &=    \frac{\tau^n + (1 - \tau)^n}{\sqrt{5}}
+          && \tau = \frac{1 + \sqrt{5}}{2} = 1,61803 \\
+       &\sim \frac{\tau^n}{\sqrt{5}}
+    \end{align*}
+  }
+  \uncover<+->{
+    En \(64\)~bits cabe \(F_n\) hasta:
+    \begin{equation*}
+      n
+        = \frac{64 \ln 2 + \ln \sqrt{5}}{\ln \tau}
+        = 93,86
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Cálculo recursivo ingenuo}
+
+  \lstinputlisting[basicstyle = \small,
+                   language = C,
+                   firstline = 8, lastline = 13]
+                  {fibonacci-recursive.c}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Cálculo recursivo ingenuo}
+
+  \uncover<+->{
+    Tomando como medida de tiempo el número de llamadas,
+    llamando \(C_n\) al número de llamadas para calcular \(F_n\)
+    resulta:
+    \begin{equation*}
+      C_{n + 2}
+        = 1 + C_{n + 1} + C_n
+        \qquad C_0 = C_1 = 1
+    \end{equation*}
+  }
+  \uncover<+->{
+    Técnicas tradicionales de solución de recurrencias dan:
+    \begin{equation*}
+      C_n
+        = 2 F_{n + 1} - 1
+    \end{equation*}
+    (O verifique substituyendo.)
+  }
+  \medskip
+  \uncover<+->{
+    Hay \(n\) niveles de recursión,
+    con lo que el espacio requerido es proporcional a \(n\).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Versión memoizada}
+
+  \lstinputlisting[basicstyle = \small,
+                   language = C,
+                   firstline = 11, lastline = 23]
+                  {fibonacci-memoized.c}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Versión memoizada}
+
+  \uncover<+->{
+    Este programa efectúa \(2 n - 1\)~llamadas,
+    y usa memoria proporcional a \(n\)
+    (nuestra versión usa memoria constante,
+     pero es simple reorganizarla
+     para que se solicite memoria solo según se necesita).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Programación dinámica}
+
+  \lstinputlisting[basicstyle = \small,
+                   language = C,
+                   firstline = 8, lastline = 17]
+                  {fibonacci-dp.c}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Programación dinámica}
+
+  \uncover<+->{
+    Este programa efectúa trabajo proporcional a~\(n\),
+    y usa memoria proporcional a \(n\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Programación dinámica ahorrando memoria}
+
+  \uncover<+->{
+    Nuestra versión siguiente nace de la observación
+    que solo se usan \lstinline!mem[i - 1]! y \lstinline!mem[i - 2]!,
+    designamos variables \lstinline!b! y \lstinline!a! para estos valores.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Programación dinámica ahorrando memoria}
+
+  \lstinputlisting[basicstyle = \small,
+                   language = C,
+                   firstline = 8, lastline = 19]
+                  {fibonacci-dp-frugal.c}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Fibonacci}
+  \framesubtitle{Programación dinámica ahorrando memoria}
+
+  \uncover<+->{
+    Este programa efectúa trabajo proporcional a~\(n\),
+    y usa memoria constante.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aplicabilidad de programación dinámica}
+
+  \uncover<+->{
+    Suponemos un problema \(P\),
+    que se resuelve en etapas,
+    eligiendo parte de la solución \(p\) en cada una de ellas.
+  }
+  \begin{description}
+  \item[Estructura Inductiva:]
+    Dada la elección \(\widehat{p}\),
+    queda un subproblema menor \(P'\)
+    tal que si \(\Pi'\) es solución viable de \(P'\),
+    \(\{\widehat{p}\} \cup \Pi'\) es solución viable de \(P\)
+    (\(P'\) no tiene \textquote{restricciones externas}).
+  \item[Subestructura Óptima:]
+    Si \(P'\) queda de \(P\) al sacar \(\hat p\),
+    y  \(\Pi'\) es óptima para \(P'\),
+    \(\Pi' \cup \{ \widehat{p} \}\) es óptima para \(P\).
+  \item[Elección Completa:]
+    Entre todas las opciones,
+    elegimos aquel \(\widehat{p}\) que da el mejor resultado
+    combinado con \(\Pi'\),
+    una solución óptima para el problema resultante
+    de \(P \smallsetminus \{ \widehat{p} \}\).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aplicabilidad de programación dinámica}
+
+  \uncover<+->{
+    A diferencia de un algoritmo voraz,
+    no conocemos un criterio \textquote{local}
+    que nos permita elegir \(\widehat{p}\),
+    debemos considerar varias opciones.
+    Esto lleva naturalmente a una recursión:
+    resuelva los subproblemas recursivamente,
+    y elija aquella combinación que da la solución global.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Lo anterior está planteado en términos de buscar un óptimo,
+    pero puede adaptarse para determinar si hay o no soluciones.
+  }
+\end{frame}
+
+\section{Estructura general}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+
+  \begin{enumerate}[font = \textbf, label = {(\alph*)}]
+  \item \textbf{Plantear la recurrencia:}
+    Esta es la parte crítica,
+    depende íntimamente del problema.
+    Debemos identificar los subproblemas relevantes,
+    cómo se combinan para una solución,
+    identificar todas las alternativas relevantes
+    y cómo elegir la mejor de las alternativas.
+  \item \textbf{Escribir un programa recursivo:}
+    Generalmente es una traducción mecánica de la recurrencia.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+
+  \begin{enumerate}[font = \textbf, label = {(\alph*)}, start = 3]
+  \item \textbf{Identificar subproblemas:}
+    \label{step:dp:identify}
+    Vea todas las formas en las que el programa recursivo se llama a sí mismo.
+    Determine el conjunto de posibles argumentos.
+  \item \textbf{Defina una estructura de datos:}
+    Requerimos almacenar resultados para todas las combinaciones posibles
+    de argumentos.
+    Esto generalmente lleva a alguna clase de tabla,
+    pero perfectamente puede ser apropiada una estructura diferente.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+
+  \begin{enumerate}[font = \textbf, label = {(\alph*)}, start = 5]
+  \item \textbf{Identifique dependencias:}
+    Debemos organizar los cálculos de forma que valores requeridos
+    ya se hayan calculado antes.
+    Por ejemplo,
+    diagrama las dependencias.
+  \item \textbf{Determine un buen orden de cálculo:}
+    El orden en que funciona el programa recursivo es una guía.
+    Interesa un orden simple de programar.
+    Las dependencias descubiertas en el paso anterior
+    definen un orden parcial entre subproblemas,
+    buscamos una extensión lineal.
+    Esto es crítico,
+    tenga cuidado.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+
+  \begin{enumerate}[font = \textbf, label = {(\alph*)}, start = 7]
+  \item \textbf{Analice requerimientos de tiempo y espacio:}
+    Depende fundamentalmente del número de subproblemas
+    y lo que se debe hacer para cada uno de ellos.
+    Incluso es posible de obtener directamente
+    luego del paso~\ref{step:dp:identify}.
+  \item \textbf{Escriba el algoritmo:}
+    Esto es inmediato si se desarrollaron cuidadosamente los pasos anteriores.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Sobre la recurrencia}
+
+  \uncover<+->{
+    Las recurrencias que hemos usado \textquote{miran hacia atrás},
+    el programa resultante naturalmente construye \textquote{hacia adelante}.
+  }
+  \uncover<+->{
+    Es igualmente válido plantear una recurrencia
+    que \textquote{mira hacia adelante}
+    (considerar lo que falta para llegar a la meta,
+     no el camino desde el inicio).
+    El programa que resulta construye \textquote{hacia atrás}.
+  }
+
+  \uncover<+->{
+    Cuál elegir depende de las preferencias del desarrollador
+    y las particularidades del problema.
+  }
+\end{frame}
+
+\section{Ejemplo detallado}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+
+  \uncover<+->{
+    Para el entero no negativo \(n\) se define su \emph{valor recursivo}
+    como el máximo entre \(n\)
+    y la suma de los valores recursivos
+    de \(\lfloor n / 2 \rfloor\),
+    \(\lfloor n / 3 \rfloor\) y \(\lfloor n / 4 \rfloor\).
+  }
+
+  \uncover<+->{
+    Es claro que habrán muchos cálculos repetidos
+    al efectuar esto recursivamente,
+    y éstos son independientes entre sí.
+    Es la situación ideal para considerar programación dinámica.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Recurrencia}
+
+  \uncover<+->{
+    La recurrencia está básicamente dada por el enunciado:
+    \begin{equation*}
+      m(n)
+        = \max \{
+                   n,
+                   m(\lfloor n / 2 \rfloor)
+                     + m(\lfloor n / 3 \rfloor)
+                     + m(\lfloor n / 4 \rfloor)
+               \}
+    \end{equation*}
+    Es claro que \(m(0) = 0, m(1) = 1\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Programa recursivo}
+
+  \uncover<+->{
+    El programa recursivo es bastante obvio,
+    es una traducción inmediata
+    de la recurrencia.
+    \lstinputlisting[basicstyle = \small,
+                     language = Python,
+                     linerange = {3-8}]
+                    {max_sum_rec.py}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Identificar subproblemas}
+
+  \uncover<+->{
+    De la recurrencia es obvio que subproblemas inmediatos para \(n\)
+    son los para \(\lfloor n / 2 \rfloor\),
+     \(\lfloor n / 3 \rfloor\) y \(\lfloor n / 4 \rfloor\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Defina una estructura de datos}
+
+  \uncover<+->{
+    Se requiere únicamente el valor de \(m\) para valores selectos de \(n\),
+    un arreglo
+    (lista en Python)
+    es suficiente.
+    Bastan \(\lfloor n / 2 \rfloor\) elementos,
+    elementos posteriores no se usan.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Identifique dependencias}
+
+  \uncover<+->{
+    Ya lo vimos,
+    \(m(n)\)
+    depende de los valores para \(\lfloor n / 2 \rfloor\),
+    \(\lfloor n / 3 \rfloor\) y \(\lfloor n / 4 \rfloor\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Determine un buen orden de cálculo}
+
+  \uncover<+->{
+    Como \(m(n)\)
+    depende únicamente de valores de \(m\) para argumentos menores,
+    un orden de cálculo obvio es llenar el arreglo secuencialmente.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Analice requerimientos de tiempo y espacio}
+
+  \uncover<+->{
+    Es claro que la memoria extra usada
+    es el arreglo para guardar valores de \(m\)
+    (espacio \(\Theta(n)\))
+    y el cálculo de cada elemento hace referencia a tres elementos adicionales,
+    es fijo
+    (tiempo \(\Theta(n)\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Escriba el algoritmo}
+
+  \uncover<+->{
+    Escribir el programa final
+    es juntar lo discutido.
+    \label{item:dp-example-algorithm}
+    \lstinputlisting[basicstyle = \small,
+                     language = Python,
+                     linerange = {3-14}]
+                    {max_sum_dp.py}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo detallado}
+  \framesubtitle{Comentarios finales}
+
+  \uncover<+->{
+    Es útil tener a la mano
+    el programa recursivo
+    para contrastar resultados.
+  }
+  \uncover<+->{
+    En general,
+    el programa recursivo será demasiado ineficiente para tamaños grandes,
+    habrá que elegir casos de prueba pequeños.
+  }
+\end{frame}
+
+\section{Distancia de edición}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Distancia de edición}
+
+  \uncover<+->{
+    La \emph{distancia de edición}
+    (también llamada \emph{distancia de Levenshtein})
+    entre dos palabras es el mínimo número de cambios de símbolo,
+    inserciones y eliminaciones de símbolos individuales
+    que transforman una en la otra.
+  }
+  \uncover<+->{
+    Calcular esta distancia
+    (con el problema relacionado de hallar la secuencia de operaciones)
+    es recurrente.
+    Por ejemplo,
+    es lo que intenta hallar el programa \texttt{diff(1)} estándar de Unix
+    o lo que muestra como diferencias entre una versión y otra
+    el sistema de control de versiones predilecto,
+    es una operación común en biología molecular
+    (hallar similitudes entre genes),
+    es útil a la hora de sugerir reemplazos en revisión de ortografía.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Distancia de edición}
+
+  \uncover<+->{
+    Podemos ilustrar el proceso de edición
+    anotando las palabras alineadas en columnas,
+    con espacios donde se inserta o elimina un símbolo.
+  }
+  \uncover<+->{
+    Por ejemplo,
+    para editar \texttt{casas} a \texttt{calle}:
+    \\ \smallskip
+    \begin{tabular}{l}
+      \texttt{cas\textvisiblespace as} \\
+      \texttt{calle\textvisiblespace}
+    \end{tabular}
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Son \num{4} ediciones:
+    cambiar `\texttt{s}' a `\texttt{l}',
+    insertar `\texttt{l}',
+    cambiar `\texttt{a}' a `\texttt{e}',
+    eliminar `\texttt{s}'.
+  }
+  \uncover<+->{
+    El mínimo son \num{3} ediciones:
+    cambiar la primera `\texttt{s}' por `\texttt{l}',
+    cambiar la segunda `\texttt{a}' por `\texttt{l}',
+    cambiar la segunda `\texttt{s}' por `\texttt{e}'.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estructura recursiva}
+
+  \uncover<+->{
+    El primer paso es formular el problema en forma recursiva.
+  }
+
+  \uncover<+->{
+    Nuestra representación en columnas tiene la crucial propiedad
+    de subestructura óptima:
+    si eliminamos la última columna,
+    las demás representan una secuencia mínima para el resto de las palabras.
+  }
+  \uncover<+->{
+    La demostración es por contradicción:
+    si hubiera una secuencia más corta para el prefijo,
+    con la columna última daría una secuencia más corta para el total.
+  }
+
+  \uncover<+->{
+    Conociendo la última columna,
+    el hada de recursión se hace cargo del resto.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estructura recursiva}
+
+  \uncover<+->{
+    Dicho de otra forma:
+    el alineamiento buscado representa una secuencia de operaciones,
+    ordenadas
+    (sin particular razón)
+    de derecha a izquierda.
+  }
+  \uncover<+->{
+    Es una secuencia de decisiones,
+    una por columna.
+    En medio del proceso,
+    tenemos alineados sufijos de las palabras.
+    \\ \smallskip
+    \begin{center}
+      \begin{tabular}{|c|*{6}{>{\columncolor{orange}}p{0.7em}|}}
+        \hline
+        ALG  & O & R & I & T & M & O \\
+        ELEG & A & N &	 & T & E &   \\
+        \hline
+      \end{tabular}
+    \end{center}
+    \smallskip
+    El resto de las operaciones es independiente de lo ya acordado.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estructura recursiva}
+
+  \uncover<+->{
+    Para palabras \(A[1 .. m]\) y \(B[1 .. n]\) podemos plantear lo siguiente.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estructura recursiva}
+
+  \uncover<+->{
+    Para índices \(i, j\),
+    sea \(\mathrm{edit}(i, j)\) la distancia entre los prefijos
+    \(A[1 .. i]\) y \(B[1 .. j]\).
+  }
+  \uncover<+->{
+    Para \(i, j\) positivos hay exactamente cuatro posibilidades
+    para la última columna:
+  }
+  \begin{description}
+  \item[Inserción:]
+    La última entrada de la fila superior es vacía.
+    En tal caso
+    \(\mathrm{edit}(i, j) = \operatorname{edit}(i, j - 1) + 1\)
+    (el \({}+ 1\) es por la última inserción).
+  \item[Eliminación:]
+    La última entrada de la fila inferior es vacía.
+    En tal caso
+    \(\mathrm{edit}(i, j) = \operatorname{edit}(i - 1, j) + 1\)
+  \item[Reemplazo:]
+    Las últimas entradas difieren.
+    En tal caso
+    \(\mathrm{edit}(i, j) = \operatorname{edit}(i - 1, j - 1) + 1\)
+  \item[Coinciden:]
+    Las últimas entradas son iguales.
+    En tal caso
+    \(\mathrm{edit}(i, j) = \operatorname{edit}(i - 1, j - 1)\)
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estructura recursiva}
+
+  \uncover<+->{
+    Este análisis falla si \(i = 0\) o \(j = 0\),
+    pero esos casos son simples de manejar directamente:
+  }
+  \begin{itemize}
+  \item
+    Transformar la palabra vacía en una palabra de largo \(j\)
+    requiere \(j\) inserciones,
+    \(\mathrm{edit}(0, j) = j\).
+  \item
+    Transformar una palabra de largo \(i\) en la palabra vacía
+    requiere \(i\) eliminaciones,
+    \(\mathrm{edit}(i, 0) = i\).
+  \end{itemize}
+  \uncover<+->{
+    Prueba de sanidad:
+    transformar la palabra vacía en la palabra vacía tiene costo cero.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estructura recursiva}
+
+  Resulta la siguiente recursión para \(\mathrm{edit}\):
+  \begin{equation*}
+    \mathrm{edit}(i, j)
+      = \begin{cases}
+           i & \text{si \(j = 0\)} \\
+           j & \text{si \(i = 0\)} \\
+           \min
+             \begin{Bmatrix}
+               \mathrm{edit}(i, j - 1) + 1 \\
+               \mathrm{edit}(i - 1, j) + 1 \\
+               \mathrm{edit}(i - 1, j - 1) + [A[i] \ne B[j]]
+             \end{Bmatrix}
+             & \text{caso contrario}
+        \end{cases}
+  \end{equation*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programación dinámica}
+
+  \begin{description}
+  \item[Subproblemas:]
+    Cada subproblema se identifica
+    por índices \(0 \le i \le m\) y \(0 \le j \le n\).
+  \item[Memoización:]
+    Requerimos un arreglo bidimensional
+    para almacenar \(\mathrm{edit}(i, j)\),
+    \(e[0 .. m, 0 .. n]\).
+  \item[Dependencias:]
+    La entrada \(e[i, j]\) depende solo de los tres vecinos
+    \(e[i - 1, j], e[i, j - 1], e[i - 1, j - 1]\).
+  \item[Orden de llenado:]
+    Si llenamos el arreglo fila por fila,
+    cada fila de izquierda a derecha,
+    al calcular un elemento están disponibles los de los que depende.
+    \uncover<+->{
+      (No es el único que funciona,
+       pero es simple.)
+    }
+  \item[Costos:]
+    Son \(m n\) entradas en el arreglo,
+    llenar cada una toma tiempo constante.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Algoritmo final}
+
+  \selectlanguage{english}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Function{\(\mathrm{EditDistance}(A[1 .. m], B[1 .. n])\)}{
+      \ForEach{\(0 \le j \le n\)}{
+        \(e[0, j] \leftarrow j\) \;
+      }
+      \For{\(i \leftarrow 1\) \KwTo \(m\)}{
+        \(e[i, 0] \leftarrow i\) \;
+        \For{\(j \leftarrow i\) \KwTo \(n\)}{
+          \(\mathit{ins} \leftarrow e[i, j - 1] + 1\);
+          \(\mathit{del} \leftarrow e[i - 1, j] + 1\) \;
+          \eIf{\(A[i] = B[j]\)}{
+            \(\mathit{rep} \leftarrow e[i - 1, j - 1]\) \;
+          }{
+            \(\mathit{rep} \leftarrow e[i - 1, j - 1] + 1\) \;
+          }
+          \(e[i, j] \leftarrow \min\{ \mathit{ins},
+                                      \mathit{del},
+                                      \mathit{rep} \}\) \;
+        }
+        \Return \(e[m, n]\) \;
+      }
+    }
+  \end{algorithm}
+  \selectlanguage{spanish}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Obtener las operaciones}
+
+  \uncover<+->{
+    Rescatar las operaciones requiere almacenar en el arreglo
+    cuál de las tres (o cuatro)
+    operaciones fue la que dio el óptimo de ese casillero,
+    y recorrer hacia atrás desde la meta.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Puede ahorrarse espacio en el cálculo de la distancia
+    reteniendo solo las entradas que serán usadas luego.
+  }
+  \uncover<+->{
+    Para reconstruir las operaciones,
+    pueden retenerse parte de los datos y recalcular el resto.
+    El apunte referencia detalles.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Hay algoritmos más rápidos
+    en el caso que la distancia es pequeña
+    (común en aplicaciones:
+     no se comparan archivos/genes radicalmente diferentes).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo conjunto independiente de un árbol}
+
+  \uncover<+->{
+    Recordamos que un \emph{conjunto independiente}
+    (en inglés,
+     \emph{\foreignlanguage{english}{independent set}})
+    de un grafo es un conjunto de vértices entre los que no hay arcos.
+  }
+  \uncover<+->{
+    Vimos que determinar si un grafo
+    tiene un conjunto independiente de tamaño al menos \(k\)
+    (el problema \textsc{IS})
+    es \NP\nobreakdash-completo.
+  }
+  \uncover<+->{
+    Demostraremos un elegante algoritmo
+    para hallar el tamaño de un conjunto independiente de un árbol.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo conjunto independiente de un árbol}
+
+  \uncover<+->{
+    Analizando el árbol desde un nodo raíz
+    (arbitrario,
+     realmente),
+    vemos que un conjunto independiente incluye a la raíz
+    (en cuyo caso ninguno de los hijos de ésta puede pertenecer)
+    o la excluye
+    (los hijos de la raíz pueden pertenecer).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo conjunto independiente de un árbol}
+
+  \uncover<+->{
+    La idea general está clara entonces:
+    calcular para los subárboles las cantidades \(E_v\)
+    (excluye la raíz del subárbol con raíz en \(v\))
+    e \(I_v\)
+    (incluye la raíz del subárbol con raíz en \(v\)).
+  }
+  \uncover<+->{
+    Calculamos entonces para el vértice \(v\):
+    \begin{align*}
+      I_v
+        &= 1 + \sum_{t \in N(v)} E_t \\
+      E_v
+        &= \sum_{t \in N(v)} \max \{ I_t, E_t \}
+    \end{align*}
+    El tamaño máximo de un conjunto independiente es simplemente
+    \(\max \{ I_r, E_r \}\) para la raíz \(r\) del árbol.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo conjunto independiente de un árbol}
+
+  \uncover<+->{
+    El planteo recursivo llama programación dinámica a gritos.
+  }
+  \uncover<+->{
+    Claro que acá no tiene sentido una \textquote{tabla}
+    (arreglo),
+    almacenamos \(I_v, E_v\) en los nodos del árbol.
+  }
+  \uncover<+->{
+    Un orden válido de cálculo simple está dado por un recorrido en postorden.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Planteamos la estrategia de programación dinámica.
+    \uncover<+->{
+      Es una estrategia de muy amplia aplicabilidad,
+      que vale la pena asimilar bien.
+    }
+  \item
+    Discutimos de condiciones de aplicabilidad.
+    \uncover<+->{
+      Hay similitud con algoritmos voraces.
+    }
+    \uncover<+->{
+      Como esos nunca funcionan\ldots
+    }
+  \item
+    Describimos una estrategia general para desarrollar estos algoritmos,
+    ilustrada con un ejemplo realista.
+  \item
+    El ejemplo de \textsc{IS} máximo de árboles recalca
+    que la \textquote{tabla} no es central.
+  \item
+    Discusión más detallada y ejemplos
+    en el \href{http://jeffe.cs.illinois.edu/teaching/algorithms}
+               {texto de Jeff Erickson}.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step english backtracking branch em
+% LocalWords:  and bound sub memoización memoizada computines cont IS
+% LocalWords:  diff cas orange ALG ELEG edit independent set Jeff
+% LocalWords:  postorden

@@ -1,0 +1,280 @@
+\documentclass[english, spanish, fleqn]{article}
+\usepackage{amsmath, amssymb, fourier, mathrsfs}
+\usepackage{enumitem}
+\usepackage{dcolumn}
+\usepackage{cancel}
+\usepackage{babel}
+\usepackage[noline]{algorithm2e}
+\usepackage{listings}
+\usepackage{csquotes}
+\usepackage[colorlinks, urlcolor = blue]{hyperref}
+
+\title{Cambio de monedas:\\
+       Óptimo por programación dinámica}
+\author{\href{mailto:vonbrand@inf.utfsm.cl}{Horst H. von Brand}}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{[ANSI]C}
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = lines, numbers = none,
+        showstringspaces = false,
+        float, floatplacement = ht, captionpos = b,
+        xleftmargin = 1em, xrightmargin = 1em
+      }
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+
+\begin{document}
+\bibliographystyle{babplain-fl}
+
+\maketitle
+\thispagestyle{empty}
+
+  En la perdida colonia antártica
+  de \href{http://moneyart.biz/dd}{Nadiria}
+  la moneda venía en denominaciones
+  de \$1, \$4, \$7, \$13, \$28, \$52, \$91 y \$365.
+  Como el papel era extremadamente escaso,
+  por ley cualquier transacción en dinero
+  debía usar el mínimo número de billetes.
+
+\section{Por valor}
+\label{sec:by-value}
+
+  Usamos el esquema descrito en clase para obtener el número mínimo
+  de billetes para completar la cantidad \(C\).
+  Llamaremos \(b_0 = 1 < b_1 < \dotsb < b_{n - 1}\)
+  a las denominaciones de los \(n\)~billetes
+  (si \(b_0 \ne 1\),
+   hay cantidades imposibles de entregar).
+  \begin{enumerate}[label = {(\alph*)}]
+  \item \textbf{Plantear la recurrencia:}
+    En este caso,
+    es bastante obvio que el mínimo de monedas requeridas
+    para dar la cantidad \(C\)
+    es uno más que la cantidad mínima de monedas
+    requeridas para entregar
+    las cantidades \(C - b_0\), \(C - b_1\), \ldots \(C - b_{n - 1}\)
+    (omitiendo monedas de valor mayor que \(C\),
+     claro está).
+    Llamemos \(M(C)\) al mínimo número de monedas
+    requerido para completar \(C\):
+    \begin{equation}
+      \label{eq:recurrence}
+      M(C)
+        = 1 + \min_{\substack{
+                      0 \le k < n \\
+                      b_k \ge C}}
+                \{M(C - b_k)\}
+      \qquad
+      M(0)
+        = 0
+    \end{equation}
+  \item \textbf{Escribir un programa recursivo:}
+    El algoritmo recursivo~\ref{alg:recursive}
+    expresa la recurrencia~\eqref{eq:recurrence}.
+    \begin{algorithm}
+      \DontPrintSemicolon\Indp
+
+      \Function{\(M(C)\)}{
+        \eIf{\(C = 0\)}{
+          \Return \(0\) \;
+        }
+        {
+          \(m \leftarrow 0\) \;
+          \(k \leftarrow 0\) \;
+          \While{\(k < n \wedge b_k \ge C\)}{
+            \If{\(m > M(C - b_k)\)}{
+              \(m \leftarrow M(C - b_k)\) \;
+            }
+            \(k \leftarrow k + 1\) \;
+          }
+          \Return \(m + 1\) \;
+        }
+      }
+
+      \caption{Entregar vuelto --- recursivo por valor}
+      \label{alg:recursive}
+    \end{algorithm}
+  \item \textbf{Identificar subproblemas:}
+    Subproblemas relevantes son entregar la cantidad \(C - b_k\),
+    con \(0 \le k < n\) tales que \(b_k \le C\).
+  \item \textbf{Defina una estructura de datos:}
+    La estructura obvia es un arreglo que contiene \(M(c)\) para
+    \(0 \le c \le C\).
+  \item \textbf{Identifique dependencias:}
+    El valor de \(M(c)\) depende de los valores de algunos \(c\) anteriores.
+    Lo más simple es tenerlos todos a mano.
+  \item \textbf{Determine un buen orden de cálculo:}
+    Por lo discutido en el punto anterior,
+    un orden de cálculo es llenar el arreglo para \(C\) creciente.
+  \item \textbf{Analice requerimientos de tiempo y espacio:}
+    El tiempo es básicamente \(O(C n)\)
+    (debemos llenar \(C + 1\) elementos del arreglo,
+     cada uno toma \(O(n)\) operaciones).
+    El espacio requerido es \(O(C)\).
+  \item \textbf{Escriba el algoritmo:}
+    Resulta el algoritmo~\ref{alg:dp}.
+    \begin{algorithm}
+      \DontPrintSemicolon\Indp
+
+      \Function{\(M(C)\)}{
+        \(M_0 \leftarrow 0\) \;
+        \For{\(c \leftarrow 0\) \KwTo \(C\)}{
+          \(m \leftarrow 0\) \;
+          \(k \leftarrow 0\) \;
+          \While{\(k < n \wedge b_k \ge C\)}{
+            \If{\(m > M_{C - b_k}\)}{
+              \(m \leftarrow M_{C - b_k}\) \;
+            }
+            \(k \leftarrow k + 1\) \;
+          }
+        }
+        \Return \(M_C\) \;
+      }
+
+      \caption{Entregar vuelto --- programación dinámica por valor}
+      \label{alg:dp}
+    \end{algorithm}
+  \end{enumerate}
+  Lo anterior solo obtiene el número mínimo de monedas,
+  lo que interesa realmente es saber cuánto entregar de cada denominación.
+  Para ello debemos
+  registrar el valor de \(k\) que da el mínimo para cada cantidad,
+  recorriendo estos valores desde \(C\) hacia atrás,
+  contabilizando cuántas veces aparece cada moneda.
+  El programa~\ref{prog:dp} da detalles.
+  \lstinputlisting[language = C,
+                   firstline = 8,
+                   tabsize = 4,
+                   caption = {Cambio de monedas por valor},
+                   label = prog:dp]{dp.c}
+
+\section{Por moneda}
+\label{sec:by-bill}
+
+  Otra manera de plantear una recurrencia
+  es considerar agregar una denominación.
+  \begin{enumerate}[label = {(\alph*)}]
+  \item \textbf{Plantear la recurrencia:}
+    Es claro que el mínimo de billetes para entregar \(C\)
+    usando las denominaciones \(b_0, \dotsc, b_{k + 1}\)
+    es el mínimo entre entregar \(C\) con \(b_0, \dotsc, b_k\)
+    y entregar \(C - b_{k + 1}\) más uno.
+    Llamemos \(M(C, k)\) al mínimo número de monedas
+    requerido para completar \(C\) usando \(b_0, \dotsc, b_k\):
+    \begin{equation}
+      \label{eq:recurrence-2}
+      M(C, k)
+        = \min\{
+                 M(C, k - 1) + 1, M(C - b_k, k)
+              \}
+      \qquad
+      M(C, 0)
+        = C
+    \end{equation}
+    Es claro que debemos usar~\eqref{eq:recurrence-2} solo si \(C \le b_k\).
+  \item \textbf{Escribir un programa recursivo:}
+    El algoritmo recursivo~\ref{alg:recursive-2}
+    expresa la recurrencia~\eqref{eq:recurrence-2}.
+    \begin{algorithm}
+      \DontPrintSemicolon\Indp
+
+      \Function{\(M(C, k)\)}{
+        \If{\(k = 0\)}{
+          \Return \(C\) \;
+        }
+        {
+          \If{\(C \ge b_k\)}{
+            \Return \(\min\{M(C, k - 1), 1 + M(C - b_k, k - 1)\}\) \;
+            }
+            {
+              \Return \(M(C, k - 1)\) \;
+            }
+        }
+      }
+
+      \caption{Entregar vuelto --- recursivo por valor y denominación}
+      \label{alg:recursive-2}
+    \end{algorithm}
+  \item \textbf{Identificar subproblemas:}
+    Subproblemas relevantes son entregar la cantidad \(C - b_k\),
+    con \(0 \le k < n\) tales que \(b_k \le C\).
+  \item \textbf{Defina una estructura de datos:}
+    La estructura obvia es un arreglo que contiene \(M(c, k)\) para
+    \(0 \le c \le C\) y \(0 \le k < n\).
+  \item \textbf{Identifique dependencias:}
+    El valor de \(M(c, k)\) depende de los valores
+    de \(M(c, k - 1)\) y posiblemente \(M(c - b_k, k)\).
+  \item \textbf{Determine un buen orden de cálculo:}
+    Podemos llenar un arreglo que contenga \(M(c, k)\)
+    una fila a la vez,
+    para \(c\) creciente.
+    Incluso,
+    como \(M(c, k)\) solo depende de \(M(c, k - 1)\) y \(M(c', k)\)
+    con \(c' < c \)
+    podemos usar solo un vector.
+  \item \textbf{Analice requerimientos de tiempo y espacio:}
+    El tiempo es básicamente \(O(C n)\)
+    (debemos llenar \(C + 1\) elementos del arreglo,
+     cada uno toma \(O(n)\) operaciones).
+    El espacio requerido es \(O(C)\)
+    (suponiendo que solo almacenamos un vector).
+  \item \textbf{Escriba el algoritmo:}
+    Resulta el algoritmo~\ref{alg:dp-2}.
+    \begin{algorithm}
+      \DontPrintSemicolon\Indp
+
+      \Function{\(M(C)\)}{
+        \For{\(c \leftarrow 0\) \KwTo \(C\)}{
+          \(M_c \leftarrow c\) \;
+        }
+        \For{\(k \leftarrow 1\) \KwTo \(n - 1\)}{
+          \For{\(c \leftarrow b_k\) \KwTo \(C\)}{
+            \If{\(M_{c - b_k} + 1 < M_k\)}{
+              \(M_c \leftarrow M_{c - b_k} + 1\) \;
+            }
+          }
+        }
+        \Return \(M_C\) \;
+      }
+
+      \caption{Entregar vuelto --- programación dinámica por denominación}
+      \label{alg:dp-2}
+    \end{algorithm}
+  \end{enumerate}
+  Nuevamente,
+  lo anterior solo obtiene el número mínimo de monedas,
+  lo que interesa realmente es saber cuánto entregar de cada denominación.
+  Para ello debemos
+  registrar el valor de \(k\) que da el mínimo para cada cantidad,
+  recorriendo estos valores desde \(C\) hacia atrás,
+  contabilizando cuántas veces aparece cada moneda.
+  El programa~\ref{prog:dp-2} da detalles.
+  \lstinputlisting[language = C,
+                   firstline = 8,
+                   tabsize = 4,
+                   caption = {Cambio de monedas por denominación},
+                   label = prog:dp-2]{dp-2.c}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  empty Nadiria eq recurrence

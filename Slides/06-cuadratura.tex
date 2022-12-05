@@ -1,0 +1,960 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{pgfplots}
+
+\pgfplotsset{compat = newest}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Cuadratura}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Problema a resolver}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema}
+
+  \uncover<+->{
+    En ciencia e ingeniería
+    una de las tareas comunes
+    (después de resolver ecuaciones de todo tipo)
+    es calcular el valor de integrales definidas.
+  }
+
+  \uncover<+->{
+    Calcular la integral es \emph{hallar el área bajo la curva},
+    en geometría clásica
+    esto se expresaba como \emph{hallar un cuadrado de la misma área},
+    de allí el nombre de \emph{cuadratura}.
+  }
+
+  \uncover<+->{
+    La triste realidad es que muy pocas integrales de interés
+    pueden expresarse en fórmulas cerradas,
+    hay que recurrir a aproximaciones.
+  }
+  \uncover<+->{
+    Discutiremos técnicas basadas en interpolar
+    e integrar	el polinomio resultante.
+    Hay técnicas adicionales,
+    con aplicaciones especializadas.
+  }
+\end{frame}
+
+\section{Memorabilia}
+
+\begin{frame}
+  \frametitle{Memorabilia}
+
+  \uncover<+->{
+    \textbf{Teorema del valor intermedio:}
+
+    Si \(f\) es continua en \([a, b]\),
+    \selectlanguage{english}
+    \(m = \min_{a \le x \le b}\{ f(x) \}\),
+    \(M = \max_{a \le x \le b}\{ f(x) \}\),
+    \selectlanguage{spanish}
+    para todo \(m \le u \le M\) hay \(a \le \xi \le b\)
+    tal que \(f(\xi) = u\).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Memorabilia}
+
+  \uncover<+->{
+    \textbf{Teorema del valor intermedio de la derivada:}
+
+    Si \(f'\) es continua en \([a, b]\),
+    hay \(a < \xi < b \)
+    tal que:
+    \begin{equation*}
+      f'(\xi)
+        = \frac{f(b) - f(a)}{b - a}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Memorabilia}
+
+  \uncover<+->{
+    \textbf{Teorema del valor intermedio de la integral:}
+
+    Si \(f\) es continua
+    y \(g\) es integrable y no cambia de signo
+    en \([a, b]\),
+    hay \(a < \xi < b\) tal que:
+    \begin{equation*}
+      \int_a^b f(x) g(x) \, \mathrm{d} x
+         = f(\xi) \int_a^b g(x) \,  \mathrm{d} x
+    \end{equation*}
+  }
+  \uncover<+->{
+    El caso \(g(x) = 1\) da:
+    \begin{equation*}
+      \int_a^b f(x) \, \mathrm{d} x
+        = (b - a) f(\xi)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Memorabilia}
+
+  \uncover<+->{
+    \textbf{Teorema de Taylor,
+            residuo en la forma de Lagrange:}
+
+    \begin{align*}
+      f(a + h)
+        &= \sum_{0 \le k \le n} \frac{f^{(k)}(a)}{k!} h^k + R_{n + 1}(h) \\
+      R_{n + 1}(h)
+        &= \frac{f^{(n + 1)}(\xi)}{(n + 1)!} h^{n + 1}
+            \qquad a < \xi < a + h
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Memorabilia}
+
+  \uncover<+->{
+    \textbf{Integración por partes:}
+
+    \begin{equation*}
+      \int u \mathrm{d} v
+         = u v - \int v \mathrm{d} u
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Planteo del problema}
+
+  \uncover<+->{
+    Supondremos dada una función \(f(x)\),
+    queremos aproximar \(\int_a^b f(x) \, \mathrm{d} x\)
+    dentro de alguna tolerancia \(\epsilon\).
+  }
+  \uncover<+->{
+    Podemos elegir los puntos en los cuales evaluar \(f\) a conveniencia.
+  }
+  \uncover<+->{
+    Inicialmente supondremos puntos igualmente espaciados.
+    Llamaremos \(h\)~al espaciado,
+    \(n\)~al número de intervalos
+    (son \(n + 1\)~puntos).
+  }
+  \\ \medskip
+  \uncover<+->{
+    Obtendremos fórmulas de la forma general:
+    \begin{equation*}
+      \int_{x_0}^{x_n} f(x) \, \mathrm{d} x
+        \approx \sum_{0 \le i \le n} A_i f(x_i)
+    \end{equation*}
+  }
+\end{frame}
+
+\section{Fórmulas simples}
+
+\subsection{Rectángulos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Rectángulos}
+
+  La idea más simple es aproximar el área
+  mediante una \textquote{escalera}:
+  \begin{equation*}
+    \int_a^b f(x) \, \mathrm{d} x
+      \approx h \sum_{0 \le k \le n} f(a + k h)
+  \end{equation*}
+  \uncover<+->{
+    Esto corresponde a aproximar la función mediante un polinomio de grado~0
+    (constante)
+    en cada subintervalo,
+    tomando el valor de \(f\) al principio del intervalo.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Esta técnica simplista es sencilla de analizar,
+    y ayudará como muestra de las técnicas del caso.
+    No la presentamos para uso práctico.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Rectángulos}
+
+  \begin{center}
+    \pgfimage[width = 0.85\textwidth]{rectangles}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    Consideremos el intervalo \([x_i, x_{i + 1}]\),
+    con \(x_{i + 1} - x_i = h\).
+    Expresamos la integral \(F\) mediante serie de Taylor
+    con residuo en la forma de Lagrange,
+    usando el teorema fundamental del cálculo:
+    \begin{align*}
+      F(x)
+        &= \int_{x_i}^x f(t) \, \mathrm{d} t \\
+        &= F(x_i) + F'(x_i) (x - x_i) + \frac{1}{2} F''(\xi_i) (x - x_i)^2 \\
+        &= 0 + f(x_i) (x - x_i) + \frac{1}{2} f'(\xi_i) (x - x_i)^2
+    \end{align*}
+    Acá \(x_i < \xi_i < x_{i + 1}\).
+  }
+  \uncover<+->{
+    El error del intervalo es:
+    \begin{align*}
+      E_i
+        &= F(x_{i + 1}) - f(x_i) h \\
+        &= \frac{1}{2} f'(\xi_i) h^2
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    Debemos sumar sobre los \(n\) intervalos:
+    \begin{align*}
+      E
+        &= \sum_{0 \le i < n} E_i \\
+        &= \frac{h^2}{2} \sum_{0 \le i < n}f'(\xi_i)
+    \end{align*}
+  }
+  \uncover<+->{
+    Si \(m \le f'(x) \le M\) en \([a, b]\) y son \(n\) intervalos:
+    \begin{alignat*}{3}
+      &\frac{h^2}{2} \cdot n m
+        &{} \le {}& \sum_{0 \le i < n} f'(\xi_i)
+        &{} \le {}& \frac{h^2}{2} \cdot n M \\
+      &\frac{(b - a) m}{2} h
+        &{} \le {}& \sum_{0 \le i < n} f'(\xi_i)
+        &{} \le {}& \frac{(b - a) M}{2} h
+    \end{alignat*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    Si \(f'\) es continua en el intervalo \([a, b]\),
+    vemos que hay \(\xi \in [a, b]\) tal que:
+    \begin{equation*}
+      \sum_{0 \le i < n} f'(\xi_i)
+        = n f'(\xi)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Concluimos que el error cumple:
+    \begin{equation*}
+      E
+        = \frac{f'(\xi) (b - a) h}{2}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Variante: Punto medio}
+
+  \uncover<+->{
+    Un problema de la técnica anterior es patente
+    si la función es monótona
+    (creciente o decreciente):
+    el valor en el punto inicial sub- o sobre-estima el valor en el intervalo.
+  }
+  \uncover<+->{
+    Intuitivamente,
+    dará mejor resultado en general usar el punto medio:
+    \begin{equation*}
+      \int_a^b f(x) \, \mathrm{d} x
+        \approx \frac{b - a}{n}
+                   \sum_{0 \le i < n} f\left( \frac{x_i + x_{i + 1}}{2} \right)
+    \end{equation*}
+    (el \textquote{triángulo} que sobra en un extremo del subintervalo
+     se compensa aproximadamente con el que falta en el otro).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Punto medio}
+
+  \begin{center}
+    \pgfimage[width = 0.85\textwidth]{midpoints}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    La misma idea general que usamos para analizar rectángulos.
+    Solo que ahora deberemos combinar varias estimaciones,
+    por lo que describiremos errores mediante cotas asintóticas.
+  }
+
+  \uncover<+->{
+    Vemos que esta técnica es exacta para polinomios de grado \(1\),
+    por lo que extendemos las series a términos cúbicos.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    Con \(d = x - x_i\),
+    expandiendo \(F(x)\) por serie de Taylor:
+    \begin{align*}
+      F(x)
+        &= F(x_i)
+              + F'(x_i) d
+              + \frac{F''(x_i)}{2} d^2
+              + \frac{F'''(x_i)}{6} d^3
+              + O(d^4) \\
+        &= 0
+             + f(x_i) d
+             + \frac{1}{2} f'(x_i) d^2
+             + \frac{1}{6} f''(x_i) d^3
+          + O(d^4) \\
+      F(x_{i + 1})
+        &= f(x_i) h
+             + \frac{1}{2} f'(x_i) h^2
+             + \frac{1}{6} f''(x_i) h^3
+             + O(h^4)
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    El error del intervalo es:
+  }
+  \begin{align*}
+    \uncover<.->{
+      E_i
+        &= \int_{x_i}^{x_{i + 1}} f(x)\, \mathrm{d} x
+          - h f\left( \frac{x_i + x_{i + 1}}{2} \right)
+    }
+    \uncover<+->{
+      \intertext{Expandimos el segundo término por Taylor:}
+        &= F(x_{i + 1})
+          - h \left(
+                 f(x_i)
+                   + f'(x_i) \frac{h}{2}
+                   + \frac{1}{2} f''(x_i) \frac{h^2}{4}
+                   + O(h^3)
+               \right) \\
+    }
+    \uncover<+->{
+        &= \frac{1}{24} f''(x_i) h^3 + O(h^4)
+    }
+  \end{align*}
+\end{frame}
+
+\subsection{Trapezoides}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Trapezoides}
+
+  \uncover<+->{
+    El siguiente paso es aproximar la función
+    por rectas que pasan por \((x_i, f(x_i))\) y \((x_{i + 1}, f(x_{i + 1}))\).
+  }
+  \uncover<+->{
+    La figura geométrica resultante
+    (un cuadrilátero con dos lados paralelos
+     y uno de los lados entre ellos en ángulo recto)
+     se llama \emph{trapezoide}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Trapezoides}
+
+  \begin{center}
+    \pgfimage[width = 0.85\textwidth]{trapezoids}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Trapezoides}
+
+  \uncover<+->{
+    El área del trapezoide formado por las rectas \(x = x_i\),
+    \(x = x_{i + 1}\),
+    el eje \(X\)
+    y la recta que une
+    los puntos \((x_i, f(x_i))\) y \((x_{i + 1}, f(x_{i + 1}))\)
+    es simplemente:
+    \begin{equation*}
+      \frac{(x_{i + 1} - x_i) (f(x_i) + f(x_{i + 1}))}{2}
+    \end{equation*}
+  }
+  \uncover<+->{
+    La regla compuesta es:
+    \begin{equation*}
+       \int_a^b f(x) \mathrm{d} x
+         \approx \frac{b - a}{2 n}
+                    \left(
+                      (f(x_0) + f(x_n)) + 2 \sum_{0 < i < n} f(x_i)
+                    \right)
+     \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    Consideremos un intervalo,
+    tenemos para el error:
+    \begin{equation*}
+      E_i
+        = \int_{x_i}^{x_{i + 1}} f(x) \mathrm{d} x
+            - \frac{x_{i + 1} - x_i}{2} (f(x_i) + f(x_{i + 1}))
+    \end{equation*}
+  }
+  \uncover<+->{
+    Sea \(c\) el centro del intervalo:
+    \begin{equation*}
+      c
+        = \frac{x_i + x_{i + 1}}{2}
+    \end{equation*}
+    con lo que:
+    \begin{equation*}
+      x_{i + 1} - c
+        = c - x_i
+        = \frac{x_{i + 1} - x_i}{2}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  La expresión para el error
+  corresponde a integración por partes
+  (tome \(u = f(x)\),
+   \(\mathrm{d} v = \mathrm{d} (x - c) = \mathrm{d} x\)):
+  \begin{equation*}
+    -E_i
+      = \int_{x_i}^{x_{i + 1}} (x - c) f'(x) \mathrm{d} x
+  \end{equation*}
+  Nuevamente integrando por partes,
+  como \(x_{i + 1} - c = c - x_i = (x_{i + 1} - x_i) / 2\):
+  \begin{align*}
+    -E_i
+      &= \left. \frac{1}{2}(x - c)^2 f'(x) \right|_{x_i}^{x_{i + 1}}
+           - \frac{1}{2} \int_{x_i}^{x_{i + 1}}
+               (x - c)^2 f''(x) \, \mathrm{d} x \\
+      &= \frac{(x_{i + 1} - x_i)^2}{4} (f'(x_{i + 1}) - f'(x_i))
+           - \frac{1}{2} \int_{x_i}^{x_{i + 1}}
+               (x - c)^2 f''(x) \, \mathrm{d} x
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    El primer término
+    es una constante por la integral de \(f''(x)\):
+    \begin{align*}
+      -E_i
+        &= \frac{1}{2}
+             \int_{x_i}^{x_{i + 1}}
+                      \left(
+                        \left(
+                          \frac{x_{i + 1} - x_i}{2}
+                        \right)^2
+                          - (x - c)^2
+                      \right) f''(x) \mathrm{d} x
+    \end{align*}
+  }
+  \uncover<+->{
+    El polinomio bajo la integral no cambia de signo en \([x_i, x_{i + 1}]\),
+    suponiendo \(f''\) continua en el intervalo
+    podemos aplicar el teorema del valor intermedio de la integral,
+    que nos asegura que hay \(\xi_i \in [x_i, x_{i + 1}]\) tal que:
+  }
+  \begin{align*}
+    \uncover<.->{
+      -E_i
+        &= \frac{1}{2} f''(\xi_i)
+                     \int_{x_i}^{x_{i + 1}}
+                        \left(
+                          \left(
+                            \frac{x_{i + 1} - x_i}{2}
+                          \right)^2
+                            - (x - c)^2
+                      \right) \mathrm{d} x \\
+    }
+    \uncover<+->{
+        &= f''(\xi_i) \frac{(x_{i + 1} - x_i)^3}{12} \\
+    }
+    \uncover<+->{
+      E_i
+        &= -\frac{f''(\xi_i)}{12} h^3
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    Nuevamente tenemos para el intervalo completo,
+    para algún \(\xi \in [a, b]\):
+    \begin{align*}
+      E
+        &= \sum_{0 \le i < n} E_i \\
+        &= -\frac{h^3}{12}\sum_{0 \le i < n} f''(\xi_i) \\
+        &= -\frac{(b - a) h^2 f''(\xi)}{12}
+    \end{align*}
+  }
+\end{frame}
+
+\subsection{Regla de Simpson}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Regla de Simpson}
+
+  \uncover<+->{
+    Siguiente paso es interpolar mediante una cuadrática.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simpson}
+
+  Consideremos un intervalo:
+  \begin{center}
+    \pgfimage[width = 0.8\textwidth]{quadratic}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Regla de Simpson}
+
+  \uncover<+->{
+    Claro que integrar el polinomio en forma de Lagrange es feo.
+  }
+  \uncover<+->{
+    Pero si la fórmula es exacta para todos los polinomios de grado 2,
+    será exacta para polinomios de grados 0, 1 y 2.
+    Planteamos un sistema de ecuaciones,
+    usando los polinomios simples \(1, x, x^2\)
+    con puntos \(-1, 0, 1\) por simetría.
+  }
+  \uncover<+->{
+    Nuestra fórmula de cuadratura será:
+    \begin{equation*}
+      \int_{-1}^1 f(x) \, \mathrm{d} x
+        \approx A_{-1} f(-1) + A_0 f(0) + A_{+1} f(1)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Regla de Simpson}
+
+  \uncover<+->{
+    Planteamos el sistema de ecuaciones:
+    \begin{alignat*}{4}
+      &\int_{-1}^1 1 \, \mathrm{d} x
+         &{} = {}& 2
+         && = A_{-1}\cdot 1	   & + A_0 \cdot 1   & + A_{+1} \cdot 1 \\
+      &\int_{-1}^1 x \, \mathrm{d} x
+         &{} = {}& 0
+         && = A_{-1} \cdot (-1)	   & + A_0 \cdot 0   & + A_{+1} \cdot 1	 \\
+      &\int_{-1}^1 x^2 \, \mathrm{d} x
+         &{} = {}& \frac{2}{3}
+         && = A_{-1}\cdot (-1)^2    & + A_0 \cdot 0^2 & + A_{+1} \cdot 1^2
+    \end{alignat*}
+  }
+  \uncover<+->{
+    Solución es \(A_{-1} = A_{+1} = 1 / 3\), \(A_0 = 4 / 3\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Regla de Simpson}
+
+  \uncover<+->{
+    La regla compuesta,
+    para un número impar \(n\) de puntos resulta ser:
+  }
+  \begin{align*}
+    \uncover<+->{
+    \int_a^b f(x) \, \mathrm{d} x
+       &= \sum_{0 \le k \le n / 2}
+            \left(
+              \frac{1}{3} f(x_{2 k})
+                + \frac{4}{3} f(x_{2 k + 1})
+                + \frac{1}{3} f(x_{2 k + 2})
+            \right) \\
+    }
+    \uncover<+->{
+       &= \frac{2}{3} \sum_{0 \le k \le n / 2} f(x_{2 k})
+            + \frac{4}{3} \sum_{0 \le k \le n / 2} f(x_{2 k + 1})
+            - \frac{1}{3} f(x_0) - \frac{1}{3} f(x_n)
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Regla de Simpson}
+
+  \uncover<+->{
+    Vemos que también se cumple:
+    \begin{alignat*}{4}
+      &\int_{-1}^1 x^3 \, \mathrm{d} x
+         &{} = {}& 0
+         && = A_{-1}\cdot(-1)^3 & + A_0 \cdot 0^3 & + A_{+1} \cdot 1^3
+    \end{alignat*}
+  }
+  \uncover<+->{
+    Vale decir,
+    la regla de Simpson es exacta para polinomios hasta grado 3,
+    cuando teníamos derecho de esperar exacta solo hasta grado 2.
+    El mismo fenómeno ocurrirá con todas las reglas
+    con un número impar de puntos
+    distribuidos simétricamente.
+  }
+  \uncover<+->{
+    Ya habíamos visto esto con la regla del punto medio.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del error}
+
+  \begin{theorem}
+    Sea \(f \in C^4 [a, b]\),
+    llamamos \(h = (b - a) / 2\),
+    \(x_0 = a\), \(x_1 = x_0 + h\), \(x_2 = b\).
+    Hay \(\xi \in [a, b]\) tal que el error de la regla de Simpson cumple:
+    \begin{equation*}
+      E
+        = \int_a^b f(x) \, \mathrm{d} x
+             - \frac{h}{3} (f(x_0) + 4 f(x_1) + f(x_2))
+        = - \frac{h^5}{90} f^{(4)}(\xi)
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  \textbf{\large\textcolor{blue}{Demostración}}
+
+  Cambie variable \(x(t) = x_1 + h t\),
+  \(t \in [-1, 1]\).
+  Defina \(F(t) = f(x(t))\):
+  \begin{equation*}
+    \int_a^b f(x) \, \mathrm{d} x
+      = h \int_{-1}^1 F(\tau) \, \mathrm{d} \tau
+  \end{equation*}
+  y el error es:
+  \begin{align*}
+    E
+      &= \int_a^b f(x) \, \mathrm{d} x
+           - \frac{h}{3} (f(x_0) + 4 f(x_1) + f(x_2)) \\
+      &= h \left(
+              \int_{-1}^1 F(\tau) \, \mathrm{d} \tau
+                - \frac{1}{3} \left( F(-1) + 4 F(0) + F(1) \right)
+           \right)
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  Para \(t \in [-1, 1]\) defina:
+  \begin{equation*}
+    G(t)
+      = \int_{-t}^t F(\tau) \, \mathrm{d} \tau
+          - \frac{1}{3} \left( F(-t) + 4 F(0) + F(t) \right)
+  \end{equation*}
+  El error que buscamos es \(E = h G(1)\).
+  Consideremos \(H(t) = G(t) - t^5 G(1)\).
+  Como \(H(0) = H(1) = 0\),
+  por el teorema de Rolle hay \(\xi_1 \in (0, 1)\)
+  tal que \(H'(\xi_1) = 0\).
+  Como también \(H'(0) = 0\),
+  hay \(\xi_2 \in (0, \xi_1) \subset (0, 1)\) tal que \(H''(\xi_2) = 0\),
+  y de la misma forma hay \(\xi_3 \in (0, \xi_2) \subseteq (0, 1)\)
+  tal que \(H'''(\xi_3) = 0\).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  La tercera derivada de \(G\) es:
+  \begin{equation*}
+    G'''(t)
+      = \frac{t}{3} (F'''(t) - F'''(-t))
+  \end{equation*}
+  de donde:
+  \begin{equation*}
+    H'''(\xi_3)
+      = - \frac{\xi_3}{3} (F'''(\xi_3) - F'''(- \xi_3)) - 60 \xi_3^2 G(1)
+      = 0
+  \end{equation*}
+  Dividiendo por \(2 \xi_3^2 = \xi_3^2 - (- \xi_3)^2\),
+  legal ya que \(\xi_3 \ne 0\):
+  \begin{equation*}
+    \frac{F'''(\xi_3) - F'''(-\xi_3)}{\xi_3 - (- \xi_3)}
+      = - 90 G(1)
+  \end{equation*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  Por el teorema del valor intermedio de la derivada
+  hay \(\xi_4 \in (-\xi_3, \xi_3) \subset (-1, 1)\) tal que:
+  \begin{equation*}
+    F^{(4)}(\xi_4)
+      = - 90 G(1)
+  \end{equation*}
+  y el error:
+  \begin{align*}
+    E
+      &= - \frac{h}{90} F^{(4)}(\xi_4) \\
+      &= - \frac{h^5}{90} f^{(4)}(x_1 + h \xi_4) \\
+      &= - \frac{h^5}{90} f^{(4)}(\xi)
+  \end{align*}
+  donde \(\xi = x_1 + h \xi_3 \in (a, b)\).
+  \qed
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  \uncover<+->{
+    El caso más simple es dos intervalos,
+    \(n = 2\) y \(h = (x_{i + 2} - x_i) / 2\):
+    \begin{equation*}
+      E_i
+        = -\frac{(x_{i + 2} - x_i) h^4 f^{(4)}(\xi_i)}{180}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Nuevamente tenemos para el intervalo completo,
+    para algún \(\xi \in [a, b]\)
+    \begin{align*}
+      E
+        &= \sum_i E_i \\
+        &= -\frac{(b - a) h^4}{n \cdot 90}
+              \sum_{0 \le i < n / 2} f''(\xi_{2 i}) \\
+        &= -\frac{(b - a) h^4 f''(\xi)}{180}
+    \end{align*}
+  }
+\end{frame}
+
+\section{Fórmulas de orden mayor}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Fórmulas de grado mayor}
+
+  \uncover<+->{
+    Podemos definir fórmulas similares interpolando polinomios de grado mayor.
+  }
+  \uncover<+->{
+    Pero vimos el fenómeno de Runge,
+    puntos igualmente espaciados pueden llevar a enormes errores
+    del polinomio interpolador.
+    Por esto suelen usarse fórmulas compuestas
+    de fórmulas como trapezoides o Simpson.
+  }
+  \uncover<+->{
+    Otra opción es usar nodos de Chebyshev,
+    que garantizan error más bien parejo en el intervalo.
+  }
+
+  \uncover<+->{
+    Una opción mejor es usar fórmulas de Gauß,
+    nuestro tema siguiente.
+  }
+\end{frame}
+
+\section{Aceleración de la convergencia}
+
+\begin{frame}
+  \frametitle{Aceleración de Richardson}
+
+  \uncover<+->{
+    Supongamos que tenemos una aproximación a una cantidad \(A^*\)
+    que cumple:
+    \begin{equation*}
+      A(h)
+        = A^* + C h^n + O(h^{n + 1})
+    \end{equation*}
+  }
+  \uncover<+->{
+    Omitiendo el término del error,
+    calculando \(A(h)\) para dos valores de \(h\)
+    obtenemos un sistema de ecuaciones para \(A^*\) y \(C\),
+    resolviendo para \(A^*\) obtenemos una aproximación mejor.
+  }
+  \uncover<+->{
+    \begin{align*}
+      A(h)
+        &= A^* + C h^n \\
+      A(h/t)
+        &= A^* + C (h/t)^n
+    \end{align*}
+    Obtenemos una nueva aproximación \(A^+\):
+    \begin{equation*}
+      A^+
+        = \frac{t^n A(h/t) - A(h)}{t^n - 1}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Análisis del error}
+
+  Vemos que:
+  \begin{align*}
+    A^+
+      &= \frac{t^n (A^* + C (h/t)^n + O(h^{n + 1}))
+                 - (A^* + C h^n + O(h^{n + 1}))}
+              {t^n - 1} \\
+      &= A^* + O(h^{n + 1})
+  \end{align*}
+  Usando dos valores de \(h\) aumentamos el orden del método.
+  Incluso nos da una estimación del error en \(A^+ - A(h / t)\).
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Integración de Romberg}
+
+  \uncover<+->{
+    Una aplicación es integración de Romberg:
+    aproxima la integral mediante trapezoides
+    para \(h\) y \(h/2\),
+    y usa extrapolación de Richardson
+    con \(t = 2\) para obtener una aproximación mejor.
+    Pueden reutilizarse nodos,
+    el trabajo requerido es solo aproximadamente el para el paso menor.
+  }
+  \uncover<+->{
+    Si la estimación del error resultante es demasiado grande,
+    disminuimos el paso a la mitad
+    (calculando la función para puntos intermedios).
+  }
+
+  \uncover<+->{
+    Esto puede extenderse a \emph{cuadratura adaptativa}:
+    vamos monitoreando el error en cada subintervalo,
+    deteniendo el refinamiento en este
+    cuando hemos alcanzado la precisión requerida para él.
+    Esto es aplicable a funciones con comportamientos distintos
+    en el intervalo de interés.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Definimos el problema de cuadratura,
+    y las técnicas que consideramos.
+  \item
+    Planteamos aproximar por polinomios de grado 0, 1 y 2,
+    y derivamos el error de esas reglas de cuadratura.
+  \item
+    Aceleración de Richardson es una técnica de aplicación general.
+    Aplicada a trapezoides lleva a la cuadratura de Romberg.
+  \item
+    Podemos refinar a cuadratura adaptativa.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode subintervalo sub blue monitoreando
+% LocalWords:  Memorabilia width rectangles midpoints trapezoids
+% LocalWords:  quadratic handout

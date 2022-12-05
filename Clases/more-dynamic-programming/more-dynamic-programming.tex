@@ -1,0 +1,622 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Más de programación dinámica}
+\label{cha:programacion-dinamica-cont}
+
+  Hasta el momento hemos tratado casos
+  en los cuales la aplicación de las recurrencias es directo.
+  Mostraremos un par de ejemplos en los cuales se requiere trabajo previo.
+  Vienen en parte de las notas de Ignjatović~\cite{ignjatovic16:_DP}.
+
+\section{Caminos más cortos en un grafo}
+\label{sec:shortest-paths}
+
+  Vimos cómo calcular los caminos más cortos
+  desde un vértice de un grafo a los demás
+  (algoritmo de Dijkstra~\ref{alg:Dijkstra}).
+  Buscamos ahora hallar los largos de los caminos más cortos
+  entre cada par de vértices
+  El algoritmo resultante se conoce bajo el nombre de Floyd-Warshall~%
+    \cite{floyd62:_shortest_path, warshall62:_theo_boolean_matrices},
+  por quienes plantearon las ideas fundamentales.
+
+  Para aplicar programación dinámica al problema de hallar el camino más corto
+  entre un par dado de vértices \(u, v)\),
+  es claro que si el camino óptimo pasa por el vértice \(x\) intermedio,
+  los caminos \(u, x\) y \(x, v\) son óptimos.
+  El problema es que esto no reduce para nada el problema entre manos.
+  Pero podemos restringir arbitrariamente los nodos intermedios permitidos,
+  para obtener subproblemas manejables.
+  Calculemos caminos óptimos que incluyen un subconjunto de los vértices
+  como pasos intermedios,
+  incrementando el conjunto permitido paso a paso.
+  Sea \(G = (V, E)\) un grafo,
+  \(w \colon E \to \mathbb{R}\) una función de costos
+  (podemos permitir costos negativos,
+   siempre que no hayan ciclos de costo negativo
+   el camino más corto entre un par de vértices está bien definido).
+  Podemos plantear la recursión
+  para un conjunto de vértices \(U \subseteq V\)
+  y un vértice cualquiera \(x \notin U\).
+  El camino de costo mínimo entre \(u\) y \(v\)
+  que pasa solo por los vértices en \(U \cup \{x\}\)
+  es el mínimo entre el camino mínimo que solo pasa por vértices en \(U\)
+  y el camino mínimo \(u \cdots x \cdots v\) que pasa por \(x\),
+  que a su vez está compuesto por el camino óptimo entre \(u\) y \(x\)
+  y el camino óptimo entre \(x\) y \(v\),
+  ambos solo pasando por vértices de \(U\).
+  Esto da la recursión requerida.
+
+  Numeremos los vértices en orden arbitrario,
+  con lo que podemos usar vértices
+  como índices en un arreglo bidimensional \(d\)
+  de distancias entre vértices.
+  Definimos \(d_{i i} = 0\),
+  \(d_{i j} = w(i j)\) si \(i j\) es un arco
+  y \(d_{i j} = \infty\) si \(i j\) no es un arco.
+  Llamemos \(d^{(k)}_{i j}\)
+  al costo del camino de mínimo costo entre \(i\) y \(j\)
+  que pasa únicamente por vértices \(1, \dotsc, k\) entremedio.
+  Es claro que:
+  \begin{align*}
+    d^{(0)}_{i j}
+      &= d_{i j} \\
+    d^{(k + 1)}_{i j}
+      &= \min\{ d^{(k)}_{i j}, d^{(k)}_{i k} + d^{(k)}_{k j}
+  \end{align*}
+  La idea es entonces almacenar \(d^{(k)}_{i j}\) en un arreglo tridimensional.
+  Pero podemos ahorrar espacio reconociendo
+  que podemos usar el mismo arreglo bidimensional,
+  ya que los valores relevantes en la fila y columna \(k\)
+  no cambian en la iteración \(k\)
+  (esto es intuitivamente obvio,
+   caminos que comienzan o terminan en \(k\) no cambian al incluir \(k\)
+   como paso intermedio permitido).
+  Formalmente:
+  \begin{align*}
+    d^{(k)}_{i k}
+      &= \min\{d^{(k - 1)}_{i k}, d^{(k - 1)}_{i k} + d^{(k - 1)}_{k k}\} \\
+      &= \min\{d^{(k - 1)}_{i k}, d^{(k - 1)}_{i k} + 0\} \\
+      &= d^{(k - 1)}_{i k} \\
+    d^{(k)}_{k j}
+      &= \min\{d^{(k - 1)}_{k j}, d^{(k - 1)}_{k k} + d^{(k - 1)}_{k j}\} \\
+      &= \min\{d^{(k - 1)}_{k j}, 0 + d^{(k - 1)}_{k j}\} \\
+      &= d^{(k - 1)}_{k j}
+  \end{align*}
+  Nuestro algoritmo final es~\ref{alg:Floyd-Warshall}.
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{FloydWarshall}(G = (V, E), w)\)}{
+      \(d_{u v} =
+          \begin{cases}
+            0		 & u = v \\
+            \infty	 & u v \notin E \\
+            w(u v)	 & u v \in E
+          \end{cases}\) \;
+       \For{\(k \gets 1 \KwTo \lvert V \rvert\)}{
+         \(d_{u v}
+             \gets \min\{d_{u v}, d_{u k} + d_{k v}\}\) \;
+       }
+       \Return \(\mathbf{d}\) \;
+    }
+    \caption{Camino más corto entre cada par de vértices de \(G\)}
+    \label{alg:Floyd-Warshall}
+  \end{algorithm}
+  Es claro que el tiempo demandado es \(O(\lvert V \rvert^3\),
+  cosa bastante sorprendente habiendo \(O(\lvert V \rvert^2\)
+  posibles arcos en \(G\).
+
+  El algoritmo de Floyd-Warshall tiene la ventaja de acomodar costos negativos
+  (siempre que no haya ciclos de costo negativo).
+  Tiene la ventaja adicional que es fácil de paralelizar,
+  los cálculos para cada vértice
+  pueden hacerse en paralelo sin interferencias.
+  Por esta razón alguna variante de este algoritmo
+  es popular en aplicaciones de ruteo en redes.
+
+\section{Torre de Tortugas}
+\label{sec:torre-de-tortugas}
+
+  Nos dan \(n\) tortugas,
+  para cada una se da su peso y su resistencia.
+  La resistencia de una tortuga es el peso máximo
+  que es capaz de soportar sin romper su caparazón.
+  Se busca el máximo número de tortugas que se pueden apilar
+  sin romper sus caparazones.
+
+  Llamemos \(T_1, \dotsc, T_n\) a las tortugas
+  (en orden arbitrario),
+  donde el peso de \(T_i\) es \(W(T_i)\) y su fuerza \(S(T_i)\).
+  Diremos que  una torre de tortugas es \emph{legítima}
+  si la fuerza de cada tortuga es mayor o igual
+  al peso de las tortugas sobre ella.
+  Ordenamos las torres desde la punta a la base.
+
+  La programación dinámica
+  consiste en construir recursivamente una solución al problema
+  de soluciones a subproblemas.
+  Podemos plantear por ejemplo para \(1 \le j \le n\)
+  el subproblema \(P(j)\) de hallar el máximo número de tortugas
+  del conjunto \(\{ T_1, \dotsc, T_j \}\) que pueden apilarse.
+  Lamentablemente,
+  este planteo no permite recursión.
+  Nos interesaría hallar una solución a \(P(j)\)
+  vía soluciones a todos los problemas \(P(i)\) para \(1 \le i < j\).
+  Pero la cadena más larga construida
+  con tortugas de \(\{ T_1, \dotsc, T_j \}\)
+  puede que incluya a \(T_j\),
+  pero no en la última posición.
+  Por tanto la solución óptima a \(P(j)\)
+  no siempre es una simple extensión de una solución óptima
+  a algún \(P(i)\) anterior.
+
+  Debemos hallar un ordenamiento adecuado
+  junto con un subconjunto de subproblemas que permitan recurrencia.
+  Hallar tal ordenamiento no es simple.
+
+  \begin{proposition}
+    \label{prop:W+S}
+    Si hay una torre legítima de altura \(k\),
+    hay una torre legítima de altura \(k\)
+    en orden no-decreciente de peso más fuerza.
+  \end{proposition}
+  \begin{proof}
+    Demostraremos que cualquier torre legítima
+    puede reordenarse para dar otra torre legítima
+    en el orden indicado.
+    Sea \(\langle t_1, \dotsc, t_m \rangle\) una torre legítima,
+    basta demostrar que si dos tortugas consecutivas cumplen:
+    \begin{equation*}
+      W(t_{i + 1}) + S(t_{i + 1})
+        < W(t_i) + S(t_i)
+    \end{equation*}
+    podemos intercambiar esas tortugas obteniendo otra torre legítima.
+    Con esto,
+    podemos usar la idea del método de burbuja
+    para ordenar las tortugas en orden creciente de \(W + S\),
+    manteniendo siempre la legitimidad.
+
+    Sea \(\tau\) la torre original y \(\tau^*\) la obtenida al intercambiar.
+    O sea:
+    \begin{align*}
+      \tau
+        &= \langle t_1, \dotsc, t_{i - 1},
+                   t_i, t_{i + 1},
+                   \dotsc, t_m \rangle \\
+      \tau^*
+        &= \langle t_1, \dotsc, t_{i - 1},
+                   t_{i + 1}, t_i,
+                   \dotsc, t_m \rangle \\
+    \end{align*}
+    La única tortuga con más carga en su espalda en \(\tau^*\) es \(t_i\),
+    debemos demostrar que no sobrepasa su fuerza,
+    o sea que:
+    \begin{equation*}
+      \sum_{1 \le r \le i - 1} W(t_r) + W(t_{i + 1})
+        < S(t_i)
+    \end{equation*}
+    Como la torre original era legítima:
+    \begin{equation*}
+      \sum_{1 \le r \le i - 1} W(t_r) + W(t_i)
+        \le S(t_{i + 1})
+    \end{equation*}
+    Sumando \(W(t_{i + 1})\) a esta desigualdad tenemos:
+    \begin{equation*}
+      \sum_{1 \le r \le i - 1} W(t_r) + W(t_i) + W(t_{i + 1})
+        \le W(t_{i + 1}) + S(t_{i + 1})
+    \end{equation*}
+    Pero supusimos \(W(t_{i + 1}) + W(t_{i + 1}) < W(t_i) + S(t_i)\),
+    con lo que:
+    \begin{align*}
+      \sum_{1 \le r \le i - 1} W(t_r) + W(t_i) + W(t_{i + 1})
+        &< W(t_i) + S(t_i) \\
+      \sum_{1 \le r \le i - 1} W(t_r) + W(t_{i + 1})
+        &< S(t_i)
+    \end{align*}
+    Esto era lo que había que demostrar.
+  \end{proof}
+  La proposición~\ref{prop:W+S} permite restringirnos a torres
+  no-decrecientes en \(W + S\) y aún así obtener una solución óptima.
+  Supondremos entonces que las tortugas están numeradas en este orden.
+
+  Pero hay un problema:
+  consideremos la torre legítima más alta que termina en \(T_i\):
+  \begin{equation*}
+    \langle t_1, \dotsc, t_m, T_i \rangle
+  \end{equation*}
+  donde
+    \(\{ t_1, \dotsc, t_{m - 1}, t_m \} \subseteq \{ T_1, \dotsc, T_{i - 1} \}\).
+  Desafortunadamente,
+  la torre \(\langle t_1, \dotsc, t_{m - 1}, t_m \rangle\)
+  podría no ser la torre más alta con \(t_m\) en la base;
+  puede haber una torre legítima con al menos \(m + 1\) tortugas
+  \(\langle t_1^*, \dotsc, t_m^*, t_m \rangle\)
+  pero demasiado pesada para la tortuga \(T_i\).
+  Esta formulación no cumple con subestructura óptima,
+  debemos generalizar nuestro problema con mayor cuidado.
+
+  Construiremos una secuencia de las torres más livianas de cada altura.
+  O sea,
+  resolvemos los siguientes subproblemas para \(j \le n\):
+  \(P'(j)\) para cada \(r < j\) para el que hay una torre de tortugas
+  de altura \(r\) de tortugas del conjunto \(\{ T_1, \dotsc, T_j \}\)
+  (no necesariamente incluyendo a \(T_j\))
+  encuentre la más liviana.
+  Con esto la recursión funciona:
+  resuelto el problema \(P'(i - 1)\),
+  buscamos la torre más liviana \(\theta_k^i\) de largo \(k\)
+  incluyendo solo tortugas \(\{ T_1, \dotsc, T_i\} \).
+  Para ello consideramos las torres más livianas \(\theta_k^{i - 1}\)
+  y \(\theta_{k - 1}^{i - 1}\),
+  y vemos si podemos extender legítimamente la última con \(T_i\).
+  Esto da el óptimo,
+  si sobre \(T_i\) podemos poner una torre de largo \(m\),
+  ciertamente podemos poner la torre más liviana de largo \(m\) sobre ella.
+  Si la torre más alta construida con \(\{ T_1, \dotsc, T_{i - 1} \}\)
+  tiene altura \(m\) y \(T_i\) puede extenderla,
+  obtenemos la primera torre de altura \(m + 1\)
+  compuesta con \(\{ T_1, \dotsc, T_i \}\).
+  Note que nuestro problema se hizo bidimensional en el proceso.
+
+\section{Variación mínima}
+\label{sec:variacion-minima}
+
+  Definimos la \emph{variación total} de una secuencia
+  \(s = \langle x_1, \dotsc, x_n \rangle\)
+  como:
+  \begin{equation*}
+    V(s)
+      = \sum_{1 \le i \le n - 1} \lvert x_{i + 1} - x_i \lvert
+  \end{equation*}
+  Dan una secuencia de números \(a_1, \dotsc, a_n\).
+  Divídala en dos subsecuencias
+  (manteniendo el orden original)
+  de manera que la suma de las variaciones totales de las subsecuencias
+  sea la menor posible,
+  o sea,
+  halle:
+  \begin{align*}
+    s_1
+      &= \langle a_{i_1}, \dotsc, a_{i_k} \rangle
+        & i_1 < i_2 < \dotsm < i_k \\
+    s_2
+      &= \langle a_{j_1}, \dotsc, a_{j_k} \rangle
+        & j_1 < j_2 < \dotsm < j_{n -k}
+  \end{align*}
+  y \(\{ i_1, i_2, \dotsc, i_k \} \cup \{ j_1, j_2, \dotsc, j_{n - k} \}
+          = \{1, 2, \dotsc, n \}\)
+  tal que \(V(s_1) + V(s_2)\) es mínimo.
+
+  Esta también tiene su truco.
+  Uno se ve tentado a resolver subproblemas \(P(j)\) para todo \(m \le n\),
+  donde \(P(j)\) es dividir \(\langle a_1, \dotsc, a_m \rangle\)
+  en subsecuencias con mínima variación.
+  Extendemos las subsecuencias
+  \(\langle x_1, \dotsc, x_r \rangle\) donde \(r \le m\)
+  y \(\langle y_1, \dotsc, y_s \rangle\) donde \(s \le m\)
+  considerando el menor
+  de \(\lvert x_r - a_{m + 1} \rvert\) y \(\lvert y_s - a_{m + 1} \rvert\)
+  para agregar \(a_{m + 1}\) a una o la otra.
+  Desafortunadamente,
+  puede haber una división no óptima de \(\langle a_1, \dotsc, a_m \rangle\)
+  en \(\langle u_1, \dotsc, u_{r'} \rangle\) y \(\langle v_1, \dotsc, v_{s'} \rangle\)
+  tal que:
+  \begin{equation*}
+    \sum_i \lvert u_{i + 1} - u_i \rvert
+        + \sum_j \lvert v_{j + 1} - v_j \rvert
+      > \sum_i \lvert x_{i + 1} - x_i \rvert
+          + \sum_j \lvert y_{j + 1} - y_j \rvert
+  \end{equation*}
+  pero tal que \(\lvert v_{s'} - a_{m + 1} \rvert\)
+  es mucho menor que \(\lvert x_r - a_{m + 1} \rvert\)
+  y \(\lvert y_s - a_{m + 1} \rvert\),
+  de manera que:
+  \begin{multline*}
+    \sum_i \lvert u_{i + 1} - u_i  \rvert
+        + \sum_j \lvert v_{j + 1} - v_j	 \rvert
+        + \lvert v_s - a_{m + 1} \rvert \\
+      < \sum_i \lvert x_{i + 1} - x_i \rvert
+          + \sum_j \lvert y_{j + 1} - y_j \rvert
+          + \min \{ \lvert x_r - a_{m + 1} \rvert,
+                    \lvert y_s - a_{m + 1} \rvert \}
+  \end{multline*}
+
+  Para resolver esto,
+  planteamos el siguiente problema bidimensional:
+  \(P(r, s)\) es dividir la secuencia en secuencias
+  que terminan en \(a_r\) y \(a_s\)
+  de forma que la suma de sus variaciones totales se minimice.
+  Para la solución del subproblema \(P(r, s)\)
+  consideramos varios casos:
+  \begin{enumerate}
+  \item
+    Si \(r < s - 1\),
+    extendemos la solución óptima para \(P(r, s - 1)\)
+    agregando \(a_s\) a la secuencia que termina en \(a_{s - 1}\),
+    ya que la otra termina en \(a_r\).
+  \item
+    Si \(r = s - 1\),
+    consideramos soluciones para todos los subproblemas \(P(t, s - 1)\)
+    con \(t < s - 1\),
+    extendiendo la subsecuencia que termina en \(a_t\)
+    y eligiendo aquella con la mínima variación total.
+    Esto lo comparamos
+    con las subsecuencias \(\lvert a_1, \dotsc, a_{s - 1} \rvert\)
+    y \(\lvert a_s \rvert\),
+    reteniendo la menor.
+  \end{enumerate}
+
+\section{Ahorrar espacio}
+\label{sec:ahorrar-espacio}
+
+  Consideramos el problema de máxima subsecuencia común
+  (sección~\ref{sec:LCS}).
+  Vimos que el tiempo requerido por programación dinámica
+  es \(O(m n)\) al comparar secuencias de largos \(m\) y \(n\),
+  y que el espacio es también \(O(m n)\).
+  Es rutinario querer comparar secuencias de muchos miles de líneas,
+  el espacio requerido se puede hacer prohibitivo.
+  Si se analiza el algoritmo esbozado,
+  solo se requieren algunas entradas del arreglo,
+  no se necesita el arreglo completo.
+  Basándose en esta observación,
+  Hirschberg~%
+    \cite{hirschberg75:_linear_space_algor_comput_maxim_common_subseq}
+  construye un algoritmo que requiere espacio lineal.
+  Suponemos palabras \(X\) e \(Y\),
+  de largos \(m\) y \(n\),
+  respectivamente.
+  Partimos con el algoritmo de programación dinámica directo,
+  algoritmo~\ref{alg:LCS-A}.
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(A(m, n, X, Y, L)\)}{
+      \(L_{i, 0} \gets 0 \quad [ i = 0, \dotsc, m ]\) \;
+      \(L_{0, j} \gets 0 \quad [ j = 0, \dotsc, n ]\) \;
+      \For{\(i \gets 1\) \KwTo \(m\)}{
+        \For{\(j \gets 1\) \KwTo \(n\)}{
+          \eIf{\(X_i = Y_j\)}{
+            \(L_{i, j} \gets L_{i - 1, j - 1} + 1\) \;
+          }
+          {
+            \(L_{i, j} \gets
+               \max \{ L_{i, j - 1}, L_{i - 1, j} \}\) \;
+          }
+        }
+      }
+    }
+
+    \caption{Máxima común subsecuencia por programación dinámica directa}
+    \label{alg:LCS-A}
+  \end{algorithm}
+  Observamos que el algoritmo~\ref{alg:LCS-A}
+  para calcular la fila \(i\) del arreglo \(\mathbf{L}\)
+  solo hace referencia a la fila \(i - 1\).
+  Una pequeña modificación da el algoritmo~\ref{alg:LCS-B},
+  que calcula el vector \(\mathbf{\tilde{L}}\),
+  donde \(\tilde{L}_j = L_{m, j}\).
+  Básicamente mantenemos en la matriz \(\mathbf{K}\)
+  los valores requeridos.
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(B(m, n, X, Y, \tilde{L})\)}{
+      \(K_{1, j} \gets 0 \quad [ j = 0, \dotsc, n ]\) \;
+      \For{\(i \gets 1\) \KwTo \(n\)}{
+        \(K_{0, j} \gets K_{1, j} \quad [ j = 0, \dotsc, n ]\) \;
+        \For{\(j \gets 1\) \KwTo \(n\)}{
+          \eIf{\(X_i = Y_j\)}{
+            \(K_{1, j} \gets K_{0, j - 1} + 1\) \;
+          }
+          {
+            \(K_{1, j} \gets
+               \max \{ K_{1, j - 1}, K_{0, j} \}\) \;
+          }
+        }
+        \(\tilde{L}_j \gets K_{1, j} \quad [ i = 0, \dotsc, n ]\) \;
+      }
+    }
+
+    \caption{Largo de máxima común subsecuencia por programación dinámica
+             ahorrando espacio}
+    \label{alg:LCS-B}
+  \end{algorithm}
+  Lo malo es que el algoritmo~\ref{alg:LCS-B} solo entrega el largo,
+  no tenemos cómo recuperar la subsecuencia máxima.
+  Veremos cómo usar el algoritmo~\ref{alg:LCS-B} sobre subpalabras
+  para recuperar la máxima común subsecuencia en espacio lineal.
+
+  Llamemos \(X_{r s}\) a la subsecuencia \(x_r, x_{r + 1}, \dotsc, x_s\).
+  Para explicitar que estamos marchando en reversa,
+  anotamos \(\widehat{X}_{r s}\) con \(r > s\)
+  para \(x_s, x_{s + 1}, \dotsc, x_r\).
+  Sea \(L^*_{i, j}\) el largo de la subsecuencia máxima
+  entre \(X_{i + 1, m}\) e \(Y_{j + 1, n}\).
+  Notamos que \(L_{i j}\) para \(j = 0, \dotsc, n\)
+  son los largos máximos de subsecuencias comunes de \(X_{1, i}\)
+  y prefijos de \(Y\).
+  Podemos interpretarlos igualmente en términos de las palabras reversas
+  y sufijos en \(\widehat{X}\) e \(\widehat{Y}\).
+  Definamos:
+  \begin{equation}
+    \label{eq:LCS-M}
+    M_i
+      = \max_{0 \le j \le n} \{ L_{i, j} + L^*_{i, j} \}
+  \end{equation}
+  Haremos uso del siguiente teorema:
+  \begin{theorem}
+    \label{theo:LCS}
+    Para \(1 \le i \le m\) es \(M_i = L_{m, n}\).
+  \end{theorem}
+  \begin{proof}
+    Sea \(j\) tal que \(M_i = L_{i, j} + L^*_{i, j}\).
+    Sea también \(S_{i j}\) una subsecuencia máxima común
+    de \(X_{1 i}\) e \(Y_{1 j}\);
+    y sea \(S^*_{i j}\) una subsecuencia máxima común
+    de \(X_{i + 1, m}\) e \(Y_{j + 1, n}\).
+    Entonces \(Z = S_{i j} \cdot S^*_{i j}\)
+    es una subsecuencia común de \(X\) e \(Y\),
+    y su largo es \(M_i\).
+    O sea,
+    \(L_{m n} \ge M_i\).
+
+    Por otro lado,
+    sea \(S_{m n}\) cualquier subsecuencia común más larga
+    entre \(X\) e \(Y\).
+    Podemos escribir \(S_{m n} = S_1 \cdot S_2\),
+    donde \(S_1\) es subsecuencia de \(X_{1 i}\) para algún \(i\)
+    y \(S_2\) es subsecuencia de \(X_{i + 1, m}\).
+    Hay un \(j\) tal que \(S_1\) es subsecuencia de \(Y_{1 j}\)
+    y \(S_2\) es subsecuencia de \(Y_{j + 1, n}\).
+    Por las definiciones de \(L\) y \(L^*\),
+    \(\lvert S_1 \rvert \le L_{i j}\)
+    y \(\lvert S_2 \rvert \le L^*_{i j}\).
+    O sea:
+    \begin{align*}
+      L_{m n}
+        &=   \lvert S_{m n} \rvert \\
+        &=   \lvert S_1 \rvert + \lvert S_2 \rvert \\
+        &\le L_{i j} + L^*_{i j} \\
+        &\le M_i
+    \end{align*}
+    Concluimos \(L_{m n} = M_i\).
+  \end{proof}
+  Usamos el teorema~\ref{theo:LCS} recursivamente
+  para dividir el problema original en subproblemas similares
+  hasta obtener problemas triviales
+  (ver también el capítulo~\ref{cha:dividir-conquistar}).
+  Nuestro algoritmo final~\ref{alg:LCS-C}
+  construye la palabra \(Z\) que es la subsecuencia común más larga
+  de \(X\) e \(Y\).
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(C(m, n, X, Y, Z)\)}{
+      \uIf{\(n = 0\)}{
+        \(Z \gets \varepsilon\) \;
+      }
+      \uElseIf{\(m = 1\)}{
+        \eIf{\(\exists j \le n, X_1 = Y_j\)}{
+          \(Z \gets A_1\) \;
+        }
+        {
+          \(Z \gets \varepsilon\) \;
+        }
+      }
+      \Else{
+        \(i \gets \lfloor m / 2 \rfloor\) \;
+        Compute \(L_{i, j}\) and \(L^*_{i, j}\)
+          for \(0 \le j \le n\) \;
+        \(B(i, n, X_{1 i}, Y_{1, n}, L')\) \;
+        \(B(m - 1, n, \widehat{X}_{n, i + 1}, \widehat{Y}_{n, 1}, L'')\) \;
+        Find \(j\) such that \(L_{i j} + L^*_{i j} = L_{m n}\)
+          using theorem~\ref{theo:LCS}: \;
+        {
+          \(M \gets \max_{0 \le j \le n} \{ L'_j + L''_{n - j} \}\) \;
+          \(k \gets j \text{\ tal que\ } M = L'_j + L''_{n - j}\) \;
+        }
+        \(C(i, k, X_{1 i}, Y_{1 k}, Z')\) \;
+        \(C(m - 1, n - k, X_{i + 1, m}, Y_{k + 1, n}, Z'')\) \;
+
+        \Return \(Z' \cdot Z''\) \;
+      }
+    }
+
+    \caption{Máxima común subsecuencia por programación dinámica
+             ahorrando espacio}
+    \label{alg:LCS-C}
+  \end{algorithm}
+  El algoritmo \(B\) toma tiempo \(O(m n)\)
+  y usa espacio \(O(m)\)
+  (suponemos que \(X\) e \(Y\) y sus subpalabras
+   se manejan con índices a principio y fin de espacio común).
+
+  El algoritmo \(C\) se ejecuta a lo más \(2 m - 1\) veces,
+  por inducción:
+  Sea \(m \le 2^r\).
+  Si \(r = 0\),
+  es \(m = 1\) y hay \(2^0 = 1\) llamada a \(C\).
+  Suponga ahora que para \(m \le 2^r = M\) hay \(2 m - 1\) llamadas a \(C\).
+  Para \(m' \le 2^{r + 1} = 2 M\),
+  \(i\) a lo más toma el valor \(M\),
+  hay dos llamadas a \(C\) con \(m_1\) y \(m_2\) tales que \(m_1 + m_2 = m'\)
+  y con \(m_1\) y \(m_2\) ambos menores a \(M\).
+  Cada cual ejecutará \(2 m_1 - 1\) y \(2 m_2 - 1\) llamadas a \(C\)
+  por inducción,
+  agregando la llamada original a \(C\)
+  da un total de \(2 m_1 - 1 + 2 m_2 + 1 = 2 m' - 1\),
+  como se quería demostrar.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-mas-programacion-dinamica}
+
+  \begin{enumerate}
+  \item
+    ¿Cómo detectar en el algoritmo de Floyd-Warshall
+    si hay un ciclo de costo negativo?
+  \item
+    Como planteado,
+    el algoritmo de Floyd-Warshall solo calcula el costo mínimo
+    del camino entre vértices.
+    ¿Qué información adicional se requiere registrar
+    para poder reconstruir los caminos del caso?
+  \item
+    Complete la discusión sobre la torre de tortugas,
+    desarrollando un programa que resuelva el problema.
+    ¿Cuál es su complejidad?
+  \item
+    Use un razonamiento similar a la torre de tortugas
+    para hallar la subsecuencia creciente más larga
+    de una secuencia de \(n\) números
+    en tiempo \(O(n \log n)\).
+  \item
+    Reduzca el problema de variación mínima a una única dimensión
+    considerando los subproblemas \(P(s - 1, s)\) únicamente.
+  \item
+    Escriba un programa que resuelva el problema de variación mínima.
+    ¿Cuál es su complejidad?
+  \item
+    Halle,
+    módulo \(10^{16}\),
+    el número de subconjuntos no vacíos
+    de \(\{ 1^1, 2^2, 3^3, \dotsc, 250250^{250250} \}\)
+    cuya suma es divisible por \num{250}.
+  \item
+    Una \emph{partición} de \(n \in \mathbb{N}\)
+    es un conjunto \(\{ p_1, \dotsc, p_k \}\)
+    (las \emph{partes},
+     \(p_i \in \mathbb{N}\))
+    tal que \(p_1 + \dotsb + p_k = n\).
+    Dé un algoritmo para obtener el número de particiones de \(n\),
+    y dé su complejidad.
+  \item
+    El \emph{problema del vendedor viajero}
+    es un famoso problema \NP\nobreakdash-completo.
+    Plantea un grafo \(G = (V, E)\)
+    con costos de arcos \(w(e)\) para \(e \in E\).
+    Muestre cómo resolverlo,
+    eligiendo \(u \in V\) arbitrario para comenzar la gira,
+    sean \(u \ne v \in S \subseteq V\),
+    y sea \(d[v][S]\) el costo mínimo
+    de un viaje por todos los vértices de \(S\),
+    comenzando en \(u\) y terminando en \(v\).
+    Plantee una recurrencia para \(d\) considerando el último arco del viaje.
+    ¿Cuál es la complejidad de su algoritmo?
+  \end{enumerate}
+
+% To do:
+% - Space saving methods
+% - More stuff from Jeffe
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  ruteo subsecuencias subsecuencia subpalabras and for
+% LocalWords:  Find such that using theorem

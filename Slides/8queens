@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+solutions = 0
+    # Number of solutions
+queen = [0 for c in range(8)]
+    # Row of queen in column c
+rfree = [True for r in range(8)]
+    # Row r free
+du = [True for i in range(15)]
+    # Diagonal i = c + 7 - r free
+dd = [True for i in range(15)]
+    # Diagonal i = c + r free
+
+def place(r, c):
+    queen[c] = r
+    rfree[r] = dd[c + r] = du[c + 7 - r] = False
+
+def retract(r, c):
+    rfree[r] = dd[c + r] = du[c + 7 - r] = True
+
+def show_solution():
+    global solutions
+
+    solutions += 1
+    print(solutions, end = ": ")
+    for r in range(8):
+        print(queen[r] + 1,
+              end = " " if r < 7 else "\n")
+
+def solve(c):
+    global solutions
+
+    if c == 8:
+        show_solution()
+    else:
+        for r in range(8):
+            if rfree[r] and dd[c + r] \
+               and du[c + 7 - r]:
+                place(r, c)
+                solve(c + 1)
+                retract(r, c)
+
+solve(0)
+
+print(f"\nThere are {solutions} solutions")

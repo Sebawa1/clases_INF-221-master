@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+
+def opt(p, f, s):
+    r = [0 for k in range(len(p))]
+    for k in reversed(range(len(p))):
+        r[k] = f[k][s][0]
+        s -= p[k][r[k]][1]
+    return r
+
+def projects(p, s):
+    f = [[[0, 0] for x in range(s + 1)] for k in range(len(p))]
+
+    for i in range(len(p[0])):
+        for x in range(s + 1):
+            currmax = 0
+            curridx = 0
+            for k in range(len(p[0])):
+                if p[0][k][0] <= x and p[0][k][1] > currmax:
+                           currmax = p[0][k][1]
+                           curridx = k
+            f[0][x][0] = curridx
+            f[0][x][1] = currmax
+
+    for j in range(1, len(p)):
+        for i in range(len(p[j])):
+            for x in range(s + 1):
+                currmax = 0
+                curridx = 0
+                for k in range(len(p[j])):
+                    gain = p[j][k][1] + f[j - 1][x - p[j][k][0]][1]
+                    if p[j][k][0] <= x and  gain > currmax:
+                               currmax = gain
+                               curridx = k
+                f[j][x][0] = curridx
+                f[j][x][1] = currmax
+
+    return opt(p, f, s)
+
+if __name__ == "__main__":
+
+    # Costs and returns by plant, available cash
+
+    p = (((0, 0), (1, 5), (2, 6)),
+         ((0, 0), (2, 8), (3, 9), (4, 12)),
+         ((0, 0), (1, 4)))
+    s = 5
+    
+    print("Projects, costs and returns:")
+    for k in range(len(p)):
+        print(p[k])
+
+    r = projects(p, s)
+    print(f"Optimal projects: {r}")
+
+    g = 0
+    for k in range(len(r)):
+        g += p[k][r[k]][1]
+    print(f"Optimal return: {g}")

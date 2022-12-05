@@ -1,0 +1,754 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Sistemas de subconjuntos y matroides}
+\label{cha:matroids}
+
+  Para muchos problemas hay una respuesta
+  a la pregunta de por qué funcionan los algoritmos voraces.
+  \begin{definition}
+    Un \emph{sistema de subconjuntos} es un conjunto \(\mathscr{I}\)
+    de subconjuntos de un conjunto \(\mathscr{E}\)
+    (el \emph{conjunto base})
+    de modo que \(\mathscr{I}\) es cerrado bajo inclusión.
+  \end{definition}
+  O sea,
+  si \(\mathscr{B} \in \mathscr{I}\) y \(\mathscr{A} \subseteq \mathscr{B}\)
+  entonces \(\mathscr{A} \in \mathscr{I}\).
+  Note en particular que si \(\mathscr{I} \ne \varnothing\),
+  siempre es \(\varnothing \in \mathscr{I}\).
+  Cunningham~%
+    \cite{cunningham12:_coming_matroids}
+  reseña la curiosa historia de estas estructuras,
+  y su creciente relevancia en optimización combinatoria.
+  Oxley~%
+    \cite{oxley03:_matroids,oxley14:_matroids}
+  da una visión general de las matemáticas relevantes
+  (la segunda referencia es una versión expandida).
+
+  El \emph{problema de optimización} para un sistema de subconjuntos
+  asigna un peso positivo a cada elemento de \(\mathscr{E}\),
+  y busca un conjunto \(\mathscr{X} \in \mathscr{I}\)
+  cuyo peso sea máximo en todos los conjuntos de \(\mathscr{I}\).
+  Es claro que podemos definir en forma afín la búsqueda de un mínimo.
+  Retendremos esta definición
+  para no complicar innecesariamente la discusión general.
+  Parte de la discusión y los ejemplos que siguen vienen de Erickson~%
+    \cite{erickson19:_algorithms}.
+
+  Algunos ejemplos:
+  \begin{itemize}
+  \item
+    Sea \(\mathscr{E}\) un conjunto cualquiera de vectores
+    de un espacio vectorial \(V\),
+    y sea \(\mathscr{I}\) el conjunto de subconjuntos de \(\mathscr{E}\)
+    que son linealmente independientes.
+  \item
+    Considere un grafo \(G = (V, E)\).
+    Considere subconjuntos de los vértices entre los que no hay arcos.
+    Determinar si hay tal conjunto de \(k\) vértices
+    es el problema \foreignlanguage{english}{\textsc{Independent~Set}}.
+  \item
+    Considere nuevamente un grafo \(G = (V, E)\).
+    Considere subconjuntos de los vértices
+    que están conectados todos entre sí
+    (un grafo \(K_k\) como subgrafo de \(G\).
+    Determinar si hay tal conjunto de \(k\) vértices
+    es el problema \foreignlanguage{english}{\textsc{Clique}}.
+  \item
+    Considere un conjunto de tareas que usan recursos comunes
+    con instantes de inicio y fin fijos.
+    Conjuntos de tareas que pueden ejecutarse sin interferencia
+    forman un sistema de subconjuntos.
+  \item
+    Considere:
+    \begin{align*}
+      \mathscr{E}
+        &= \{ a, b, c \} \\
+      \mathscr{I}
+        &= \{ \varnothing, \{ a \}, \{ b \}, \{ a, b \}, \{ b, c \} \}
+    \end{align*}
+    Podemos verificar directamente que es cerrado bajo inclusión.
+    Una manera alternativa de describir \(\mathscr{I}\)
+    es como todos los conjuntos que no contienen a \(a\) y \(c\).
+  \item
+    Sea \(\mathscr{E}\) el conjunto de arcos de un grafo,
+    y sean \(\mathscr{I}\) los conjuntos de arcos que no comparten vértices
+    (se les llama \emph{\foreignlanguage{english}{matching}}
+     del grafo).
+  \end{itemize}
+
+\section{Algoritmo voraz genérico}
+\label{sec:greedy-generic}
+
+  Dado un sistema finito de subconjuntos \((\mathscr{E}, \mathscr{I})\)
+  hallamos un conjunto en \(\mathscr{I}\)
+  mediante el algoritmo~\ref{alg:greedy-generic}.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{Greedy}(\mathscr{E}, \mathscr{I})\)}{
+      \(\mathscr{X} \gets \varnothing\) \;
+      Sort the elements of \(\mathscr{E}\) by decreasin weight \;
+      \For{\(x \in \mathscr{E}\)}{
+        \If{\(\mathscr{X} \cup \{ x \} \in \mathscr{I}\)}{
+          \(\mathscr{X} \gets \mathscr{X} \cup \{ x \}\) \;
+        }
+      }
+      \Return \(\mathscr{X}\) \;
+    }
+    \caption{Algoritmo voraz genérico}
+    \label{alg:greedy-generic}
+  \end{algorithm}
+  El algoritmo retorna un conjunto \emph{maximal}
+  (no se le pueden agregar elementos de \(\mathscr{E}\)
+   sin salir de \(\mathscr{I}\)),
+  pero no necesariamente \emph{máximo}
+  (no hay elementos de \(\mathscr{I}\) de mayor peso).
+  Nuestro problema de optimización pide un conjunto máximo.
+
+  Nuestro resultado es que hay una propiedad
+  de sistemas de subconjuntos finitos
+  que garantiza que el algoritmo voraz~\ref{alg:greedy-generic}
+  da un conjunto máximo para todas las funciones de peso.
+
+  En nuestros ejemplos previos:
+  \begin{itemize}
+  \item
+    Si consideramos los subconjuntos de \(\{ a, b, c \}\)
+    que no tienen \(\{ a, c \}\) como subconjunto,
+    y asignamos peso a los elementos,
+    agregaremos \(b\) y aquél de \(\{ a, c \}\) de mayor peso.
+  \item
+    En los conjuntos de arcos que no forman ciclos,
+    lo que tenemos
+    es el problema \emph{\foreignlanguage{english}{Maximal Weight Forest}}
+    (hallar el bosque de mayor peso que es subgrafo de \(G\),
+     abreviado MWF).
+    Este problema es equivalente a MST,
+    si el máximo peso de un arco en MST es \(m\),
+    asígnele peso \(2 m - w(e)\) al arco \(e\).
+    El algoritmo~\ref{alg:greedy-generic} para MWF aplicado a esto
+    entrega un MST
+    (es el algoritmo de Kruskal~\ref{alg:kruskal} disfrazado).
+  \end{itemize}
+
+\section{Matroides y algoritmos voraces}
+\label{sec:matroid-greedy}
+
+  Diremos que un sistema de subconjuntos \((\mathscr{E}, \mathscr{I})\)
+  tiene la \emph{propiedad de intercambio}
+  si:
+  \begin{equation}
+    \label{eq:subset-system-exchange}
+    \forall \mathscr{A}, \mathscr{B} \in \mathscr{I},
+      (\lvert \mathscr{A} \rvert < \lvert\mathscr{B} \rvert)
+        \Longrightarrow
+          (\exists e \in \mathscr{B} \smallsetminus \mathscr{A}
+             \text{\ tal que\ } \mathscr{A} \cup \{ e \} \in \mathscr{I})
+  \end{equation}
+  En estos términos:
+  \begin{definition}
+    Un \emph{matroide} es un sistema de subconjuntos
+    \(M = (\mathscr{E}, \mathscr{I})\)
+    con la propiedad de intercambio.
+    Llamamos \emph{conjuntos independientes}
+    a los elementos de \(\mathscr{I}\).
+  \end{definition}
+  Se les llama \emph{conjuntos dependientes}
+  (¡Sorpresa!)
+  a los subconjuntos de \(\mathscr{E}\) que no pertenecen a \(\mathscr{I}\).
+  El \emph{rango} de \(\mathscr{X} \subseteq \mathscr{E}\)
+  es la cardinalidad de su máximo subconjunto independiente.
+  Un conjunto independiente de dice que es una \emph{base} de \(M\)
+  si no es subconjunto de ningún conjunto independiente
+  (es un conjunto independiente maximal).
+  A un conjunto dependiente cuyos subconjuntos propios
+  son todos independientes se le llama \emph{circuito}.
+
+  Algunos ejemplos,
+  varios de los cuales aparecerán nuevamente luego.
+  Que son matroides quedará como ejercicio:
+  \begin{description}
+  \item[Matroide uniforme \boldmath\(U_{k, n}\)\unboldmath:]
+    Un subconjunto \(X \subseteq \{ 1, 2, \dotsc, n \}\)
+    es independiente si y solo si \(\lvert X \rvert \le k\).
+
+    Todo subconjunto de \(k\) elementos es una base;
+    todo conjunto de \(k + 1\) o más elementos es un circuito.
+  \item[Matroide gráfico \boldmath\(\mathscr{M}(G)\)\unboldmath:]
+    Sea \(G = (V, E)\) un grafo.
+    Un subconjunto de \(E\) es independiente si no contiene ciclos.
+
+    Una base del matroide es un árbol recubridor de \(G\);
+    un circuito es un ciclo en \(G\).
+  \item[Matroide cográfico \boldmath\(\mathscr{M}^*(G)\)\unboldmath:]
+    Sea \(G = (V, E)\) un grafo.
+    Un subconjunto \(I \subseteq E\) es independiente
+    si el subgrafo complementario \((V, E \smallsetminus I)\) es conexo.
+
+    Una base del matroide es el complemento de un árbol recubridor de \(G\);
+    un circuito es un \emph{cociclo} de \(G\),
+    un conjunto mínimo de arcos que desconecta a \(G\).
+  \item[Matroide de correspondencias:]
+    Sea \(G = (V, E)\) un grafo.
+    Un conjunto \(I \subseteq V\) es independiente si y solo si
+    hay un \emph{\foreignlanguage{english}{matching}}
+    (conjunto de arcos que no tienen vértices en común)
+    que los cubre.
+  \item[Caminos disjuntos:]
+    Sea \(G = (V, E)\) un grafo dirigido,
+    y sea \(s\) un vértice fijo de \(G\).
+    Un subconjunto \(I \subseteq V\) es independiente si y solo si
+    hay caminos que no comparten arcos desde \(s\) a cada elemento de \(I\).
+  \end{description}
+
+  El resultado general es de Radó y Edmonds~%
+    \cite{edmonds71:_matroid_greed_algor}:
+  \begin{theorem}[Radó-Edmonds]
+    \label{theo:greedy-matroid}
+    Dado un sistema de subconjuntos \((\mathscr{E}, \mathscr{I})\),
+    las siguientes son equivalentes:
+    \begin{enumerate}
+    \item
+      El algoritmo voraz~\ref{alg:greedy-generic}
+      entrega una solución óptima
+      (mínima o máxima)
+      para toda función de peso
+    \item
+      El sistema de subconjuntos es un matroide
+    \end{enumerate}
+  \end{theorem}
+  \begin{proof}
+    Demostramos implicancia en ambas direcciones.
+
+    Usamos contradicción para demostrar
+    que si \(M= (\mathscr{E}, \mathscr{I})\) es un matroide
+    entonces el algoritmo voraz entrega un óptimo
+    (máximo en la demostración,
+     demostrar el caso de mínimo es simétrico).
+    Sea \(\mathscr{A} = \{ a_1, a_2, \dotsc, a_k \}\)
+    la solución entregada por el algoritmo voraz,
+    y sea \(\mathscr{B} = \{ b_1, b_2, \cdots, b_{k'} \}\) una solución óptima,
+    donde suponemos \(w(\mathscr{B}) > w(\mathscr{A})\).
+    Primero,
+    \(k = k'\),
+    ya que si fuera \(k' \ne k\) por la propiedad de intercambio
+    podríamos agregar un elemento del conjunto mayor al otro.
+    Esto o contradice la optimalidad de \(\mathscr{B}\)
+    o contradice el que el algoritmo terminó con \(\mathscr{A}\).
+    Luego,
+    podemos suponer que los elementos de \(\mathscr{A}\) y \(\mathscr{B}\)
+    se listan en orden de mayor a menor
+    (en \(\mathscr{A}\) es el orden en que los incluyó nuestro algoritmo),
+    y consideremos el mínimo \(s\) tal que \(w(b_s) > w(a_s)\).
+    Sean los subconjuntos:
+    \begin{align*}
+      \alpha
+        &= \{ a_1, \cdots, a_{s - 1} \} \\
+      \beta
+        &= \{ b_1, \cdots, b_s \}
+    \end{align*}
+    Por ser parte de \(\mathscr{I}\)
+    los conjuntos \(\mathscr{A}\) y \(\mathscr{B}\),
+    también son parte de \(\mathscr{I}\) los conjuntos \(\alpha\) y \(\beta\).
+    Por la propiedad de intercambio,
+    hay \(t\) con \(1 \le t \le s\)
+    tal que \(b_t \in \beta \smallsetminus \alpha\)
+    y \(\alpha \cup \{ b_t \} \in \mathscr{I}\).
+    Pero \(w(b_t) \ge w(b_s) > w(a_s)\),
+    y nuestro algoritmo hubiese preferido \(b_t\) a \(a_s\).
+
+    Al revés,
+    si el algoritmo voraz siempre entrega un óptimo
+    entonces \((\mathscr{E}, \mathscr{I})\) es un matroide.
+    Para esto basta demostrar que el algoritmo voraz
+    puede no entregar un óptimo
+    si \((\mathscr{E}, \mathscr{I})\) no es un matroide.
+    Si \((\mathscr{E}, \mathscr{I})\) no es un matroide,
+    entonces:
+    \begin{equation*}
+      \exists \mathscr{A}, \mathscr{B} \in \mathscr{I},
+        (\lvert \mathscr{A} \rvert < \lvert\mathscr{B} \rvert)
+          \wedge
+            (\not\exists e \in \mathscr{B} \smallsetminus \mathscr{A}
+               \text{\ tal que\ } \mathscr{A} \cup \{ e \} \in \mathscr{I})
+    \end{equation*}
+    Sean \(m = \lvert \mathscr{A} \rvert\)
+    y \(n = \lvert \mathscr{E} \rvert\).
+    Defina:
+    \begin{equation*}
+      w(e)
+        = \begin{cases}
+             m + 2	 & e \in \mathscr{A} \\
+             m + 1	 & e \in \mathscr{B} \smallsetminus \mathscr{A} \\
+             1 / (2 n)	 & \text{caso contrario}
+          \end{cases}
+    \end{equation*}
+    El algoritmo voraz retorna \(\mathscr{A}\),
+    con peso a lo más \(m (m + 2) + 1 / 2 = m^2 + 2 m + 1 / 2\);
+    una solución mejor es \(\mathscr{B}\)
+    con peso al menos \((m + 1)^2 = m^2 + 2 m + 1\).
+  \end{proof}
+  Otra propiedad interesante resulta de lo siguiente:
+  \begin{definition}
+    Un sistema de subconjuntos \((\mathscr{E}, \mathscr{I})\)
+    tiene la \emph{propiedad de cardinalidad}
+    si:
+    \begin{equation}
+      \label{eq:propiedad-cardinalidad}
+      \forall \mathscr{E}' \subseteq \mathscr{E},
+         (A, B \in \mathscr{I}
+            \text{\ subconjuntos maximales de \(\mathscr{E'}\)})
+           \implies ( \lvert A \rvert = \lvert B \rvert )
+    \end{equation}
+  \end{definition}
+  Decimos que \(A \in \mathscr{I}\)
+  es \emph{subconjunto maximal} de \(\mathscr{E}'\)
+  si \(A \subseteq \mathscr{E}'\) y no hay \(a \in \mathscr{E}'\)
+  tal que \(A \cup \{ a \} \in \mathscr{I}\).
+  Con esto tenemos:
+  \begin{theorem}[Propiedad de cardinalidad]
+    Sea un sistema de subconjuntos \((\mathscr{E}, \mathscr{I})\).
+    Entonces \((\mathscr{E}, \mathscr{I})\) es un matroide
+    si y solo si cumple la propiedad de cardinalidad.
+  \end{theorem}
+  \begin{proof}
+    Es un si y solo si,
+    demostramos implicancia en ambas direcciones.
+
+    Sea \(\mathscr{E}\) un matroide,
+    \(A, B\) subconjuntos maximales de \(\mathscr{E}' \subseteq \mathscr{E}\).
+    Debemos demostrar \(\lvert A \rvert = \lvert B \rvert\),
+    cosa que haremos por contradicción.
+    Supongamos \(\lvert A \rvert < \lvert B \rvert\),
+    por la propiedad de intercambio:
+    \begin{equation*}
+      \exists e \in B \smallsetminus A,
+        (A \cup \{ e \} \in \mathscr{I})
+    \end{equation*}
+    Note que \(A \cup \{ e \} \in \mathscr{E}'\)
+    ya que \(e \in B \subseteq \mathscr{E}'\),
+    o sea,
+    \(A\) no sería maximal.
+    El caso \(\lvert A \rvert > \lvert B \rvert\) es simétrico.
+
+    Al revés,
+    debemos demostrar que
+    si \((\mathscr{E}, \mathscr{I})\) no es matroide
+    entonces hay \(\mathscr{E}'\) y \(A, B \in \mathscr{I}\)
+    con \(A, B\) maximales en \(\mathscr{E}'\)
+    con \(\lvert A \rvert \ne \lvert B \rvert\).
+    Si \((\mathscr{E}, \mathscr{I})\) no es matroide:
+    \begin{equation*}
+      \exists A, C \in \mathscr{I},
+        \lvert A \rvert < \lvert C \rvert \wedge
+          \not\exists e \in C \smallsetminus A
+          \text{\ con\ } A \cup \{ e \} \in \mathscr{I}
+    \end{equation*}
+    Defina \(\mathscr{E}' = A \cup C\),
+    note que \(A\) es maximal en \(\mathscr{E}'\).
+    Hay \(B \in \mathscr{I}\) tal que \(C \subseteq B\)
+    y \(B\) es maximal en \(\mathscr{E}'\).
+    Pero \(\lvert B \rvert \ge \lvert A \rvert + 1\),
+    como debíamos demostrar.
+  \end{proof}
+  Tenemos dos propiedades diferentes
+  (intercambio y cardinalidad)
+  que describen los matroides.
+
+  Note que nuestro primer ejemplo de algoritmo voraz
+  (programar observaciones de ALMA)
+  tiene un sistema de subconjuntos natural asociado:
+  dos tareas son independientes si no traslapan
+  (conjuntos independientes son los \textsc{Independent~Set}
+   del grafo en el cual cada observación es un vértice,
+   y dos vértices están unidos si traslapan).
+  Esto \emph{no} es un matroide,
+  pueden haber conjuntos independientes maximales de tamaños distintos.
+  Nuestro algoritmo voraz entrega un óptimo por la elección
+  de función de peso
+  (todos iguales),
+  para otras funciones de peso falla.
+
+  Algunos ejemplos de matroides
+  y los algoritmos voraces correspondientes:
+  \begin{itemize}
+  \item
+    Los subconjuntos de un conjunto finito \(\mathscr{U}\)
+    de cardinalidad a lo más \(k\).
+
+    Podemos hallar el subconjunto más pesado usando el algoritmo voraz.
+  \item
+    Sea \(G = (V, E)\) un grafo,
+    \(s \in V\) un vértice cualquiera.
+    Los arcos de caminos desde \(s\) en el grafo son un matroide.
+  \item
+    Matroide de columnas.
+    Sea \(\mathbf{A}\) una matriz,
+    \(\mathscr{E}
+        = \{ \mathbf{x}
+               \colon \mathbf{x} \text{\ es columna de \(\mathbf{A}\)} \}\),
+    y sea \(\mathscr{I}\) los conjuntos de columnas linealmente independientes.
+
+    Podemos hallar la base más pesada para las columnas de \(\mathbf{A}\)
+    usando el algoritmo voraz.
+  \end{itemize}
+  Nuestro último ejemplo de sistema de subconjuntos
+  (arcos independientes en un grafo)
+  no es un matroide,
+  y el algoritmo voraz no siempre da un máximo.
+  Considere el grafo de la figura~\ref{fig:edge-labelled-graph}.
+  \begin{figure}
+    \centering
+    \tikzstyle{vertex} = [circle, fill = black!75, draw = black]
+    \begin{tikzpicture}
+       \node[vertex] at (0, {2 * sqrt(3)})		      (A)   {};
+       \node[vertex] at (2, {2 * sqrt(3)})		      (B)   {};
+       \node[vertex] at (4, {2 * sqrt(3)})		      (C)   {};
+
+       \node[vertex] at (1, {sqrt(3)})		      (D)   {};
+       \node[vertex] at (3, {sqrt(3)})		      (E)   {};
+
+       \node[vertex] at (2, 0)			      (F)   {};
+
+       \path (A) edge node[above] {\num{3}} (B)
+             (A) edge node[above] {\num{2}} (D)
+             (B) edge node[above] {\num{2}} (C)
+             (B) edge node[above] {\num{2}} (E)
+             (C) edge node[below] {\num{2}} (E)
+             (D) edge node[above] {\num{3}} (E)
+             (D) edge node[above] {\num{2}} (F)
+             (E) edge node[below] {\num{2}} (F);
+    \end{tikzpicture}
+    \caption{Un grafo con arcos rotulados}
+    \label{fig:edge-labelled-graph}
+  \end{figure}
+  Al buscar un conjunto de arcos de máximo peso
+  que no comparten vértices,
+  el algoritmo voraz da el conjunto maximal
+  que consta de los arcos de peso~\num{3},
+  para un total de~\num{6}
+  (ver~\ref{fig:edge-labelled-graph-greedy});
+  \begin{figure}
+    \centering
+    \tikzstyle{vertex} = [circle, fill = black!75, draw = black]
+    \subfloat[Resultado del algoritmo voraz]{
+      \begin{tikzpicture}
+         \node[vertex] at (0, {2 * sqrt(3)})		      (A)   {};
+         \node[vertex] at (2, {2 * sqrt(3)})		      (B)   {};
+         \node[vertex] at (4, {2 * sqrt(3)})		      (C)   {};
+
+         \node[vertex] at (1, {sqrt(3)})		      (D)   {};
+         \node[vertex] at (3, {sqrt(3)})		      (E)   {};
+
+         \node[vertex] at (2, 0)			      (F)   {};
+
+         \draw[very thick] (A) edge node[above] {\num{3}}	      (B)
+                           (D) edge node[above] {\num{3}}	      (E);
+
+         \draw[thin, gray] (D) edge node[above] {\num{2}}	      (F)
+                           (E) edge node[below] {\num{2}}	      (F)
+                           (A) edge node[above] {\num{2}}	      (D)
+                           (B) edge node[above] {\num{2}}	      (C)
+                           (B) edge node[above] {\num{2}}	      (E)
+                           (C) edge node[below] {\num{2}}	      (E);
+      \end{tikzpicture}
+    \label{fig:edge-labelled-graph-greedy}
+  }
+  \qquad
+  \subfloat[Un óptimo]{
+    \begin{tikzpicture}
+       \node[vertex] at (0, {2 * sqrt(3)})		      (A)   {};
+       \node[vertex] at (2, {2 * sqrt(3)})		      (B)   {};
+       \node[vertex] at (4, {2 * sqrt(3)})		      (C)   {};
+
+       \node[vertex] at (1, {sqrt(3)})		      (D)   {};
+       \node[vertex] at (3, {sqrt(3)})		      (E)   {};
+
+       \node[vertex] at (2, 0)			      (F)   {};
+
+       \draw[very thick] (A) edge node[above] {\num{3}} (B)
+                         (C) edge node[below] {\num{2}} (E)
+                         (D) edge node[above] {\num{2}} (F);
+
+       \draw[thin, gray] (A) edge node[above] {\num{2}} (D)
+                         (B) edge node[above] {\num{2}} (C)
+                         (B) edge node[above] {\num{2}} (E)
+                         (D) edge node[above] {\num{3}} (E)
+                         (E) edge node[below] {\num{2}} (F);
+    \end{tikzpicture}
+    \label{fig:edge-labelled-graph-maximum}
+  }
+  \end{figure}
+  pero el máximo es~\num{7}
+  (ver~\ref{fig:edge-labelled-graph-maximum}).
+
+  La teoría de matroides nació de consideraciones
+  sobre conjuntos linealmente independientes de vectores,
+  y se vio aplicable a teoría de grafos.
+  Rápidamente se extendió a otras áreas,
+  un ejemplo es el texto de Lawler~%
+    \cite{lawler76:_combinatorial_optimization_matroids}
+  sobre optimización combinatoria y matroides.
+
+\section{Programación con plazos fatales}
+\label{sec:deadline-scheduling}
+
+  Suponga que debe completar \(n\) tareas en \(n\) días,
+  donde cada tarea demanda un día completo de dedicación.
+  Cada tarea tiene un plazo fatal,
+  si se completa después de su plazo fatal hay un costo a pagar.
+  Se busca el orden en el cual ejecutar las tareas
+  de forma de pagar el mínimo costo.
+
+  Formalmente,
+  numeramos las tareas de \num{1} a \(n\),
+  dados un arreglo de plazos fatales \(D\)
+  (un entero entre \num{1} y \(n\))
+  y uno de penalizaciones \(P\)
+  (números reales no negativos).
+  Un programa \(\pi\) es una permutación de \(\{ 1, 2, \dotsc, n \}\).
+  Buscamos un programa \(\pi\) que minimice:
+  \begin{equation*}
+    \sum_{1 \le i \le n} P[i] \cdot [ \pi(i) > D[i] ]
+  \end{equation*}
+
+  No parece para nada un ejemplo de optimización de matroide,
+  allí solicitan un subconjunto y buscamos una permutación.
+  Sorprendentemente,
+  hay un matroide disfrazado en él.
+  Para el programa \(\pi\),
+  diga que las tareas para las cuales \(\pi(i) > D[i]\)
+  están \emph{atrasadas},
+  las demás \emph{a tiempo}.
+  La observación trivial de que el costo de una programación
+  queda determinada por sus tareas a tiempo lleva a revelar el matroide.
+
+  Llame \emph{realista} a un conjunto de tareas \(X\)
+  tal que hay una programación \(\pi\) en la que todas las tareas de \(X\)
+  se completan a tiempo.
+  Podemos caracterizar los subconjuntos realistas de la siguiente forma.
+  Sea \(X(t)\) el conjunto de tareas en \(X\)
+  con plazo fatal en o antes de \(t\):
+  \begin{equation*}
+    X(t)
+      = \{ i \in X \colon D[i] \le t \}
+  \end{equation*}
+  En particular,
+  \(X(0) = \varnothing\) y \(X(n) = X\).
+  \begin{proposition}
+    \label{prop:schedule-realistic}
+    Sea \(X \subseteq \{ 1, 2, \dotsc, n \}\) un conjunto arbitrario de tareas.
+    Entonces \(X\) es realista si y solo si \(\lvert X(t) \rvert \le t\)
+    para todo \(t\).
+  \end{proposition}
+  \begin{proof}
+    Es un si y solo si,
+    demostramos implicancia en ambas direcciones.
+
+    Sea \(\pi\) una programación
+    en la que todas las tareas de \(X\) están a tiempo.
+    Sea \(i_t\) la \(t\)\nobreakdash-ésima de \(X\) a completar.
+    Por un lado,
+    \(\pi(i_t) \ge t\),
+    ya que completamos \(t - 1\) tareas antes;
+    por el otro,
+    \(\pi(i_t) \le D[i_t]\) ya que \(i_t\) está a tiempo.
+    Concluimos \(D[i_t] \ge t\),
+    por lo que \(\lvert X(t) \rvert \le t\).
+
+    Suponga ahora que \(\lvert X(t) \rvert \le t\) para todo \(t\).
+    Si ejecutamos las tareas de \(X\) en orden de plazo fatal,
+    completamos las tareas con plazo fatal a más tardar \(t\)
+    el día \(t\).
+    Para todo \(i \in X\) estamos completando \(i\) antes de \(D[i]\),
+    \(X\) es realista.
+  \end{proof}
+  Llamemos \emph{canónica} una programación para el conjunto de tareas \(X\)
+  en la cual se ejecutan las tareas de \(X\) en orden de plazo fatal creciente,
+  y las demás tareas en orden arbitrario.
+  La proposición~\ref{prop:schedule-realistic}
+  nos dice que \(X\) es realista
+  si y solo si todas sus tareas se completan a tiempo
+  en su programación canónica.
+  O sea,
+  nuestro problema se puede reformular como
+  hallar un subconjunto realista \(X\) que maximice:
+  \begin{equation*}
+    \sum_{i \in X} P[i]
+  \end{equation*}
+  Estamos buscando un subconjunto óptimo.
+  \begin{proposition}
+    \label{prop:realistic=matroid}
+    La colección de conjuntos realistas es un matroide.
+  \end{proposition}
+  \begin{proof}
+    El conjunto vacío es realista
+    (vacuamente),
+    todo subconjunto de un conjunto realista es obviamente realista.
+    Resta demostrar que se cumple la propiedad de intercambio.
+    Sean entonces \(X\) e \(Y\) conjuntos realistas,
+    con \(\lvert X \rvert > \lvert Y \rvert\).
+
+    Sea \(t^*\) el máximo entero
+    tal que \(\lvert X(t^*) \rvert \le \lvert Y(t^*) \rvert\).
+    Debe existir,
+    ya que \(\lvert X(0) \rvert = 0 \le 0 = \lvert Y(0) \rvert\)
+    mientras
+    \(\lvert X(n) \rvert
+        = \lvert X \rvert
+        > \lvert Y \rvert
+        = \lvert Y(n) \rvert\).
+    Por la definición de \(t^*\),
+    hay más tareas con plazo fatal \(t^* + 1\) que \(t^*\)
+    en \(X\) que en \(Y\).
+    O sea,
+    podemos elegir \(j \in X \smallsetminus Y\) con plazo fatal \(t^* + 1\).
+    Llamemos \(Z = Y \cup \{ j \}\).
+
+    Sea \(t\) arbitrario.
+    Si \(t \le t^*\),
+    entonces \(\lvert Z(t) \rvert = \lvert Y(t) \rvert \le t\),
+    ya que \(Y\) es realista.
+    Por otro lado,
+    si \(t > t^*\),
+    \(\lvert Z(t) \rvert = \lvert Y(t) \rvert + 1 \le \lvert X(t) \rvert\)
+    por la definición de \(t^*\) y dado que \(X\) es realista.
+    Por la proposición~\ref{prop:schedule-realistic},
+    \(Z\) es realista.
+    Se cumple la propiedad de intercambio.
+  \end{proof}
+  Por la proposición~\ref{prop:realistic=matroid},
+  nuestro problema de hallar la programación óptima
+  es una optimización de matroide,
+  el algoritmo voraz~\ref{alg:greedy-schedule} da detalles.
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    Sort \(P\) in decreasing order
+      and sort \(D\) the same \;
+    \(j \gets 0\) \;
+    \For{\(i \gets 1\) \KwTo \(n\)}{
+      \(X[j + 1] \gets i\) \;
+      \If{\(X[1 .. j + 1]\) is realistic}{
+        \(j \gets j + 1\) \;
+      }
+    }
+    \Return the canonical program for \(X[1 .. j]\) \;
+
+    \caption{Algoritmo voraz para programar tareas}
+    \label{alg:greedy-schedule}
+  \end{algorithm}
+  Falta determinar si un conjunto de tareas es realista.
+  La proposición~\ref{prop:schedule-realistic}
+  da una pista cómo hacerlo,
+  dando el algoritmo~\ref{alg:realistic-subset}.
+  Esto supone que \(X\) viene ordenado por plazo fatal:
+  \begin{equation*}
+    i \le j
+      \implies D[X[i]] \le D[X[j]]
+  \end{equation*}
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{realistic}(X, D)\)}{
+      \(N \gets 0\) \;
+      \(j \gets 0\) \;
+      \For{\(t \gets 1\) \KwTo \(n\)}{
+        \If{\(D[X[j]] = t\)}{
+          \(N \gets N + 1; j \leftarrow j + 1\) \;
+          \If{\(N > t\)}{
+            \Return \(F\) \;
+          }
+        }
+      }
+      \Return \(T\) \;
+    }
+    \caption{Determinar si un conjunto es realista}
+    \label{alg:realistic-subset}
+  \end{algorithm}
+  El resultado se ejecuta en tiempo \(O(n^2)\),
+  usando estructuras de datos apropiadas esto se reduce a \(O(n \log n)\).
+  Detalles quedan de ejercicio.
+
+
+\section*{Ejercicios}
+\label{sec:ejercicios-matroides}
+
+  \begin{enumerate}
+  \item
+    Demuestre que los ejemplos de sistemas de subconjuntos citados
+    realmente lo son.
+    ¿Son matroides?
+  \item
+    Demuestre que el matroide gráfico \(\mathscr{M}(G)\) es un matroide
+    para todo grafo \(G\).
+    Describa sus bases y circuitos.
+  \item
+    Demuestre que para todo grafo \(G\)
+    el matroide cográfico \(\mathscr{M}^*(G)\) es un matroide.
+  \item
+    Demuestre que para todo grafo \(G\) el matroide de correspondencias
+    es un matroide.
+    \\ \textbf{Pista:}
+       ¿Qué es la diferencia simétrica de dos correspondencias?
+  \item
+    Indique qué entrega el algoritmo voraz en cada ejemplo de matroide citado.
+  \item
+    Sea \(G\) un grafo.
+    Un conjunto de ciclos \(\{ c_1, c_2, \dotsc, c_k \}\) de \(G\)
+    se llama \emph{redundante} si cada arco de \(G\)
+    aparece en un número par de \(c_i\).
+    Un conjunto de ciclos es \emph{independiente}
+    si no contiene subconjuntos redundantes.
+    Un conjunto maximal de ciclos independientes es una \emph{base de ciclos}
+    de \(G\).
+    \begin{enumerate}
+    \item
+      Sea \(C\) una base de ciclos de \(G\).
+      Demuestre que para cada ciclo \(\gamma\) de \(G\),
+      hay un subconjunto \(A \subseteq C\) tal que \(A \cap \{ \gamma \}\)
+      es redundante.
+      O sea,
+      \(\gamma\) es el \textquote{o exclusivo} de los ciclos de \(A\).
+    \item
+      Demuestre que la colección de conjuntos de ciclos independientes
+      es un matroide.
+    \item
+      Suponga ahora que cada arco de \(G\) tiene un peso,
+      que el peso de un ciclo es la suma de los pesos de sus arcos,
+      y que el peso de un conjunto de ciclos
+      es la suma de los pesos de los ciclos
+      (note que arcos que se repiten se cuentan cada vez que aparecen).
+      Describa y analice un algoritmo eficiente
+      para hallar una base de ciclos de mínimo peso.
+      (Esto no es sencillo,
+       no es inmediato obtener los ciclos de \(G\)).
+    \end{enumerate}
+  \item
+    Demuestre que el sistema de subconjuntos
+    del problema de programar observaciones de ALMA no es un matroide.
+    Dé un ejemplo con una función de peso
+    (retorno de la observación)
+    tal que el algoritmo voraz no entregue una programación óptima.
+  \item
+    Demuestre cómo programar tareas con plazo fatal en tiempo \(O(n \log n)\).
+
+    \textbf{Pista:} Use una estructura
+      que permita determinar si \(X \cup \{ i \}\) es realista
+      y agregar \(i\) a \(X\) en tiempo \(O(\log n)\) cada operación.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  english Independent Set subgrafo Clique matching Sort
+% LocalWords:  the elements of by decreasin weight Forest MWF MST in
+% LocalWords:  recubridor cográfico cociclo optimalidad vertex circle
+% LocalWords:  fill black draw ésima reformular decreasing order and
+% LocalWords:  sort same is realistic canonical program for

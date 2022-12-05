@@ -1,0 +1,282 @@
+%\bibliographystyle{babplain-fl}
+
+\chapter{Algunos resultados del análisis}
+\label{apx:analysis}
+
+  En derivaciones en análisis numérico
+  usamos varios resultados conocidos
+  (y no tan conocidos)
+  del análisis.
+  Resumimos los más importantes,
+  con sus demostraciones.
+
+  Primeramente,
+  algunas definiciones previas.
+  \begin{definition}
+    El conjunto de funciones continuas sobre el intervalo cerrado \([a, b]\)
+    se anota \(C[a, b]\).
+    Usamos \(C^n[a, b]\) para denotar el conjunto de funciones reales
+    con \(n\)\nobreakdash-ésima derivada continua
+    sobre el intervalo \([a, b]\).
+    Notaciones correspondientes se usan para intervalos abiertos
+    en alguno de sus extremos,
+    como \(C(a, b)\) para funciones continuas
+    en el intervalo abierto \((a. b)\).
+  \end{definition}
+
+  Un \textquote{resultado obvio}
+  (cuya demostración en realidad es bastante compleja,
+   y omitiremos)
+  es el siguiente:
+  \begin{theorem}[Valores extremos]
+    \label{theo:extreme value}
+    Sea \(f\) una función continua sobre el intervalo \([a, b]\).
+    Sean el mínimo y el máximo de \(f\) sobre el intervalo,
+    \(m = \min_{x \in [a, b]} \{ f(x) \}\)
+    y \(M = \max_{x \in [a, b]} \{ f(x) \}\).
+    Entonces para todo \(v \in [m, M]\)
+    hay \(\zeta \in [a, b]\) tal que \(f(\zeta) = v\).
+  \end{theorem}
+  O sea,
+  \(f\) toma todos los valores entre \(m\) y \(M\).
+
+  \begin{theorem}[Rolle]
+    \label{theo:Rolle}
+    Sea \(f \colon [a, b] \to \mathbb{R}\) continua,
+    diferenciable en \((a, b)\),
+    tal que \(f(a) = f(b)\).
+    Entonces hay \(\zeta \in (a, b)\) tal que \(f'(\zeta) = 0\).
+  \end{theorem}
+  En particular,
+  considerando el caso \(f(a) = f(b) = 0\)
+  dice que entre cada par de ceros de \(f\) hay al menos un cero de \(f'\).
+  \begin{proof}
+    Como \(f\) es continua en \([a, b]\),
+    alcanza sus valores máximo y mínimo en el intervalo.
+    Si máximo y mínimo coinciden en ambos extremos,
+    la función es constante,
+    su derivada se anula en \((a, b)\)
+    y podemos elegir \(\zeta \in (a, b)\) arbitrariamente.
+
+    Supongamos entonces que el máximo no ocurre en los extremos
+    (la situación con el mínimo es similar),
+    llamemos \(\zeta\) al punto máximo.
+    Para \(\zeta + h \in (a, b)\) consideremos la expresión:
+    \begin{equation*}
+      \frac{f(\zeta + h) - f(\zeta)}{h}
+    \end{equation*}
+    Para \(h\) positivo esta expresión es negativa
+    (numerador negativo,
+     denominador positivo)
+    para \(h\) negativo es positiva
+    (numerador negativo,
+     denominador negativo).
+    Concluimos que:
+    \begin{align*}
+      \lim_{h \to 0} \frac{f(\zeta + h) - f(\zeta)}{h}
+        &= f'(\zeta) \\
+        &= 0
+    \end{align*}
+    El límite existe ya que supusimos que \(f\) es diferenciable.
+    Esto es lo que queríamos demostrar.
+  \end{proof}
+  Un resultado que usamos es el siguiente:
+  \begin{theorem}[Rolle extendido]
+    \label{theo:Rolle-extended}
+    Sea \(f \colon [a, b] \to \mathbb{R}\) continua,
+    diferenciable \(n\) veces en \((a, b)\),
+    tal que \(f(a) = f(b) = 0\)
+    y con \(n + 1\)~ceros distintos en \([a, b]\).
+    Entonces hay \(\zeta \in (a, b)\) tal que \(f^{(n)}(\zeta) = 0\).
+  \end{theorem}
+  \begin{proof}
+    La demostración es por inducción.
+    \begin{description}
+    \item[Base:]
+      Para \(n = 0\) tenemos el teorema de Rolle,
+      teorema~\ref{theo:Rolle}.
+    \item[Inducción:]
+      Supongamos que vale para \(n\),
+      y consideremos la función \(f'(x)\).
+      Por hipótesis \(f'\) es continua en \((a, b)\).
+      Por el teorema de Rolle aplicado
+      a los intervalos
+        \([x_0, x_1], [x_1, x_2], \dotsc, [x_n, x_{n + 1}]\),
+      cada uno de estos contiene un cero de \(f'(x)\),
+      llamémosles \(\zeta_0, \zeta_1, \dotsc, \zeta_n\).
+      Por inducción,
+      el intervalo \([\zeta_0, \zeta_n] \subset [a, b]\)
+      contiene un cero \(\zeta\)
+      de la \(n\)\nobreakdash-ésima derivada de \(f'(x)\),
+      que es \(f^{(n + 1)}(x)\).
+    \end{description}
+    Por inducción vale para todo \(n \in \mathbb{N}_0\).
+  \end{proof}
+  \begin{theorem}[Valor medio]
+    \label{theo:mean-value}
+    Sea \(f \colon [a, b] \to \mathbb{R}\) continua en \([a, b]\)
+    y derivable en \((a, b)\).
+    Entonces hay \(\zeta \in (a, b)\) tal que:
+    \begin{equation*}
+      f'(\zeta)
+        = \frac{f(b) - f(a)}{b - a}
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Consideremos la función:
+    \begin{equation*}
+      g(x)
+        = f(x) - \frac{f(b) - f(a)}{b - a} x
+    \end{equation*}
+    Entonces \(g\) cumple las hipótesis del teorema de Rolle,
+    \ref{theo:Rolle}.
+    Vale decir,
+    hay un punto \(\zeta \in (a, b)\) tal que:
+    \begin{align*}
+      g'(\zeta)
+        &= 0 \\
+        &= f'(\zeta) - \frac{f(b) - f(a)}{b - a}
+    \end{align*}
+    El resultado sigue.
+  \end{proof}
+  El siguiente se conoce como teorema del valor medio extendido,
+  o teorema de valor medio de Cauchy.
+  \begin{theorem}[Valor medio extendido]
+    \label{theo:mean-value-extended}
+    Sean \(f, g\) funciones continuas en el intervalo \([a, b]\),
+    derivables en \((a, b)\).
+    Entonces hay \(\zeta \in (a, b)\) tal que:
+    \begin{equation*}
+      (f(b) - f(a)) g'(\zeta)
+        = (g(b) - g(a)) f'(\zeta)
+    \end{equation*}
+  \end{theorem}
+  Obviamente,
+  si \(g(a) \ne g(b)\) y \(g'(\zeta) \ne 0\) esto equivale a:
+  \begin{equation*}
+    \frac{f'(\zeta)}{g'(\zeta)}
+      = \frac{f(b) - f(a)}{g(b) - g(a)}
+  \end{equation*}
+  \begin{proof}
+    Si \(g(a) = g(b)\),
+    por el teorema de Rolle
+    (teorema~\ref{theo:Rolle})
+    hay \(\zeta \in (a, b)\) tal que \(g'(\zeta) = 0\),
+    para este el teorema se cumple trivialmente.
+
+    Suponga ahora \(g(a) \ne g(b)\).
+    Defina:
+    \begin{equation*}
+      h(x)
+        = f(x) - \frac{f(b) - f(a)}{g(b) - g(a)} g(x)
+    \end{equation*}
+    Como \(f, g\) son continuas en \([a, b]\) y derivables en \((a, b)\),
+    esto se cumple para \(h\),
+    al satisfacer las hipótesis del teorema de Rolle
+    hay \(\zeta \in (a, b)\) tal que:
+    \begin{align*}
+      h'(\zeta)
+        &= 0 \\
+        &= f'(\zeta) - \frac{f(b) - f(a)}{g(b) - g(a)} g'(\zeta)
+    \end{align*}
+    El resultado es inmediato.
+  \end{proof}
+  El teorema del valor medio,
+  teorema~\ref{theo:mean-value},
+  es el caso particular \(g(x) = x\).
+
+  Finalmente:
+  \begin{theorem}
+    \label{theo:mean-value-integral}
+    Sea \(f \colon [a, b] \to \mathrm{R}\) continua,
+    y sea \(g \colon [a, b] \to \mathbb{R}\)
+    integrable que no cambia de signo en \([a, b]\).
+    Entonces hay \(\zeta \in [a, b]\) tal que:
+    \begin{equation*}
+      \int_a^b f(x) g(x) \mathrm{d} x
+        = f(\zeta) \int_a^b g(x) \mathrm{d} x
+    \end{equation*}
+  \end{theorem}
+  El caso especial \(g(x) = 1\) da el resultado conocido:
+  \begin{equation*}
+    \int_a^b f(x) \mathrm{d} x
+      = f(\zeta) (b - a)
+  \end{equation*}
+  \begin{proof}
+    Supongamos \(g\) es no negativa,
+    el caso de \(g\) no positiva es similar.
+    Sabemos que hay valores mínimo y máximo de \(f\) sobre \([a, b]\),
+    llamémosles \(m, M\),
+    tales que para \(x \in [a, b]\):
+    \begin{equation*}
+      m \le f(x) \le M
+    \end{equation*}
+    Como \(g\) no es negativa:
+    \begin{equation*}
+      m \int_a^b g(x) \mathrm{d} x
+        \le \int_a^b f(x) g(x) \mathrm{d} x
+        \le M \int_a^b g(x) \mathrm{d} x
+    \end{equation*}
+    Si ahora:
+    \begin{equation*}
+      \int_a^b g(x) \mathrm{d} x
+        = 0
+    \end{equation*}
+    podemos elegir \(\zeta \in [a, b]\) arbitrario.
+    Si la última integral no se anula,
+    por el teorema de los valores extremos,
+    teorema~\ref{theo:extreme value},
+    hay \(\zeta \in [a, b]\) con el que se cumple lo prometido.
+  \end{proof}
+  Un resultado importantísimo es:
+  \begin{theorem}[Taylor]
+    \label{theo:taylor}
+    Sea \(f \in C^{n + 1}(a, x)\) con \(f^{(n + 1)} \in C[a, x]\).
+    Entonces hay \(\xi \in [a, x]\) tal que:
+    \begin{equation*}
+      f(x)
+        = \sum_{0 \le k \le n} \frac{f^{(k)}(a)}{k!} (x - a)^k
+            + \frac{f^{(n + 1)}(\xi)}{(n + 1)!} (x - a)^{n + 1}
+    \end{equation*}
+  \end{theorem}
+  A esta se le conoce como \emph{la forma de Lagrange del residuo},
+  es la más útil para nuestros fines.
+  \begin{proof}
+    Sean:
+    \begin{align*}
+      F(t)
+        &= \sum_{0 \le k \le n} \frac{f^{(k)}(t)}{k!} (x - t)^k \\
+      G(t)
+        &= (t - x)^{n + 1}
+    \end{align*}
+    Por el teorema~\ref{theo:mean-value-extended},
+    tenemos que hay \(\xi \in (a, x)\) tal que:
+    \begin{equation*}
+      \frac{F'(\xi)}{G'(\xi)}
+        = \frac{F(x) - F(a)}{G(x) - G(a)}
+    \end{equation*}
+    Vemos que:
+    \begin{align*}
+      F'(t)
+        &= \frac{f^{(n + 1)}(t)}{n!} (x - t)^n \\
+      G'(t)
+        &= (n + 1) (t - x)^n
+    \end{align*}
+    Substituyendo y simplificando queda:
+    \begin{equation*}
+      f(x)
+        = \sum_{0 \le k \le n} \frac{f^{(k)}(a)}{k!} (x - a)^k
+            + \frac{f^{(n + 1)}(\xi)}{(n + 1)!} (x - a)^{k + 1}
+    \end{equation*}
+    Esto es lo que había que demostrar.
+  \end{proof}
+
+%\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  ésima diferenciable

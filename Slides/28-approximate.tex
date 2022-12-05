@@ -1,0 +1,1002 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{mathrsfs}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage[basic]{complexity}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{tikz}
+
+\usetikzlibrary{fit, shapes.misc}
+
+\newtheorem{proposition}{Proposición}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Algoritmos aproximados}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Escena}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La escena}
+
+  \uncover<+->{
+    Muchos problemas de enorme interés práctico son \NP\nobreakdash-completos
+    (lo son sus variantes de decisión,
+     que en caso de problemas \NP\nobreakdash-completos
+     significa que resolver el respectivo problema de búsqueda
+     u optimización también toma tiempo más que polinomial
+     si \(\cP \ne \NP\)).
+  }
+  \uncover<+->{
+    Simplemente decir \textquote{es \NP\nobreakdash-completo}
+    y dejar el problema de lado no suele ser opción.
+  }
+  \uncover<+->{
+    Requerimos una solución,
+    aún si no podemos garantizar la mejor posible.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La escena}
+
+  \begin{description}
+  \item[Búsqueda completa:]
+    Buscar el óptimo,
+    resignándonos al costo.
+  \item[Algoritmo especializado:]
+    Posiblemente para casos especiales de particular interés.
+  \item[Heurísticas:]
+    \emph{Debieran} dar una solución razonable.
+    Basadas en intuición sobre el problema,
+    no evidencia sólida.
+  \item[Algoritmos aleatorizados:]
+    A veces resuelven problemas complejos con alta probabilidad,
+    o dan buenas soluciones aproximadas.
+  \item[Algoritmos aproximados:]
+    Algoritmos deterministas que dan soluciones aproximadas
+    dentro de cierto rango obviamente son de interés.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de rendimiento}
+
+  \uncover<+->{
+    Dada una instancia \(I\) del problema,
+    llamamos \(C(I)\) al costo de la solución provista por el algoritmo,
+    y \(C^*(I)\) al costo óptimo respectivo.
+    Supondremos costos estrictamente positivos,
+    con lo que buscamos \(C(I) / C^*(I)\) pequeño si es minimización,
+    para maximización \(C^*(I) / C(I)\) pequeño.
+  }
+  \uncover<+->{
+    El algoritmo logra \emph{cota de razón} \(\rho(n)\)
+    si para todas las instancias \(I\) de tamaño \(n\):
+    \begin{equation*}
+      \max_{\lvert I \rvert = n}
+        \left\{
+          \frac{C(I)}{C^*(I)},
+          \frac{C^*(I)}{C(I)}
+        \right\}
+        \le \rho(n)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Note que \(\rho(n)\) siempre es mayor o igual a \(1\),
+    siendo \(1\) solo si la solución aproximada es el óptimo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aproximabilidad}
+
+  \uncover<+->{
+    Algunos problemas \NP\nobreakdash-completos
+    pueden aproximarse arbitrariamente.
+    Para ellos hay un algoritmo
+    que toma una instancia \(I\) y un real \(\varepsilon > 0\),
+    se ejecuta en tiempo polinomial en \(n = \lvert I \rvert\)
+    y retorna una solución cuya cota de razón es a lo más \(1 + \varepsilon\).
+    A este tipo de algoritmo se le llama
+    \emph{\foreignlanguage{english}{polynomial time approximation scheme}}
+    o PTAS.
+  }
+  \uncover<+->{
+    El tiempo de ejecución depende de \(n\) y \(\varepsilon\),
+    en muchos casos al disminuir \(\varepsilon\)
+    el tiempo de ejecución crece más allá de polinomial,
+    como es \(O(n^{1/\varepsilon})\).
+  }
+  \uncover<+->{
+    Si el tiempo de ejecución es polinomial en \(n\) y \(1/\varepsilon\),
+    se habla de
+    \emph{\foreignlanguage{english}
+                          {fully polynomial time approximation scheme}}
+    o FPTAS.
+    Ejemplo es tiempo de ejecución \(O((1/\varepsilon)^2 n^3)\),
+    mientras \(O(n^{1/\varepsilon})\) y \(O(2^{1/\varepsilon} n^2)\) no lo son.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aproximabilidad}
+
+  \uncover<+->{
+    Los problemas \NP\nobreakdash-completos son equivalentes
+    respecto de si sus peores casos
+    pueden resolverse exactamente en tiempo polinomial,
+    su aproximabilidad varía considerablemente.
+  }
+  \begin{itemize}
+  \item
+    Si hay un algoritmo aproximado con una cota de razón menor que \(\infty\)
+    para el problema del vendedor viajero
+    (\textsc{TSP}),
+    entonces \(\cP = \NP\).
+  \item
+    Algunos problemas pueden aproximarse
+    con una cota que crece lentamente con \(n\).
+    Por ejemplo
+    \textsc{Set~Cover}
+    puede aproximarse dentro de un factor de \(\ln n\).
+  \item
+    Hay problemas que se pueden aproximar dentro de un factor fijo.
+  \item
+    Hay problemas que tienen PTAS o FPTAS.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aproximabilidad}
+
+  \uncover<+->{
+    De hecho,
+    similar al caso de los problemas \NP\nobreakdash-completos,
+    hay colecciones de problemas que \textquote{se cree} que son equivalentes
+    en que son difíciles de aproximar,
+    y que si uno puede aproximarse en tiempo polinomial
+    todos ellos pueden serlo.
+  }
+  \uncover<+->{
+    Pero el estudio de algoritmos aproximados
+    sirve para llenar varios cursos\ldots
+  }
+\end{frame}
+
+\section{Algoritmos aproximados}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \uncover<+->{
+    El problema	 de optimización \textsc{Vertex~Cover}
+    da un grafo \(G = (V, E)\)
+    y solicita un subconjunto mínimo \(C \subseteq V\)
+    tal que todos los arcos de \(G\) contienen al menos un vértice en \(C\).
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Sabemos que el problema de decisión correspondiente
+    (¿tiene \(G\) un \emph{\foreignlanguage{english}{vertex cover}}
+    de tamaño \(k\)?)
+    es \NP\nobreakdash-completo.
+  }
+  \uncover<+->{
+    Demostraremos que hay un algoritmo con cota de razón \(2\),
+    o sea,
+    obtiene un conjunto que a lo más tiene el doble tamaño del mínimo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \uncover<+->{
+    Tenemos un algoritmo muy simple,
+    que se basa en una observación obvia:
+    si consideramos el arco \(u v \in E\),
+    al menos uno de los dos vértices pertenece al conjunto,
+    no sabemos cuál.
+  }
+  \uncover<+->{
+    Agregamos ambos a nuestro conjunto
+    (más tonto,
+     imposible),
+    luego eliminamos los arcos que contienen los vértices \(u, v\),
+    y repetimos el proceso con el resto.
+  }
+  \uncover<+->{
+    Note que es un algoritmo aleatorizado
+    (elige un arco cualquiera en cada paso).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+    \begin{algorithm}[H]
+      \DontPrintSemicolon
+
+      \Function{\(\mathrm{ApproxVC}(G)\)}{
+        \(C \leftarrow \varnothing\) \;
+        \While{\(E \ne \varnothing\)}{
+          Sea \(u v \in E\) un arco cualquiera \;
+          \(C \leftarrow C \cup \{u, v\}\) \;
+          Elimine de \(E\) todos los arcos incidentes a \(u\) o \(v\) \;
+        }
+        \Return \(C\) \;
+      }
+    \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \begin{proposition}<+->
+    El algoritmo \(\mathrm{ApproxVC}\) tiene cota de razón \(2\)
+    para \textsc{Vertex~Cover}.
+  \end{proposition}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \begin{proof}<+->
+    Sea \(C\) el conjunto que entrega \(\mathrm{ApproxVC}\),
+    y sea \(C^*\) el mínimo.
+    Sea \(A\) el conjunto de arcos
+    seleccionados por \(\mathrm{ApproxVC}\),
+    vemos que \(\lvert C \rvert = 2 \lvert A \rvert\)
+    (cada arco seleccionado aporta \(2\) vértices a \(C\)).
+    Pero el \emph{\foreignlanguage{english}{vertex cover}} mínimo
+    tiene que contener al menos uno de esos dos vértices,
+    con lo que \(\lvert A \rvert \le \lvert C^* \rvert\).
+    Tenemos:
+    \begin{align*}
+      \frac{\lvert C \rvert}{2}
+        &= \lvert A \rvert
+         \le \lvert C^* \rvert \\
+      \frac{\lvert C \rvert}{\lvert C^* \rvert}
+        &\le 2
+    \end{align*}
+    \qedhere
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \uncover<+->{
+    Para el grafo bipartito completo \(K_{n, n}\)
+    \(\mathrm{ApproxVC}\) da cota de razón
+    exactamente \(2\):
+    elige todos los vértices,
+    para un total de \(2 n\);
+    el óptimo es uno de los conjuntos de vértices,
+    con \(n\) vértices.
+  }
+  \uncover<+->{
+    A esto se le llama \emph{ejemplo ajustado}
+    (\emph{\foreignlanguage{english}{tight example}} en inglés)
+    para el algoritmo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \uncover<+->{
+    Otra idea es una estrategia voraz:
+    ¿porqué no concentrarse en vértices que cubren el máximo número de arcos?
+    O sea,
+    ir agregando vértices en orden de grado decreciente.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Function{\(\mathrm{GreedyVC}(G)\)}{
+      \(C \leftarrow \varnothing\) \;
+      \While{\(E \ne \varnothing\)}{
+        Sea \(u\) el vértice de mayor grado en \(G\) \;
+        \(C \leftarrow C \cup \{ u \}\) \;
+        Elimine \(u\) de \(V\)
+        y de \(E\) todos los arcos que contienen a \(u\) \;
+      }
+      \Return \(C\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \uncover<+->{
+    No siempre da una solución mejor que la estrategia estúpida
+    de dos-por-uno.
+  }
+  \uncover<+->{
+    Sorprendentemente,
+    actualmente \(\mathrm{ApproxVC}\)
+    es el algoritmo aproximado que garantiza la mejor cota de razón
+    para este problema.
+  }
+  \uncover<+->{
+    Para \(\mathrm{GreedyVC}(G)\)
+    la cota de razón crece como \(\Theta(\log n)\),
+    donde \(n\) es el número de vértices del grafo,
+    ni siquiera es una constante.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \uncover<+->{
+    El algoritmo \(\mathrm{GreedyVC}\) puede
+    comportarse arbitrariamente peor que \(\mathrm{ApproxVC}\).
+  }
+  \uncover<+->{
+    Por otro lado,
+    en \textquote{grafos típicos}
+    suele dar mejores resultados que \(\mathrm{ApproxVC}\),
+    vale la pena correr ambos
+    (y ya que \(\mathrm{ApproxVC}\) es aleatorizado,
+     correr este varias veces)
+     y quedarse con el conjunto más pequeño.
+    O combinar:
+    usar \(\mathrm{ApproxVC}\),
+    pero elegir siempre el arco \(u v\) con máximo \(\delta(u) + \delta(v)\),
+    con la idea de eliminar los más arcos posibles.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Vertex Cover}}
+
+  \uncover<+->{
+    La moraleja es que no siempre la heurística \textquote{obvia}
+    da el mejor resultado,
+    puede ser necesario considerar varias alternativas.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{TSC}}
+
+  \uncover<+->{
+    Tenemos un grafo \(G = (V, E)\)
+    con costos de los arcos,
+    \(c \colon E \to \mathbb{R}^+\).
+    Buscamos un circuito de costo mínimo
+    (sumando los costos de los arcos)
+    que visite cada vértice.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{TSC}}
+
+  \uncover<+->{
+    El problema \textsc{TSC} es similar al problema de ciclo Hamiltoniano
+    (\textsc{Hamiltonian}):
+    dado un grafo \(G = (V, E)\)
+    pregunta si existe un ciclo que pasa por cada vértice exactamente una vez.
+  }
+  \uncover<+->{
+    Usaremos esta similitud para demostrar
+    que es imposible aproximar \textsc{TSP}
+    mediante un algoritmo determinista polinomial
+    salvo si \(\cP = \NP\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{TSC}}
+
+  \begin{theorem}<+->
+    No hay un algoritmo aproximado polinomial para \textsc{TSP}
+    que dé una cota de razón menor que \(\infty\)
+    a menos que \(\cP = \NP\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{TSC}}
+
+  \begin{proof}<+->
+    Reduciremos \textsc{Hamiltonian}
+    a obtener una aproximación a \textsc{TSP}.
+    Sea \(G = (V, E)\)
+    y sea \(n = \lvert V \rvert\),
+    elegimos \(C\) y creamos una instancia de \textsc{TSP}
+    con:
+    \begin{equation*}
+      c(u, v)
+        = \begin{cases}
+            1 & u v \in E \\
+            C & u v \notin E
+          \end{cases}
+    \end{equation*}
+    Esta instancia de \textsc{TSP}
+    tiene solución de costo \(n\)
+    si y solo si \(G\) tiene un ciclo hamiltoniano;
+    si no,
+    el costo de la travesía es a lo menos \(n - 1 + C\).
+    Si hay un algoritmo polinomial
+    que dé \(\rho(n) \le (C + n - 1) / n\),
+    tendríamos un algoritmo polinomial para \textsc{Hamiltonian}.
+    Pero \(C\) es arbitrario
+    y \textsc{Hamiltonian} es \NP\nobreakdash-completo.
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \(\text{\textsc{TSC}}_\Delta\)}
+
+  \uncover<+->{
+    Una variante de \textsc{TSP},
+    que llamaremos \(\textsc{TSP}_\Delta\),
+    se da si para todos los vértices
+    los costos cumplen la desigualdad triangular:
+    \begin{equation*}
+      c(u, v)
+        \le c(u, x) + c(x, v)
+    \end{equation*}
+    Un caso especial de esto es cuando los vértices son puntos en el plano
+    y los costos son las distancias entre ellos
+    (\emph{vendedor viajero euclidiano},
+     aplicable por ejemplo a movimientos de la pluma de un \emph{plotter}).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \(\text{\textsc{TSC}}_\Delta\)}
+
+  \begin{theorem}<+->
+    Para \(\textsc{TSP}_\Delta\)
+    hay un algoritmo polinomial que asegura cota de razón \(2\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \(\text{\textsc{TSC}}_\Delta\)}
+
+  \begin{proof}<+->
+    Primeramente,
+    sea \(C^*\) el costo del ciclo óptimo.
+    Si eliminamos uno de los arcos del ciclo
+    obtenemos un árbol recubridor del grafo,
+    de costo a lo menos el del árbol recubridor mínimo del grafo,
+    llamémosle \(T^*\).
+    Por otro lado,
+    podemos construir un circuito que visita cada vértice dos veces
+    partiendo de un árbol recubridor mínimo:
+    recorrerlo \textquote{por fuera} da un circuito
+    cuyo costo es \(2 T^*\);
+    si evitamos vértices ya visitados,
+    obtenemos un ciclo,
+    como estamos evitando vértices,
+    por la desigualdad triangular el costo es menor.
+    Resumiendo,
+    obtenemos un recorrido de costo \(C\):
+    \begin{align*}
+      T^*
+        &<   C^*
+         \le C
+         \le 2 T^*
+         <   2 C^* \\
+      \frac{C}{C^*}
+        &< 2
+    \end{align*}
+    \qedhere
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \(\text{\textsc{TSC}}_\Delta\)}
+
+  \uncover<+->{
+    Nuevamente,
+    la heurística simple de ir siempre al más cercano sin visitar
+    puede comportarse arbitrariamente peor.
+  }
+  \uncover<+->{
+    En la práctica,
+    generalmente da resultados razonables.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    Otro problema \NP\nobreakdash-completo famoso
+    es \textsc{Set~Cover}:
+    Dado un conjunto universo finito \(\mathscr{U}\)
+    y una familia finita de subconjuntos \(\mathscr{S}_i\),
+    \(1 \le i \le n\),
+    tal que \(\bigcup_i \mathscr{S}_i = \mathscr{U}\)
+    (los \(\mathscr{S}_i\) \emph{no} son necesariamente disjuntos),
+    se busca la colección mínima de los \(\mathscr{S}_i\)
+    tal que:
+    \begin{equation*}
+      \bigcup_{i \in \mathscr{C}} \mathscr{S}_i
+        = \mathscr{U}
+    \end{equation*}
+  }
+
+  \uncover<+->{
+    El problema \textsc{Vertex~Cover} es un caso particular,
+    los arcos de \(G\) son subconjuntos de tamaño \(2\) de los vértices,
+    y nos interesa la colección mínima de arcos
+    que incluyen a todos los vértices.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    La estrategia que llevó a \(\mathrm{ApproxVC}\) acá no es aplicable,
+    los conjuntos \(\mathscr{S}_i\) no son necesariamente del mismo tamaño.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Una heurística plausible
+    es la estrategia voraz de elegir en cada paso
+    aquel subconjunto que más elementos aún no considerados incluye.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    Esta heurística puede ser engañada,
+    como ilustra la figura.
+    \begin{center}
+      \begin{tikzpicture}
+        \tikzstyle{dot} = [draw, shape = circle, fill];
+        \tikzstyle{set} = [draw, shape = rounded rectangle]
+        \path (0, 1) node[dot] (a0) {}
+              (1, 1) node[dot] (a1) {}
+              (2, 1) node[dot] (a2) {}
+              (3, 1) node[dot] (a3) {}
+              (4, 1) node[dot] (a4) {}
+              (5, 1) node[dot] (a5) {}
+              (6, 1) node[dot] (a6) {};
+        \path (0, 0) node[dot] (b0) {}
+              (1, 0) node[dot] (b1) {}
+              (2, 0) node[dot] (b2) {}
+              (3, 0) node[dot] (b3) {}
+              (4, 0) node[dot] (b4) {}
+              (5, 0) node[dot] (b5) {}
+              (6, 0) node[dot] (b6) {};
+        \node[set, fit = (a0) (a6)] {};
+        \node[set, fit = (b0) (b6)] {};
+        \node[set, inner sep = 5pt, fit = (a0) (b0)] {};
+        \node[set, inner sep = 5pt, fit = (a1) (b2)] {};
+        \node[set, inner sep = 5pt, fit = (a3) (b6)] {};
+      \end{tikzpicture}
+    \end{center}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    La estrategia voraz elegiría el conjunto de \(8\) elementos,
+    luego el de \(4\),
+    y finalmente el de \(2\);
+    la solución óptima es elegir simplemente ambos conjuntos de \(7\).
+  }
+  \uncover<+->{
+    Este ejemplo puede extenderse a dos conjuntos de \(2^n - 1\)
+    para cualquier \(n\)
+    y los respectivos conjuntos de \(2 \cdot 2^k\)
+    que intersectan a los conjuntos grandes en mitades,
+    similar a la figura.
+  }
+  \uncover<+->{
+    Igual que en el ejemplo,
+    la estrategia voraz elegiría los \(n\)~conjuntos pequeños,
+    siendo que la solución óptima es elegir los dos conjuntos grandes.
+    No hay límite a la cota de razón del algoritmo voraz.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    Antes de ir al resultado,
+    recordamos una cota importante.
+  }
+  \begin{lemma}<+->
+    Para todo \(c > 0\):
+    \begin{equation*}
+      \left( 1 - \frac{1}{c} \right)^c
+        \le \frac{1}{\mathrm{e}}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}<+->
+    Usamos que para todo \(x\) es \(1 + x \le \mathrm{e}^x\)
+    (son iguales para \(x = 0\) únicamente).
+    Substituyendo \(x = - 1 / c\) tenemos \(1 - 1/c \le \mathrm{e}^{-1/c}\),
+    elevando a la potencia \(c\) tenemos lo prometido.
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \begin{theorem}<+->
+    El algoritmo voraz para \textsc{Set~Cover} tiene una cota de razón
+    de a lo más \(\ln m\),
+    donde \(m = \lvert \mathscr{U} \rvert\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    \textcolor{blue}{Demostración.} \\
+    Sea \(c\) el tamaño del \emph{\foreignlanguage{english}{set cover}} óptimo,
+    y sea \(g\) el tamaño del \emph{\foreignlanguage{english}{set cover}}
+    entregado por el algoritmo voraz menos uno.
+    Demostraremos que \(g/c \le \ln m\),
+    lo que no es exactamente lo prometido,
+    pero está a \(1\) de distancia.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Al iniciar el algoritmo voraz,
+    tenemos \(m_0 = m\) elementos a cubrir.
+  }
+  \uncover<+->{
+    Sabemos que hay una cobertura de tamaño \(c\)
+    (la óptima),
+    con lo que por el principio del palomar
+    hay a lo menos un conjunto de \(m_0 / c\) elementos.
+  }
+  \uncover<+->{
+    Al elegir el conjunto más grande,
+    el algoritmo voraz elige un conjunto con al menos \(m_0 / c\) elementos,
+    quedando \(m_1 \le m_0 - m_0 / c = m_0( 1 - 1/c)\) elementos a cubrir.
+    Por el mismo argumento,
+    se pueden cubrir los \(m_1\) elementos restantes
+    con \(c - 1\) conjuntos,
+    quedan \(m_2 \le m_1 (1 - 1 / (c - 1)) \le m_0 (1 - 1 / c)^2\),
+    y así sucesivamente.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    Aplicando esto \(g\) veces,
+    cada vez cubre al menos \(1 - 1/c\) de los elementos,
+    los elementos que restan al final del algoritmo voraz es a lo más
+    \(m (1 - 1/c)^g\).
+  }
+  \uncover<+->{
+    El valor máximo de \(g\)
+    para el cual queda al menos un elemento sin cubrir es:
+    \begin{align*}
+      1
+        &\le m \left( 1 - \frac{1}{c} \right)^g \\
+        &=   m \left( \left( 1 - \frac{1}{c} \right)^c \right)^{g/c}
+    \end{align*}
+  }
+  \end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    Por el lema:
+    \begin{align*}
+      1
+        &\le m \mathrm{e}^{-g/c} \\
+    \intertext{Multiplicando por \(\mathrm{e}^{g/c}\) y tomando logaritmos:}
+      \frac{g}{c}
+        &\le \ln m
+    \end{align*}
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Set Cover}}
+
+  \uncover<+->{
+    En la práctica,
+    la cota del teorema
+    resulta ser demasiado pesimista.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Knapsack}}
+
+  \uncover<+->{
+    El problema de la mochila
+    (\textsc{Knapsack})
+    es otro problema \NP\nobreakdash-completo importante.
+  }
+  \uncover<+->{
+    Tenemos una mochila de capacidad \(M\)
+    y \(n\) objetos,
+    con el objeto \(i\) de peso \(p_i\) y valor \(v_i\).
+    Buscamos el conjunto de objetos que da el valor máximo
+    que no sobrepasa la capacidad.
+  }
+  \uncover<+->{
+    Suponemos además que tanto \(M\) como los \(p_i\) son enteros.
+  }
+  \uncover<+->{
+    Este problema podemos plantearlo como:
+    \begin{align*}
+      &\max \sum_i x_i v_i \\
+      &\text{tal que} \sum_i x_i p_i \le M \\
+      &x_i \in \{0, 1\}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema \textsc{Knapsack}}
+
+  \uncover<+->{
+    La estrategia voraz del problema continuo no funciona:
+  }%
+  \uncover<+->{%
+    con \(p_1 = 1, v_1 = 1 + \varepsilon, p_2 = M, v_2 = M\)
+    elige solo el objeto \(1\),
+    para un valor \(1 + \varepsilon\);
+    siendo que eligiendo \(2\) obtiene un valor \(M\).
+  }
+  \uncover<+->{
+    La aproximación no es mejor que \(M\),
+    y \(M\) es arbitrario.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un FPTAS para \textsc{Knapsack}}
+
+  \uncover<+->{
+    La idea central es usar redondeo.
+  }
+  \uncover<+->{
+    Si \(V = \sum_i v_i\),
+    sabemos que hay un algoritmo de programación dinámica
+    que resuelve el problema en tiempo \(O(n V)\).
+  }
+  \uncover<+->{
+    Esto no es polinomial en el largo de los datos de entrada
+    (dados en una representación eficiente,
+     como es números binarios,
+     lo que daría la representación del largo de \(V\)
+     como \(O(\log V)\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un FPTAS para \textsc{Knapsack}}
+
+  \uncover<+->{
+    Para obtener un FPTAS,
+    defina:
+    \begin{equation*}
+      v_i'
+        = \left\lfloor
+            \frac{n}{\varepsilon} \cdot \frac{v_i}{v_{\mathrm{max}}}
+          \right\rfloor
+    \end{equation*}
+    Ejecute el algoritmo de programación dinámica
+    para obtener la solución óptima \(\mathrm{OPT}'\)
+    al problema modificado,
+    con costo \(O(n V')\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un FPTAS para \textsc{Knapsack}}
+
+  \uncover<+->{
+    Sabemos:
+    \begin{equation*}
+      V' \le n \max_i v_i' \le \frac{n^2}{\varepsilon}
+    \end{equation*}
+    Es claro que
+    \(\mathrm{OPT}' \ge v'_{\mathrm{max}} \ge n / \varepsilon\).
+  }
+  \uncover<+->{
+    Después de redondear,
+    todo conjunto de \(k\) objetos pierde a lo más \(k < n\) en valor,
+    lo que
+    (por lo anterior)
+    es a lo más \(\varepsilon \mathrm{OPT}'\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un FPTAS para \textsc{Knapsack}}
+
+    \begin{proposition}<+->
+      Para \(\varepsilon > 0\),
+      la solución óptima de la instancia redondeada
+      tiene valor al menos \((1 - \varepsilon) \mathrm{OPT}\).
+    \end{proposition}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un FPTAS para \textsc{Knapsack}}
+
+  \begin{proof}<+->
+    Sea \(v(S)\) el valor del conjunto \(S\) de objetos,
+    \(v'(S)\) el valor del conjunto con valores redondeados.
+    Para todo conjunto \(S\):
+    \begin{equation*}
+      \alpha v(S) - \lvert S \rvert
+        \le v'(S)
+        \le \alpha v(S)
+    \end{equation*}
+    donde \(\alpha = n / (\varepsilon v_{\mathrm{max}})\).
+    Sea \(A^*\) un conjunto óptimo para el problema original
+    y \(A\) un conjunto óptimo del problema redondeado,
+    entonces:
+    \begin{align*}
+      v(A)
+        &\ge \frac{1}{\alpha} v'(A)
+         \ge \frac{1}{\alpha} v'(A^*)
+         \ge \frac{1}{\alpha} v(A^*) - \frac{1}{\alpha} \lvert A^* \rvert \\
+        &\ge \mathrm{OPT} - \frac{n}{\alpha}
+         \ge \mathrm{OPT} - \varepsilon v_{\mathrm{max}}
+         \ge \mathrm{OPT} - \varepsilon \operatorname{OPT}
+    \end{align*}
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un FPTAS para \textsc{Knapsack}}
+
+  \uncover<+->{
+    Dado \(\varepsilon > 0\),
+    el esquema de redondeo nos da un algoritmo
+    que entrega una solución de valor \((1 - \varepsilon) \mathrm{OPT}\)
+    en tiempo \(O(n^3 / \varepsilon)\),
+    es un FPTAS.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Definimos algoritmos aproximados y cota de aproximación.
+  \item
+    Estudiamos algunos casos,
+    con cotas diferentes.
+  \item
+    Vimos cómo acotar la cota para algunas heurísticas.
+  \item
+    Obtuvimos un FPTAS para \textsc{Knapsack}.
+  \end{itemize}
+
+\end{frame}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode aleatorizados maximización english PTAS
+% LocalWords:  Aproximabilidad polynomial approximation scheme fully
+% LocalWords:  FPTAS aproximabilidad TSP Set Cover serlo Vertex cover
+% LocalWords:  vertex aleatorizado tight example TSC Hamiltoniano set
+% LocalWords:  Hamiltonian hamiltoniano plotter recubridor blue max
+% LocalWords:  intersectan Knapsack

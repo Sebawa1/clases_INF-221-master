@@ -1,0 +1,658 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Búsqueda en Grafos}
+\label{cha:busqueda-en-grafos}
+
+  Hay una variedad de situaciones en las que se debe explorar algún grafo
+  en busca de un vértice (nodo) meta.
+  Antes se han discutido técnicas básicas,
+  como búsqueda/recorrido de árboles,
+  búsqueda en profundidad y a lo ancho en grafos,
+  y algoritmos como los de Dijkstra y Bellman-Ford.
+  Pero estos tienen la desventaja de considerar todos los nodos,
+  interesan técnicas que elijan inteligentemente los nodos a revisar
+  para minimizar el trabajo.
+
+  Las técnicas son variantes de \emph{\foreignlanguage{english}{backtracking}}
+  (ver el capítulo~\ref{cha:backtracking}).
+  Exploraremos algunas de ellas.
+  En los casos de interés,
+  el grafo a recorrer no se conoce explícitamente,
+  dado un vértice en él se generan descendientes (vecinos) bajo demanda.
+  La estructura general es como describen Dechter y Pearl~%
+    \cite{dechter85:_gen_best_first_search}.
+
+\section{Branch and Bound}
+\label{seq:branch-and-bound}
+
+  Bajo este rótulo se agrupan muchas técnicas diferentes
+  para buscar un nodo óptimo en el grafo,
+  basadas en la idea de \emph{generar} nuevas opciones
+  (esto es \emph{\foreignlanguage{english}{branch}})
+  que se evalúan para \emph{podar} ramas que nacen de opciones
+  que se puede demostrar no llevan a la meta
+  (la evaluación provee la cota,
+   \emph{\foreignlanguage{english}{bound}}).
+
+  Formalmente,
+  buscamos el nodo en el grafo \(G = (V, E)\) que maximiza la función
+  \(f \colon V \to \mathbb{R}\).
+  Suponemos que hay una función \(\Gamma \colon V \to 2^V\)
+  que,
+  dado un nodo entrega los vecinos relevantes.
+  Contamos con una función cota \(b \colon V \to \mathbb{R}\)
+  tal que \(b(x) \ge \max_{y \text{\ alcanzable de\ } x} f(y)\).
+
+  Si se revisa el algoritmo~\ref{alg:branch-and-bound},
+  es una versión modificada de las rutinas no recursivas
+  de recorrido de grafos.
+  Considera una cola \(Q\)
+  (puede ser una cola de prioridad,
+   donde puede tener sentido ordenar por el valor de \(g\)
+   u otra función que refleja la probabilidad
+   de hallar la solución desde ese nodo)
+  y una cota \(B\),
+  el valor de la mejor solución hallada hasta el momento.
+  En la práctica se agregará la restricción
+  que \(\Gamma\) no genere nodos anteriores
+  para que no entre en un ciclo
+  (por ejemplo,
+   el grafo es un árbol o al menos un grafo dirigido acíclico,
+   DAG).
+   En el algoritmo usamos un \emph{\foreignlanguage{english}{bag}}
+   de vértices
+   (literalmente,
+    una \textquote{bolsa} o \textquote{saco};
+    una estructura en la que podemos poner elementos
+    a ser sacados luego,
+    no especifica orden).
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{BB}\)}{
+      \(x \gets \text{\ initial guess}\) \;
+      \(\mathrm{B} \gets f(x)\) \;
+      \(\mathrm{insert}(Q, x)\) \;
+      \BlankLine \;
+      \While{\(\neg \mathrm{empty}(Q)\)}{
+        \(x \gets \mathrm{extract}(Q)\) \;
+        \If{\(f(x) < B\)}{
+          \(B \gets f(x)\) \;
+        }
+        \ForEach{\(v \in \Gamma(x)\)}{
+          \If{\(b(v) \ge B\)}{
+            \(\mathrm{enBag}(Q, v)\) \;
+          }
+        }
+      }
+      \Return \(B\) \;
+    }
+    \caption{Esquema de \emph{Branch and Bound}}
+    \label{alg:branch-and-bound}
+  \end{algorithm}
+  Es claro que la misma idea puede aplicarse para minimizar,
+  cambiando el sentido de las comparaciones.
+  
+  Una aplicación es resolver el problema del vendedor viajero
+  (\textsc{TSP},
+   un conocido problema \NP\nobreakdash-completo).
+  El problema contempla un grafo \(G = (V, E)\)
+  y un peso \(w \colon E \to \mathbb{R}\),
+  y busca un ciclo hamiltoniano de \(G\)
+  (un camino simple que visita cada vértice exactamente una vez)
+  de peso mínimo.
+  Modela el caso de un vendedor viajero que debe visitar a sus clientes,
+  partiendo de la oficina y volviendo a ella,
+  con mínimo costo.
+
+  La idea es partir con un vértice cualquiera,
+  y a partir de allí ir extendiendo el camino un arco a la vez.
+  Analizando el algoritmo~\ref{alg:branch-and-bound}
+  vemos que \(f(x)\) debe representar un valor que puede lograrse
+  (en nuestro ejemplo,
+   el costo del camino que se considera hasta \(x\)
+   y un camino posible a través del resto del grafo,
+   como el que resulta del algoritmo voraz
+   que visita cada vez el vértice más cercano),
+  Asimismo,
+  \(g(x)\) debe ser una cota inferior al costo del camino
+  que lleva del último vértice en el camino parcial al vértice inicial.
+  Podemos usar para \(b(x)\) el costo del árbol recubridor mínimo
+  del grafo que resulta de eliminar los vértices intermedios ya visitados
+  (el camino óptimo es un árbol recubridor de este grafo,
+   con la particularidad que es un camino simple,
+   su costo no puede ser menor al del árbol recubridor mínimo).
+
+\section{El algoritmo \(A^*\)}
+\label{seq:A-star}
+
+  Un algoritmo genérico de búsqueda es \(A^*\),
+  desarrollado inicialmente para planificar rutas de robots
+  moviéndose en un ambiente con obstáculos.
+  En el algoritmo,
+  vértices son posibles posiciones del robot,
+  que comienza su viaje en \(s\),
+  y debe llegar a la más cercana de las posiciones en \(T\)
+  (pueden haber varios destinos alternativos).
+  Desde la posición \(r\)
+  pueden alcanzarse directamente las posiciones en \(\Gamma(r)\);
+  si \(u \in \Gamma(r)\),
+  conocemos el costo \(c(r, u)\) para moverse directamente de~\(r\) a~\(u\).
+  Los proponentes de \(A^*\),
+  Hart, Nilsson y Raphael~%
+    \cite{hart68:_A-star}
+  demuestran que es óptimo en el sentido que discutiremos.
+  Dechter y Pearl~%
+    \cite{dechter85:_gen_best_first_search}
+  discuten esquemas de búsqueda en situaciones generalizadas,
+  que incluyen el nuestro como caso muy particular,
+  y discuten optimalidad de \(A^*\).
+
+  Suponemos un grafo dirigido \(G = (V, E)\),
+  con una función de costo de los arcos \(c \colon E \to \mathbb{R}\),
+  donde se cumple que para una constante \(\delta > 0\)
+  siempre es \(c(e) \ge \delta\)
+  (esto evita caminos de largo infinito con costo finito),
+  nos dan un conjunto de \emph{fuentes} \(S \subset V\),
+  un conjunto de \emph{metas} \(T \subset V\)
+  y un operador \emph{sucesor} \(\Gamma \colon V \to 2^V\)
+  (vale decir,
+   el grafo está dado en forma implícita solamente;
+   suponemos además que cuando \(\Gamma\)
+   nos entrega los descendientes de \(v\)
+   simultáneamente entrega los costos
+   desde el nodo \(v\) a cada uno de los vecinos).
+  Note que \emph{no} estamos suponiendo que \(G\) es finito,
+  suponemos eso sí que el número de nodos vecinos (descendientes)
+  es siempre finito
+  (a un grafo con esta propiedad le llaman \emph{localmente finito}).
+  El subgrafo \(G_v\) es el nodo \(v\) junto con todos sus descendientes.
+  Dado un nodo fuente \(s \in S\)
+  nos interesa hallar en \(G_s\) el nodo \(t \in T\)
+  que minimiza el costo del camino
+  (la suma de los costos de los arcos)
+  de \(s\) a \(t\).
+  Al costo mínimo de un camino de \(u\) a \(v\) lo anotaremos \(h(u, v)\),
+  para abreviar escribiremos \(h(v)\) para \(\min_{t \in T} \{ h(v, t) \}\)
+  (\(h(v)\) es el costo del camino óptimo desde \(v\) a un destino).
+
+  Podemos imaginar muchos algoritmos que expanden vértices
+  y exploran los caminos que nacen de ellos,
+  podando la búsqueda.
+  Diremos que un algoritmo es \emph{admisible}
+  si garantiza hallar un camino óptimo de \(s\) a una meta
+  para todo grafo como descrito.
+  Algoritmos admisibles podrán expandir diferentes nodos,
+  o hacerlo en distinto orden.
+  Interesa que el algoritmo expanda el mínimo número de nodos.
+  Expandir nodos que se sabe que no pueden estar en un camino óptimo
+  es desperdiciar esfuerzo,
+  mientras ignorar nodos que están en un camino óptimo
+  puede hacer que no lo encuentre y no ser admisible.
+  Nos interesan algoritmos admisibles y eficientes.
+
+  Supondremos una \emph{función de evaluación}
+  \(\widehat{f} \colon V \to \mathbb{R}\),
+  de manera de expandir a continuación
+  el nodo de mínimo valor de \(\widehat{f}\).
+  Esto sugiere el algoritmo~\ref{alg:A-star},
+  que contempla una cola de prioridad \(Q\).
+  Diremos que nodos en \(Q\)
+  (al igual que nodos aún no considerados)
+  están \emph{abiertos},
+  y marcaremos ciertos nodos como \emph{cerrados}
+  para no considerarlos nuevamente.
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Function{\(A^* (G, s, T)\)}{
+      \(\mathrm{Insert}(Q, s, \widehat{f}(s))\) \;
+      \While{\(\not \mathrm{empty}(Q)\)}{
+        \(v \gets \mathrm{DeleteMin}(Q)\) \;
+        Mark \(v\) closed \;
+        \If{\(v \in T\)}{
+          \Return \(v\) \;
+        }
+        \ForEach{\(u \in \Gamma(v)\)}{
+          \uIf{\(u \text{\ is not closed}\)}{
+            \(\mathrm{Insert}(Q, u, \widehat{f}(u))\) \;
+          }
+          \ElseIf{\(\text{new \(\widehat{f}(u)\) less than old value}\)}{
+            Remove closed mark from \(u\) \;
+            \(\mathrm{Insert}(Q, u, \widehat{f}(u))\) \;
+          }
+        }
+      }
+    }
+    \caption{El algoritmo \(A^*\)}
+    \label{alg:A-star}
+  \end{algorithm}
+  En realidad nos interesa el camino de \(s\) a \(T\),
+  la modificación obvia
+  es registrar el nodo padre de \(v\) cuando lo marcamos cerrado
+  (y corregirlo al volverlo a cerrar),
+  finalmente seguimos la lista desde el nodo meta alcanzado hacia atrás
+  para reconstruir el camino buscado.
+
+  El algoritmo~\ref{alg:A-star}
+  supone una cola de prioridad que permite modificar prioridades.
+  La mayoría de las versiones disponibles en bibliotecas
+  supone prioridades inmutables.
+  En el caso que el algoritmo solicita modificar prioridades,
+  podemos simplemente insertar el nodo con la nueva prioridad.
+  Cuando nuevamente encontremos el nodo,
+  será con prioridad más alta y lo descartaremos.
+  Ensucia la cola con datos inútiles,
+  pero parece no tener un impacto demasiado alto en el rendimiento,
+  como muestran experimentos de Rintala y Valmari~%
+   \cite{rintala15:_prio_queue_class}.
+
+\subsection{La función de evaluación}
+\label{sec:A-star-evaluacion}
+
+  Para el subgrafo \(G_s\) sea \(f(v)\) el costo óptimo
+  de un camino de \(s\) a \(T\),
+  con la restricción que el camino pase por \(v\).
+  Note que \(f(s) = h(s)\),
+  que \(f(v) = f(s)\) para todo \(v\) en un camino óptimo,
+  y que \(f(v) > f(s)\) si \(v\) no está en un camino óptimo.
+  No conocemos \(f\)
+  (determinar su valor es precisamente el objetivo del ejercicio),
+  pero es razonable usar una estimación de \(f\)
+  como función de evaluación \(\widehat{f}\)
+  en el algoritmo~\ref{alg:A-star}.
+
+  Podemos escribir \(f\) como una suma:
+  \begin{equation}
+    \label{eq:A-star:f=g+h}
+    f(v)
+      = g(v) + h(v)
+  \end{equation}
+  donde \(g(v)\) es el costo óptimo de un camino de \(s\) a \(v\)
+  mientras \(h(v)\) es el costo óptimo de un camino de \(v\) a \(T\).
+  Dadas estimaciones de \(g\) y \(h\)
+  podemos calcular una aproximación a \(f\).
+  Sea \(\widehat{g}\) una estimación de \(g\),
+  un valor obvio es el costo del camino más corto hallado entre \(s\) y \(v\)
+  hasta el momento,
+  lo que implica \(\widehat{g}(v) \ge g(v)\).
+  El siguiente punto es una estimación de \(h\),
+  que llamaremos \(\widehat{h}\).
+  Dependiendo del problema,
+  definimos funciones \(\widehat{h}\) apropiadas,
+  por el momento demostramos que si \(\widehat{h}(v) \le h(v)\),
+  el algoritmo~\ref{alg:A-star} es admisible.
+  \begin{lemma}
+    \label{lem:A-star:1}
+    Para un nodo no cerrado \(v\) y un camino óptimo \(P\) de \(s\) a \(v\),
+    hay un nodo abierto \(v'\) en \(P\)
+    con \(\widehat{g}(v') = g(v')\).
+  \end{lemma}
+  \begin{proof}
+    Sea \(P = \langle s = v_0, \dotsc, v_k = v \rangle\).
+    Si \(s\) está abierto
+    (no se ha completado ninguna iteración),
+    tome \(s = v'\),
+    con lo que \(\widehat{g}(s) = g(s) = 0\),
+    y el lema se cumple trivialmente.
+    Supongamos ahora que \(s\) está cerrado,
+    sea \(\Delta\) el conjunto de nodos cerrados \(v_i\) en \(P\)
+    para los que \(\widehat{g}(v_i) = g(v_i)\).
+    Sabemos que \(\Delta \ne \varnothing\),
+    ya que \(s \in \Delta\).
+    Sea \(v^*\) el elemento de \(\Delta\) con máximo índice
+    (el último nodo cerrado de \(P\)),
+    donde \(v^* \ne v\) porque \(v\) está abierto.
+    Sea \(v'\) el sucesor de \(v^*\) en \(P\).
+    Entonces:
+    \begin{align*}
+      \widehat{g}(v')
+        &\le \widehat{g}(v^*) + c(v^* v')
+          && \text{por definición de \(\widehat{g}\)} \\
+      \widehat{g}(v^*)
+        &=   g(v^*)
+          && \text{porque \(v^* \in \Delta\)} \\
+      g(v')
+        &=   g(v^*) + c(v^* v')
+          && \text{dado que \(P\) es óptimo}
+    \end{align*}
+    Concluimos que \(\widehat{g}(v') \le g(v')\),
+    como \(\widehat{g}(v') \ge g(v')\) resulta \(\widehat{g}(v') = g(v')\),
+    y por la definición de \(\Delta\),
+    \(v'\) está abierto.
+  \end{proof}
+  \begin{corollary}
+    \label{cor:A-star:1}
+    Suponga que para todo \(v\) es \(\widehat{h}(v) \le h(v)\),
+    y que \(A^*\) no ha terminado.
+    Entonces para todo camino óptimo \(P\) de \(s\) a \(T\)
+    hay un nodo abierto \(v' \in P\) con \(\widehat{f}(v') \le f(s)\).
+  \end{corollary}
+  \begin{proof}
+    Por el lema~\ref{lem:A-star:1},
+    hay un nodo abierto \(v' \in P\) con \(\widehat{g}(v') = g(v')\),
+    con lo que por la definición de \(\widehat{f}\):
+    \begin{align*}
+      \widehat{f}(v')
+        &=   \widehat{g}(v') + \widehat{h}(v') \\
+        &=   g(v') + \widehat{h}(v') \\
+        &\le g(v') + h(v') \\
+        &=   f(v')
+    \end{align*}
+    Como \(P\) es óptimo,
+    \(f(v') = f(s)\) para todo \(v' \in P\).
+  \end{proof}
+  Estamos en condiciones de demostrar:
+  \begin{theorem}
+    \label{theo:A-star:admisible}
+    Si para todo \(v \in V\) es \(\widehat{h}(v) \le h(v)\),
+    \(A^*\) es admisible.
+  \end{theorem}
+  \begin{proof}
+    La demostración es por contradicción.
+    Hay dos casos a considerar:
+    \begin{description}
+    \item[No termina:]
+      Sea \(t \in T\),
+      alcanzable desde \(s\) en un número finito de pasos
+      con costo mínimo \(f(s)\).
+      Como el costo de cada arco es a lo menos \(\delta\),
+      se alcanza \(t\) en a lo más \(M = f(s) / \delta\) pasos,
+      y para todos los vértices \(v\)
+      más lejos de \(s\) que \(M\) es:
+      \begin{equation*}
+        \widehat{f}(v)
+          \ge \widehat{g}(v)
+          \ge g(v)
+          \ge M \delta
+      \end{equation*}
+      O sea,
+      ningún nodo a distancia mayor a \(M\) de \(s\) se expande,
+      ya que por el corolario~\ref{cor:A-star:1}
+      habrá un nodo abierto \(v'\)en un camino óptimo
+      tal que \(\widehat{f}(v') \le f(s) < f(v)\).
+      El algoritmo elegirá \(v'\) en vez de \(v\).
+      Hay un número finito de nodos a distancia a lo más \(M\),
+      cada uno de ellos puede ser reabierto solo un número finito de veces,
+      ya que hay un número finito de caminos que pasan por él,
+      y se reabre solo si calculamos un \(\widehat{g}(v)\) menor.
+    \item[Entrega un camino no óptimo:]
+      Supongamos que \(A^*\) termina en el nodo \(t\)
+      con \(\widehat{f}(t) = \widehat{g}(t) > f(s)\).
+      Por el corolario~\ref{cor:A-star:1}
+      había un nodo abierto \(v'\) en un camino óptimo
+      con \(\widehat{f}(v') \le f(s) < \widehat{f}(t)\).
+      Se habría elegido \(v'\) para ser expandido en vez de \(t\),
+      con lo que \(A^*\) no habría terminado.
+    \end{description}
+    \qedhere
+  \end{proof}
+
+\subsection{Optimalidad de \(A^*\)}
+\label{sec:A-star:optimo}
+
+  Hemos demostrado que si \(\widehat{h}(v) \le h(v)\),
+  \(A^*\) es admisible.
+  Una cota inferior obvia es \(\widehat{h}(v) = 0\),
+  con lo que \(A^*\) es ciego
+  (el resultado es esencialmente el algoritmo de Dijkstra).
+  Muchos problemas ofrecen cotas inferiores mejores,
+  que restringen los nodos a ser considerados.
+  Por ejemplo,
+  en el problema original de movimiento de un robot en un área con obstáculos,
+  una cota inferior a la distancia a recorrer
+  es la distancia entre dos puntos,
+  obviando los obstáculos.
+  En general,
+  si omitimos algunas de las restricciones del problema,
+  obtendremos un costo no mayor,
+  o sea un valor admisible de \(\widehat{h}(v)\).
+
+  Resulta que \(A^*\) es óptimo,
+  en el sentido que expande el mínimo número de nodos
+  entre todos los algoritmos que usan la misma información
+  (la misma cota \(\widehat{h}\)).
+  Esto porque un algoritmo que \emph{no} expanda
+  todos los nodos con \(\widehat{f}(v) < f(s)\) para la meta \(s\)
+  puede omitir el camino óptimo.
+
+  Diremos que la estimación \(\widehat{h}\)
+  cumple la condición de \emph{monotonía} si:
+  \begin{equation}
+    \label{eq:A-star:monotonia}
+    h(u, v) + \widehat{h}(u)
+      \ge \widehat{h}(v)
+  \end{equation}
+  La condición~\eqref{eq:A-star:monotonia}
+  expresa que la estimación \(\widehat{h}(v)\)
+  no puede mejorarse usando datos correspondientes de otros nodos.
+
+  Resulta que si \(\widehat{h}\) cumple monotonía,
+  nunca se reconsideran nodos.
+  \begin{lemma}
+    \label{lem:A-star:2}
+    Suponga que se cumple
+    la condición de monotonía~\eqref{eq:A-star:monotonia},
+    y que \(A^*\) cerró el nodo \(v\).
+    Entonces \(\widehat{g}(v) = g(v)\).
+  \end{lemma}
+  \begin{proof}
+    Por contradicción.
+    Considere el subgrafo \(G_s\) justo antes de cerrar \(v\),
+    y suponga que \(\widehat{g}(v) > g(v)\).
+    Sea \(P\) un camino óptimo de \(s\) a \(v\),
+    como \(\widehat{g}(v) > g(v)\) el algoritmo no lo encontró.
+    Por el lema~\ref{lem:A-star:1},
+    hay un nodo abierto \(v' \in P\) con \(\widehat{g}(v') = g(v')\).
+    Por suposición,
+    \(v \ne v'\),
+    con lo que:
+    \begin{align*}
+      g(v)
+        &= g(v') + h(v', v) \\
+        &= \widehat{g}(v') + h(v', v) \\
+    \intertext{Vale decir:}
+      \widehat{g}(v)
+        &> \widehat{g}(v') + h(v', v) \\
+    \intertext{Sumando \(\widehat{h}\) a ambos lados:}
+      \widehat{g}(v) + \widehat{h}(v)
+        &> \widehat{g}(v') + h(v', v) + \widehat{h}(v') \\
+    \intertext{Aplicando~\eqref{eq:A-star:monotonia} al lado derecho:}
+      \widehat{g}(v) + \widehat{h}(v)
+        &> \widehat{g}(v') + \widehat{h}(v') \\
+    \intertext{Por la definición de \(\widehat{f}\):}
+      \widehat{f}(v)
+        &> \widehat{f}(v')
+    \end{align*}
+    Pero en tal caso \(A^*\) hubiese expandido \(v'\),
+    que estaba disponible,
+    en vez de \(v\).
+  \end{proof}
+
+\section{Juegos}
+\label{seq:juegos}
+
+  Consideremos un juego en que compiten dos jugadores,
+  \(A\) y \(B\),
+  que juegan alternadamente.
+  A cada posición
+  (o estado)
+  del juego se le asigna un valor,
+  que indica qué tan buena es para el jugador.
+  Claramente,
+  cada jugador hará la movida
+  que maximice el valor mínimo
+  resultando de las posibles movidas siguientes del oponente.
+  Una posibilidad es asignar el valor \(+1\)
+  si es una posición en que \(A\) gana inmediatamente,
+  \(-1\) si gana \(B\),
+  y \num{0} si es empate.
+  En este sentido,
+  \(A\) busca maximizar,
+  \(B\) busca minimizar.
+
+\subsection{Min-Max}
+\label{seq:minmax}
+
+  Generalmente no es posible explorar el árbol completo,
+  y evaluamos posiciones mediante alguna función heurística
+  al llegar a una profundidad máxima.
+  Un posible algoritmo es~\ref{alg:minmax},
+  que se invoca
+  como \(\operatorname{minmax}(\mathrm{inicio},
+                               \mathrm{depth}, A)\)
+  si \(A\) es quien abre el juego
+  y queremos explorar hasta \(\mathrm{depth}\).
+  Es simple registrar además la movida que da lugar al mejor valor
+  (es la jugada a hacer).
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\operatorname{minmax}(
+                   \mathrm{node},
+                   \mathrm{depth},
+                   \mathrm{turn})\)}{
+      \If{\(\mathrm{depth} = 0
+              \vee \mathrm{node} \text{\ is terminal}\)}{
+        \Return heuristic value of \(\mathrm{node}\) \;
+      }
+
+      \eIf{\(\mathrm{turn} = A\)}{
+        \(\mathrm{best} \gets -1\) \;
+        \ForEach{\(\mathrm{child} \text{\ of\ } \mathrm{node}\)}{
+          \(\mathrm{v}
+              \gets \operatorname{minmax}(\mathrm{child},
+                                          \mathrm{depth} - 1,
+                                          B)\) \;
+          \(\mathrm{best}
+              \gets \max(\operatorname{best},
+                         \mathrm{v})\) \;
+        }
+      }{
+        \(\mathrm{best} \gets +1\) \;
+        \ForEach{\(\mathrm{child} \text{\ of\ } \operatorname{node}\)}{
+          \(\mathrm{v}
+              \gets \operatorname{minmax}(\mathrm{child},
+                                          \mathrm{depth} - 1,
+                                          A)\) \;
+          \(\mathrm{best}
+              \gets \min(\mathrm{best},
+                         \mathrm{v})\) \;
+        }
+      }
+      \Return \(\mathrm{best}\) \;
+    }
+    \caption{Algoritmo MinMax}
+    \label{alg:minmax}
+  \end{algorithm}
+
+\subsection{Alpha-Beta}
+\label{seq:alphabeta}
+
+  Supongamos que es el turno de \(A\)
+  (busca maximizar),
+  analizando posibles jugadas de \(B\)
+  (busca minimizar).
+  Si ya conocemos una cota \(\alpha\)
+  (hemos visto una movida que garantiza ese valor para \(A\))
+  no tiene sentido continuar explorando un camino
+  si lo mejor que podemos lograr en él es peor,
+  con consideraciones simétricas para \(B\).
+
+  Nuestro algoritmo~\ref{alg:alphabeta}
+  mantiene valores \(\alpha\)
+  (el mínimo que ya tiene garantizado \(A\) que puede obtener)
+  y \(\beta\)
+  (el máximo que ya tiene garantizado \(B\) que puede obtener),
+  y los usa para cortar la exploración tempranamente.
+  Se invoca inicialmente
+  como \(\mathrm{alphabeta}(\mathnormal{inicio},
+           -1, +1, \mathrm{depth}, A)\)
+  (la única garantía que tiene \(A\) es que puede perder,
+   simétricamente \(B\) gana).
+  Es obvio registrar con \(\alpha\)
+  (respectivamente \(\beta\))
+  la movida que da lugar a ese valor.
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\operatorname{alphabeta}(\mathrm{node},
+                                         \mathrm{depth},
+                                         \alpha, \beta,
+                                         \mathrm{turn})\)}{
+      \If{\(\mathrm{depth} = 0
+              \vee \mathrm{node} \text{\ is terminal}\)}{
+        \Return heuristic value of \(\mathrm{node}\) \;
+      }
+
+      \eIf{\(\mathrm{turn} = A\)}{
+        \(\mathrm{best} \gets -1\) \;
+        \ForEach{\(\mathrm{child} \text{\ of\ } \mathrm{node}\)}{
+          \(\mathrm{v}
+              \gets \operatorname{alphabeta}(\mathrm{child},
+                                             \mathrm{depth} - 1,
+                                             \alpha, \beta,
+                                             B)\) \;
+          \(\mathrm{best}
+               \gets \max(\mathrm{best}, \mathrm{v})\)\;
+          \(\alpha
+               \gets \max(\alpha, \mathrm{best})\) \;
+          \If{\(\beta \le \alpha\)}{
+            \Break \;
+          }
+        }
+      }{
+        \(\mathrm{best} \gets +1\) \;
+        \ForEach{\(\mathrm{child} \text{\ of\ } \operatorname{node}\)}{
+          \(\mathrm{v}
+              \gets \operatorname{alphabeta}(\mathrm{child},
+                                             \mathrm{depth} - 1,
+                                             \alpha, \beta,
+                                              B)\) \;
+          \(\mathrm{best}
+               \gets \min(\mathrm{best}, \mathrm{v})\)\;
+          \(\beta
+              \gets \min(\beta, \mathrm{best})\) \;
+          \If{\(\beta \le \alpha\)}{
+            \Break \;
+          }
+        }
+      }
+      \Return \(\mathrm{best}\) \;
+    }
+    \caption{Algoritmo Alpha-Beta}
+    \label{alg:alphabeta}
+  \end{algorithm}
+  Note que el algoritmo~\ref{alg:alphabeta}
+  no especifica el orden en que se exploran los hijos de un nodo,
+  claramente conviene explorar de forma que \(\alpha\) aumente rápidamente
+  (\(\beta\) disminuya),
+  porque eso limita las búsquedas.
+  O sea,
+  conviene explorar primero las mejores movidas.
+  En la práctica se usa alguna evaluación heurística
+  para ordenarlos adecuadamente.
+  Knuth y Moore~%
+    \cite{knuth75:_alpha_beta_pruning}
+  discuten la historia del algoritmo,
+  arguyendo que muchas de las variantes tempranas que se discuten como tal
+  en realidad son algoritmos similares,
+  bastante más limitados;
+  dan una de las primeras descripciones precisas
+  y un análisis de su rendimiento.
+  Pearl~%
+    \cite{pearl82:_branch_factor_alpha_beta}
+  demuestra que es óptimo.
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  english backtracking Branch and Bound acíclico DAG bag
+% LocalWords:  TSP hamiltoniano recubridor optimalidad Mark closed of
+% LocalWords:  less than old value Remove mark from Min Max heuristic
+% LocalWords:  heurística MinMax Alpha branch bound subgrafo

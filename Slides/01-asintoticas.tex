@@ -1,0 +1,799 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+%\usepackage{beamerarticle}
+
+\usepackage{ifpdf}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{siunitx}
+\usepackage{babel}
+\usepackage{csquotes}
+\mode<article>{\usepackage[colorlinks, urlcolor = blue]{hyperref}}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Asintóticas}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Introducción}
+
+\begin{frame}
+  \frametitle{Justificación}
+
+  \uncover<+->{
+    En cálculos numéricos,
+    interesa obtener aproximaciones precisas a los valores buscados.
+    O sea,
+    acotar el error cometido en la aproximación numérica.
+  }
+
+  \uncover<+->{
+    Al evaluar algoritmos,
+    interesa estimar el uso de recursos
+    (tiempo,
+     memoria,
+     tráfico de red,
+     \ldots)
+    en términos del \textquote{tamaño} del problema a resolver.
+  }
+
+  \uncover<+->{
+    En estas
+    (y muchas otras)
+    aplicaciones no interesa el valor exacto
+    (si lo conociéramos,
+     el ejercicio mismo no tiene sentido)
+    interesa dar estimaciones o cotas simples
+    suficientemente precisas.
+  }
+  \uncover<+->{
+    Herramienta fundamental son las \emph{estimaciones asintóticas}.
+  }
+\end{frame}
+
+\section{Definiciones}
+
+\begin{frame}
+  \frametitle{Notaciones asintóticas}
+
+  Hay varias notaciones,
+  con definiciones a veces bastante diferentes.
+  Adoptaremos las de
+  \href{https://faculty.math.illinois.edu/~hildebr/lecture-notes/asymptotics.pdf}
+       {Hildebrand},
+  a su vez afines a las de \href{https://danluu.com/knuth-big-o.pdf}{Knuth}.
+\end{frame}
+
+\subsection{\emph{Big-Oh}}
+
+\begin{frame}
+  \frametitle{\emph{Big Oh}}
+
+  La notación más común es \emph{\foreignlanguage{english}{big Oh}}
+  (O mayúscula),
+  que primero introduciremos en su uso más común,
+  comportamiento de funciones de una variable real
+  (o entera)
+  cuando tiende a infinito.
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{Big Oh} --- definición \(x\) grande}
+
+   \uncover<+->{
+     Dadas funciones \(f(x)\), \(g(x)\)
+     definidas para todo \(x\) suficientemente grande
+     decimos que:
+     \begin{equation*}
+       f(x)
+         = O(g(x))
+     \end{equation*}
+     si hay constantes \(c > 0\) y \(x_0\) tales que:
+     \begin{equation*}
+       \lvert f(x) \rvert
+         \le c \, \lvert g(x) \rvert  \qquad (x \ge x_0)
+     \end{equation*}
+   }
+   \uncover<+->{
+     Normalmente el valor de \(x_0\) no es importante,
+     de ser relevante anotaremos \((x \ge x_0)\).
+   }
+
+   \uncover<+->{
+     Para enfatizar que \(c\) o \(x_0\) dependen de algún parámetro \(\alpha\),
+     anotamos \(O_\alpha(\cdot)\).
+   }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{Big Oh} --- definición general}
+
+   \uncover<+->{
+     Dadas funciones \(f(x)\), \(g(x)\)
+     definidas para todo \(x\) relevante,
+     decimos que:
+     \begin{equation*}
+       f(x)
+         = O(g(x))
+         ¸\qquad (x_0 \le x \le x_1)
+     \end{equation*}
+     si hay una constante \(c > 0\) tal que:
+     \begin{equation*}
+       \lvert f(x) \rvert
+         \le c \, \lvert g(x) \rvert  \qquad (x_0 \le x \le x_1)
+     \end{equation*}
+   }
+
+  \uncover<+->{
+     Esta es una \emph{estimación \(O\)},
+     decimos \emph{\(f\) es de orden \(g\)},
+     \(c\) es la \emph{constante-\(O\)},
+     \(x_0 \le x \le x_1\) es el \emph{rango de validez} de la estimación.
+   }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{Big Oh} ---comentarios}
+
+  \uncover<+->{
+    Un caso común es que estemos interesados en un entorno de \num{0},
+    \(\lvert x \rvert \le \varepsilon\) para algún \(\varepsilon\)
+    que no interesa especificar más.
+  }
+
+  \uncover<+->{
+    No daremos intervalos explícitamente más que en casos especiales.
+    Las situaciones comunes son que estemos interesados en \(x \to \infty\)
+    o \(x \to 0\),
+    quedará claro del contexto de cuál estamos hablando.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{big-Oh} --- comentarios}
+
+  \uncover<+->{
+    Generalmente el valor de \(c\) no importa.
+    En muchos casos podemos calcular un valor explícito,
+    aunque es muy tedioso incluso si no buscamos el mejor valor posible.
+    Muchas veces puede deducirse su existencia de consideraciones de continuidad
+    y similares.
+  }
+
+  \uncover<+->{
+    El punto de esta notación
+    --- y de las otras notaciones asintóticas ---
+    es que permite expresar en forma simple y sugestiva,
+    que la desigualdad se cumple sin tener que exhibirla en detalle.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{big-Oh} --- ecuaciones}
+
+  \uncover<+->{
+    En expresiones interpretamos \(O(g(x))\) como
+    \textquote{reemplaza una función que cumple la estimación-O}.
+  }
+
+  \uncover<+->{
+    Por ejemplo:
+    \begin{equation*}
+      \ln (1 + x)
+         = x + O(x^2) \qquad (\lvert x \rvert \le 1/2)
+    \end{equation*}
+    significa:
+
+    \begin{displayquote}
+      \(\ln(1 + x) = x + f(x)\),
+      donde \(f(x)\) satisface \(\lvert f(x) \rvert \le c \, x^2\)
+      para alguna constante \(c\) siempre que \(\lvert x \rvert \le 1/2\)
+    \end{displayquote}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{big-Oh} --- interpretación}
+
+  \uncover<+->{
+    La igualdad es notación cómoda,
+    pero fundamentalmente incorrecta.
+  }
+  \uncover<+->{
+    Lo correcto es interpretar expresiones que contienen \(O(\cdot)\)
+    como un conjunto de funciones,
+    y el signo igual
+    realmente dice que el conjunto de funciones a la izquierda
+    es un subconjunto del conjunto del lado derecho.
+  }
+  \uncover<+->{
+    Si no hay \(O(\cdot)\),
+    es simplemente el conjunto de esa única función.
+  }
+
+  \uncover<+->{
+    La notación de igualdad es demasiado cómoda y ampliamente usada;
+    han habido heroicos esfuerzos de cambiarla por algo más descriptivo,
+    sin real efecto.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{big-Oh} --- advertencias}
+
+  \uncover<+->{
+    La \textquote{igualdad} así definida
+    ni siquiera es una relación de equivalencia.
+  }
+
+  \uncover<+->{
+    Es reflexiva y transitiva,
+    pero no simétrica.
+  }
+  \uncover<+->{
+    Por ejemplo,
+    de \(x = O(x^2)\) no podemos concluir que \(x^2 = O(x)\).
+  }
+\end{frame}
+
+\subsection{Otras notaciones}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Otras notaciones}
+
+  \uncover<+->{
+    Hay una variedad de notaciones adicionales,
+    algo menos usadas.
+    Nuevamente,
+    normalmente se subentiende algún rango \(x \ge x_0\).
+  }
+  \uncover<+->{
+    Las advertencias sobre \(O(\cdot)\) son aplicables a ellas también.
+  }
+
+  \uncover<+->{
+    \begin{equation*}
+      f(x)
+        = \Omega(g(x))
+        \qquad \text{Hay \(c > 0\)
+                     tal que
+                     \(\lvert f(x) \rvert \ge c \, \lvert g(x) \rvert\)}
+    \end{equation*}
+    \(f(x)\) es de orden al menos \(g(x)\)
+  }
+  \uncover<+->{
+    \begin{equation*}
+      f(x)
+        = \Theta(g(x))
+        \qquad \text{\(f(x) = O(g(x))\) y \(f(x) = \Omega(g(x))\)}
+    \end{equation*}
+    \(f(x)\) es del mismo orden que \(g(x)\)
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Otras notaciones (cont)}
+
+  \uncover<+->{
+    Hay otras notaciones,
+    usadas comúnmente para situaciones
+    en que interesa \(x\) en un entorno de \(a\)
+    (frecuentemente \(a = 0\),
+     aunque también \(a = \infty\)).
+  }
+  \uncover<+->{
+    \begin{equation*}
+      f(x)
+        = o(g(x))
+        \qquad \lim_{x \to a} \frac{f(x)}{g(x)} = 0
+    \end{equation*}
+    \(f(x)\) es de menor orden que \(g(x)\)
+  }
+  \uncover<+->{
+    \begin{equation*}
+      f(x)
+        = \omega(g(x))
+        \qquad \lim_{x \to a} \frac{f(x)}{g(x)} = \pm\infty
+    \end{equation*}
+    \(f(x)\) es de mayor orden que \(g(x)\)
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Otras notaciones (cont)}
+
+  \uncover<+->{
+    \begin{equation*}
+      f(x)
+        \sim g(x)
+        \qquad \lim_{x \to a} \frac{f(x)}{g(x)} = 1
+    \end{equation*}
+    \(f(x)\) es asintóticamente
+    (o asintóticamente equivalente a) \(g(x)\)
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Serie de Taylor}
+
+  \uncover<+->{
+    Herramienta fundamental es la serie de Taylor centrada en \(a\):
+    \begin{equation*}
+      f(x)
+        = \sum_{0 \le k \le n} \frac{1}{k!} f^{(k)}(a) (x - a)^k
+           + R_{n + 1}(x)
+    \end{equation*}
+  }
+  \uncover<+->{
+    La forma de Lagrange del residuo es:
+    \begin{equation*}
+      R_{n + 1}(x)
+        = \frac{1}{(n + 1)!} f^{(n + 1)}(\xi) (x - a)^{n + 1}
+    \end{equation*}
+    con \(\xi\) entre \(a\) y \(x\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Serie de Taylor}
+
+  \uncover<+->{
+    Note que para todo \(x \in [a, b]\):
+  }
+  \begin{align*}
+    \uncover<+->{
+      R_{n + 1}(x)
+        &=   \frac{f^{(n + 1)}(\xi)}{(n + 1)!} (x - a)^{n + 1} \\
+    }
+    \uncover<+->{
+     \rvert  R_{n + 1}(x) \rvert
+        &\le \frac{1}{(n + 1)!} \max_{\xi \in [a, b]} \{ f^{(n + 1)}(\xi) \}
+                \cdot \lvert x - a \rvert^{n + 1} \\
+    }
+    \uncover<+->{
+      \intertext{Esto es:}
+      R_{n + 1}(x)
+        &= O\left( (x - a)^{n + 1} \right)
+          \quad(x \in [a, b])
+    }
+  \end{align*}
+\end{frame}
+
+\subsection{Ejemplos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  \begin{description}
+  \item[\boldmath\(x = O(\mathrm{e}^x)\)\unboldmath:]
+    \uncover<+->{
+      Consideremos \(x \mathrm{e}^{-x}\),
+      con derivada \(\mathrm{e}^{-x} (1 - x)\)
+      (negativa para \(x > 1\),
+      positiva para \(x < 1\) y cero únicamente para \(x = 1\)).
+      O sea,
+      \(x \mathrm{e}^{-x}\) tiene un máximo para \(x = 1\),
+      con lo que para todo \(x \in \mathbb{R}\)
+      y todo \(c \ge \mathrm{e}^{-1}\):
+      \begin{equation*}
+        x
+          \le c \, \mathrm{e}^x
+      \end{equation*}
+    }
+
+    \uncover<+->{
+      Otra forma de verlo:
+      \(x \mathrm{e}^{-x}\) es continua en todo \(\mathbb{R}\),
+      negativa para \(x\) negativo,
+      tiende a cero para \(x \to a\),
+      por lo que es acotada en todo \(\mathbb{R}\).
+    }
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  \begin{description}
+  \item[\boldmath\(\ln (1 + x) = x - x^2 / 2 + O(x^3)
+            \quad (\lvert x \rvert \le 1/2)\)\unboldmath:]
+    \uncover<+->{
+      Conocemos la serie de Taylor,
+      válida para \(\lvert x \rvert < 1\):
+      \begin{equation*}
+        \ln (1 + x)
+          = \sum_{n \ge 1} \frac{(-1)^{n + 1} x^n}{n}
+      \end{equation*}
+    }
+    \uncover<+->{
+      En el rango \(\lvert x \rvert \le 1/2\) indicado:
+      \begin{align*}
+        \left\lvert \ln (1 + x) - x  + \frac{x^2}{2} \right\rvert
+          &\le \sum_{n \ge 3} \frac{\lvert x \rvert^n}{n} \\
+          &<   \lvert x^3 \rvert
+                  \frac{1}{3} \sum_{n \ge 0}\lvert x \rvert^n
+          &\le	 \lvert x^3 \rvert
+                   \cdot \frac{1}{3} \sum_{n \ge 0} 2^{-n} \\
+          &=   \frac{2}{3} \lvert x^3 \rvert
+      \end{align*}
+    }
+  \end{description}
+\end{frame}
+
+\subsection{Fórmulas útiles}
+
+\begin{frame}
+  \frametitle{Algunas fórmulas útiles}
+
+  Acá \(\alpha \in \mathbb{R}\)
+  y \(C > 0\).
+  La constante \(1/2\) en los rangos \(\lvert z \rvert \le 1/2\)
+  puede reemplazarse por \(c < 1\).
+  \begin{alignat*}{3}
+    \frac{1}{1 + z}
+       &= 1 + O(\lvert z \rvert)
+       &&\quad& (\lvert z \rvert \le 1/2) \\
+    (1 + z)^\alpha
+       &= 1 + O_\alpha(\lvert z \rvert)
+       &&& (\lvert z \rvert \le 1/2) \\
+    (1 + z)^\alpha
+       &= 1 + \alpha z + O_\alpha(\lvert z \rvert^2)
+       &&& (\lvert z \rvert \le 1/2) \\
+    \ln (1 + z)
+       &= O(\lvert z \rvert)
+       &&& (\lvert z \rvert \le 1/2) \\
+    \ln (1 + z)
+       &= z + O(\lvert z \rvert^2)
+       &&& (\lvert z \rvert \le 1/2) \\
+    \ln (1 + z)
+       &= z - \frac{z^2}{2} + O(\lvert z \rvert^3)
+       &&& (\lvert z \rvert \le 1/2)
+  \end{alignat*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Algunas fórmulas útiles (cont)}
+
+  \begin{alignat*}{3}
+    \mathrm{e}^z
+       &= 1 + O_C (\lvert z \rvert)
+       &&\qquad& (\lvert z \rvert \le C) \\
+    \mathrm{e}^z
+       &= 1 + z + O_C (\lvert z \rvert^2)
+       &&& (\lvert z \rvert \le C) \\
+    \mathrm{e}^z
+       &= 1 + z + \frac{z^2}{2} + O_C (\lvert z \rvert^3)
+       &&& (\lvert z \rvert \le C)
+  \end{alignat*}
+\end{frame}
+
+\subsection{Propiedades}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedades}
+
+  \begin{description}
+  \item[Constantes:]
+    Si \(C > 0\),
+    \(f(x) = O(C g(x))\) es equivalente a \(f(x) = O(g(x))\).
+  \item[Absorber términos:]
+    Para \(c\) constante y \(g(x) = O(h(x))\),
+    \(f(x) = c g(x) + O(h(x))\)
+    es equivalente a \(f(x) = O(h(x))\).
+  \item[Transitividad:]
+    Si \(f(x) = O(g(x))\) y \(g(x) = O(h(x))\)
+    entonces \(f(x) = O(h(x))\).
+  \item[Sumas y productos:]
+    Si \(f_1(x) = O(g_1(x))\) y \(f_2(x) = O(g_2(x))\),
+    entonces
+     \(f_1(x) + f_2(x) = O(\lvert g_1(x) \rvert + \lvert g_2(x) \rvert)\)
+    y
+     \(f_1(x) \cdot f_2(x) = O(\lvert g_1(x) g_2(x) \rvert)\).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedades}
+
+  \begin{description}
+  \item[Diferencias:]
+    Si \(f_1(x) = O(g_1(x))\) y \(f_2(x) = O(g_2(x))\),
+    entonces
+    \(f_1(x) - f_2(x) = O(\lvert g_1(x) \rvert + \lvert g_2(x) \rvert)\).
+
+    Términos \(O(\cdot)\) \emph{nunca} se cancelan
+    (representan funciones posiblemente diferentes).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedades}
+
+  \begin{description}
+  \item[Sumas de un número arbitrario de términos:]
+    Se extiende a un número arbitrario
+    o infinito de términos \(O\)
+    si las estimaciones valen \emph{uniformemente},
+    O sea,
+    si para todo \(n\) vale \(f_n(x) \le c g_n(x)\) si \(x \ge x_0\),
+    entonces también:
+    \begin{align*}
+      \sum_n f_n(x)
+        &= \sum_n O(\lvert g_n(x) \rvert) \\
+        &= O\left( \sum_n \lvert g_n(x) \rvert \right)
+    \end{align*}
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedades}
+
+  \begin{description}
+  \item[Distribuyendo términos:]
+    Si \(f_1(x) = O(g_1(x))\) y \(f_2(x) = O(g_2(x))\),
+    para cualquier \(h(x)\) es
+    \(h(x) (f_1(x) + f_2(x))
+        = O(\lvert h(x) \rvert
+             \cdot (\lvert g_1(x) \rvert + \lvert g_2(x) \rvert))\).
+  \item[Extraer factores:]
+    Si \(f(x) = O(g(x) h(x))\) entonces \(f(x) = g(x) O(h(x))\).
+  \end{description}
+\end{frame}
+
+\subsection{Simplificar}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simplificaciones}
+
+  En lo que sigue,
+  nos interesa el caso en que \(\phi(x) \to 0\).
+  \begin{align*}
+    \uncover<+->{\frac{1}{1 + O(\phi(x))} = 1 + O(\phi(x)) \\}
+    \uncover<+->{(1 + O(\phi(x)))^p = 1 + O_p(\phi(x)) \\}
+    \uncover<+->{\ln (1 + O(\phi(x))) = O(\phi(x)) \\}
+    \uncover<+->{\exp (O(\phi(x))) = 1 + O(\phi(x))}
+  \end{align*}
+  \uncover<+->{
+    Estas se demuestran fácilmente de las series de Taylor respectivas.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Trucos}
+
+  \begin{description}
+  \item[Logaritmos:]
+    Ayudan a simplificar productos y potencias.
+    Luego exponenciar.
+  \item[Factor principal:]
+    Extraerlo,
+    y estimar el resto.
+  \item[Término máximo:]
+    Estimar una suma como el número de términos por el mayor de ellos.
+    El máximo término da una cota inferior útil.
+  \end{description}
+\end{frame}
+
+\section{Ejemplos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  \uncover<+->{
+    Estimar \(\mathrm{e}^{-x} / (1 - x)\)
+    para \(x\) pequeño.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Series de Taylor de las partes:
+  }
+  \begin{align*}
+    \uncover<+->{
+      \frac{\mathrm{e}^{-x}}{1 - x}
+        &= \left(1 - x + \frac{x^2}{2} + O(x^3)\right)
+             \cdot \left(1 + x + x^2 + O(x^3)\right) \\
+    }
+    \uncover<+->{
+        &= 1 + \frac{x^2}{2} + O(x^3)
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  Estimar \((a_1 + a_2 + \dotsb + a_n)^p\) para \(p \ge 1\)
+  si los  \(a_k > 0\).
+  Note que acá \(n\) y \(p\) son constantes.
+  \\[3ex]
+  \uncover<+->{
+    Resulta \((a_1 + a_2 + \dotsb + a_n)^p = \Theta(a_1^p + \dotsb + a_n^p)\)
+  }
+  \\[1ex]
+  \uncover<+->{
+    Debemos demostrar cotas
+    superior (\(O(\cdot)\)) e inferior (\(\Omega(\cdot)\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  \uncover<+->{
+    Cota superior:
+    \begin{equation*}
+      \left( \sum_{1 \le k \le n} a_k \right)^p
+        \le \left( n \max_{1 \le k \le n}\{  a_k \} \right)^p
+        = n^p \left( \max_{1 \le k \le n} \{  a_k^p \} \right)
+        \le n^p \left( \sum_{1 \le k \le n} a_k^p \right)
+    \end{equation*}
+    Por las suposiciones,
+    \(n^p\) es constante.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  \uncover<+->{
+    Cota inferior:
+    \begin{equation*}
+      \sum_{1 \le k \le n} a_k^p
+        \le n \max_{1 \le k \le n} \{ a_k^p \}
+        \le n \left( \sum_{0 \le k \le n} a_k \right)^p
+    \end{equation*}
+  }
+  \uncover<+->{
+    O sea:
+    \begin{equation*}
+      \left( \sum_{0 \le k \le n} a_k \right)^p
+        \le \frac{1}{n} \sum_{1 \le k \le n} a_k^p
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  Determine el comportamiento de \(f(x) = \sqrt{x^2 + 1}\)
+  cuando \(x \to \infty\).
+
+  \uncover<+->{
+    Como \(x > 0\),
+    es \(\sqrt{x^2} = x\).
+    Bajo la raíz, domina \(x^2\),
+    esperamos \(f(x)\) cercano a \(\sqrt{x^2} = x\).
+  }
+
+  \begin{align*}
+    \uncover<+->{f(x) &= \sqrt{x^2 + 1} \\}
+    \uncover<+->{     &= \sqrt{x^2 (1 + x^{-2})} \\}
+    \uncover<+->{     &= x \sqrt{1 + x^{-2}} \\}
+    \uncover<+->{     &= x \left( 1 + O(x^{-2}) \right)}
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplos}
+
+  ¿Qué tan buena es la estimación siguiente
+  (promediar diferencias \(x \pm \delta\))?
+  \begin{equation*}
+    f'(x)
+      = \frac{f(x + \delta) - f(x - \delta)}{2 \delta}
+   \end{equation*}
+
+   \uncover<+->{
+     Expandimos \(f\) por Taylor alrededor de \(x\):
+     \begin{equation*}
+       f(x + h)
+         = f(x) + f'(x) h + \frac{f''(x)}{2} h^2 + \frac{f'''(x) h^3}{6}
+              + O(h^4)
+    \end{equation*}
+  }
+  \uncover<+->{En consecuencia:}
+  \begin{align*}
+    \uncover<+->{
+      \frac{f(x + \delta) + f(x - \delta)}{2 \delta}
+        &= \frac{2 f'(x) \delta + f'''(x) \delta^3 / 3
+                  + O(\delta^4)}
+                {2 \delta} \\
+    }
+    \uncover<+->{
+       &= f'(x) + \frac{f'''(x)}{6} \delta^2
+                  + O(\delta^3)
+    }
+  \end{align*}
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Definición de notaciones asintóticas
+  \item
+    Algunos ejemplos.
+    Para muchos más,
+    y detalles adicionales,
+    vea el el apunte,
+    las notas de
+    \href{https://faculty.math.illinois.edu/~hildebr/lecture-notes/asymptotics.pdf}
+         {Hildebrand}
+    o el \href{https://aofa.cs.princeton.edu/home}
+              {texto de Sedgewick y Flajolet}.
+  \item
+    Soltura al interpretar y manipular este tipo de expresiones
+    es importante en mucho de lo que sigue del curso.
+  \item
+    Usaremos resultados del cálculo con frecuencia,
+    para un recordatorio vea el apéndice del apunte.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  presentation Big english big deducirse cont ex handout
+% LocalWords:  asintóticamente exponenciar glyphtounicode

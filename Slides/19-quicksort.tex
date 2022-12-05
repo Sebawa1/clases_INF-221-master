@@ -1,0 +1,873 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{dcolumn}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{listings}
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{Python}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{\foreignlanguage{english}{Quicksort}}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        tabsize = 4,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Idea básica}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La idea básica}
+
+  \uncover<+->{
+    No siempre tenemos control sobre la división.
+    El ejemplo clásico
+    es \emph{\foreignlanguage{english}{\foreignlanguage{english}{Quicksort}}}.
+  }
+
+  \uncover<+->{
+    La idea
+    de \emph{\foreignlanguage{english}{\foreignlanguage{english}{Quicksort}}}
+    es simple:
+  }
+  \begin{itemize}
+  \item
+    Elija un elemento \emph{pivote} entre los elementos a ordenar
+  \item
+    Reorganice de forma que los elementos menores al pivote
+    estén antes de los mayores al pivote.
+  \item
+    Ordene recursivamente
+    los tramos antes y después de la posición
+    que separa los elementos \textquote{chicos} de los \textquote{grandes}.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La idea básica}
+
+  \uncover<+->{
+    Es crítico que al particionar no terminemos
+    con alguno de los subtramos el tramo original completo.
+    Eso se evita al elegir el pivote entre los elementos del rango.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Hay varias formas de efectuar la crítica operación de particionar.
+    En todo caso,
+    es claro ver que se puede efectuar en tiempo \(\Theta(n)\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La idea básica}
+
+  \uncover<+->{
+    Si la división fuera siempre en mitades,
+    la recurrencia para el número de operaciones sería aproximadamente:
+    \begin{equation*}
+      T(n) = 2 T(n / 2) + n
+    \end{equation*}
+    y el teorema maestro da \(T(n) = \Theta(n \log n)\).
+  }
+  \uncover<+->{
+    Si la división es en fracciones fijas,
+    digamos \(\alpha\) y \(1 - \alpha\),
+    es:
+    \begin{equation*}
+      T(n) = T(\alpha n) + T((1 - \alpha) n) + n
+    \end{equation*}
+    El teorema de Akra-Bazzi tiene \(p = 1\) con lo que también:
+    \begin{equation*}
+      T(n)
+        = \Theta\left(
+                  z \int_1^n \frac{u \, \mathrm{d} u}{u^2}
+                \right)
+        = \Theta(n \log n)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La idea básica}
+
+  \uncover<+->{
+    Claro que si la división
+    es en un número fijo de elementos \(k\) en el primer tramo
+    (con lo que es condición de contorno el valor \(T(k)\)):
+    \begin{equation*}
+      T(n)
+        = T(k) + T(n - k) + n
+    \end{equation*}
+  }
+  \uncover<+->{
+    Solución es
+    (suponiendo \(n\) múltiplo de \(k\)):
+    \begin{equation*}
+      T(n)
+        = \frac{(n / k - 1) (n + 2 n / k + 2 T(k))}{2} + T(k)
+        = \Theta(n^2 / k)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Harto preocupante,
+    el peor caso es \(O(n^2)\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La idea básica}
+
+  \uncover<+->{
+    Analizaremos el caso promedio,
+    más adelante demostraremos que los peores casos
+    son extraordinariamente poco probables
+    \emph{siempre que los datos vengan ordenados al azar}.
+  }
+  \uncover<+->{
+    Plantearemos algunas variantes,
+    más eficientes
+    o resistentes a ataques que fuercen el peor caso.
+  }
+  \\ \medskip
+  \uncover<+->{
+    La mayor parte del trabajo se hace en el proceso de particionar,
+    hacerlo eficiente es crucial.
+  }
+\end{frame}
+
+\section{Desarrollo de un programa}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+
+  \uncover<+->{
+    Debemos ordenar el tramo \lstinline!A[m] .. A[n - 1]! del arreglo.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si \(m + 1 \ge n\) no hay nada que hacer.
+  }
+
+  \uncover<+->{
+    Si \(m + 1 < n\),
+    reorganizamos con un \(p\) por definir tal que
+    \lstinline!A[m .. k - 1] <= p! y \lstinline!p < A[k .. n - 1]!
+  }
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Particionar}
+
+  Una manera de particionar es el código siguiente,
+  debido a Lomuto:
+  \small
+  \begin{lstlisting}[gobble = 4]
+    p = A[n - 1];
+    j = m;
+    for(i = m; i < n - 1; i++)
+        if(A[i]) <= p) {
+            swap(A[i], A[j]); j++;
+        }
+    swap(A[j], A[n - 1]);
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Particionar}
+
+  Mucho más eficiente es el esquema de Hoare:
+  \small
+  \begin{lstlisting}[gobble = 4]
+    p = A[(m + n) / 2];
+    int i = m - 1, j = n;
+    for(;;) {
+        while(A[++i] < p)
+            ;
+        while(p < A[--j])
+            ;
+        if(i >= j) break;
+        swap(A[i], A[j]);
+    }
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Particionar}
+
+  \uncover<+->{
+    Este código es corto,
+    pero lejos de trivial.
+  }
+  \uncover<+->{
+    Aumenta \lstinline!i! pasando elementos \textquote{chicos}
+    parando con elementos mayores o iguales,
+    o disminuye \lstinline!j! pasando elementos \textquote{grandes},
+    para al encontrar un elemento menor o igual.
+    Inicialmente el pivote está entre \lstinline!i! y \lstinline!j!,
+    esto sirve para detener los ciclos
+    sin tener que verificar específicamente no salir del rango.
+  }
+  \uncover<+->{
+    Sabemos que al final \lstinline!A[m .. j] <= p!
+    y \lstinline!A[j + 1 .. n - 1] >= p!.
+  }
+  \uncover<+->{
+    El pivote queda en \lstinline!A[j]!.
+  }
+
+  \uncover<+->{
+    Solo intercambiamos elementos,
+    el resultado es una permutación de los datos originales.
+  }
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Primer esbozo}
+
+  \small
+  \begin{lstlisting}[gobble = 4]
+    int quicksort(type A[], int m, int n)
+    {
+        if(m + 1 < n) {
+            type p = A[(m + n) / 2];
+            int i = m - 1, j = n;
+            for(;;) {
+                while(A[++i] < p);
+                while(p < A[--j]);
+                if(i >= j) break;
+                swap(A[i], A[j]);
+            }
+            quicksort(A, m, j + 1);
+            quicksort(A, j + 1, n);
+        }
+    }
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Particionar}
+
+  \uncover<+->{
+    Si hay elementos iguales al pivote,
+    debe tenerse cuidado que no queden todos en el mismo tramo.
+    Si fueran todos los elementos iguales,
+    caemos en el peor caso.
+  }
+  \uncover<+->{
+    En un computador determinista no es fácil dividirlos mitad y mitad.
+    Pero podemos simplemente dejarlos fuera,
+    como lo hace el particionamiento de Hoare.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Particionar}
+
+  \uncover<+->{
+    Es común que los datos vengan \textquote{casi ordenados}
+    (o sea,
+     los elementos generalmente no están lejos de sus posiciones en orden).
+    Garantía de peor caso al elegir el primero
+    (o el último)
+    de pivote,
+    nuevamente.
+  }
+
+  \uncover<+->{
+    La técnica de particionamiento de Hoare elige como pivote
+    un elemento del centro.
+    Otra opción es elegir el pivote al azar en el rango.
+    Esto también evita ataques que usan la elección del pivote
+    para forzar el peor caso.
+  }
+
+  \uncover<+->{
+    Otra posibilidad
+    (que disminuye además la probabilidad del peor caso)
+    es tomar una muestra
+    (por ejemplo,
+     primer y último elementos,
+     y el central)
+    y usar la mediana de la muestra como pivote.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Particionar}
+
+  \uncover<+->{
+    Otra opción es dividir en tres tramos:
+    menores al pivote,
+    iguales al pivote
+    y mayores al pivote.
+  }
+  \uncover<+->{
+    Se conoce como el problema de la bandera holandesa
+    (en inglés,
+     \emph{\foreignlanguage{english}{Dutch national flag problem}})
+    por la bandera de franjas de tres colores,
+    bautizado así por Dijkstra.
+  }
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Particionar}
+
+  Lo siguiente mantiene \lstinline!A[m .. i - 1] < p!,
+  \lstinline!A[i .. j - 1] == p!
+  y \lstinline!A[k .. n - 1] > p!;
+  \lstinline!A[j .. k - 1]! indecisos.
+  \small
+  \begin{lstlisting}[gobble = 4]
+     int i = m, j = m, k = n;
+     while(j < k) {
+         if(A[j] < p) {
+             swap(A[i], A[j]); i++; j++;
+         }
+         else if(A[j] > p) {
+             k--; swap(A[j], A[k]);
+         }
+         else
+            j++;
+         }
+     }
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Evitar recursión}
+
+  \uncover<+->{
+    \foreignlanguage{english}{Quicksort} hace dos llamadas recursivas.
+  }
+  \uncover<+->{
+    Podemos reemplazar la última
+    (llamada de cola)
+    por ajustar argumentos y volver al comienzo.
+  }
+  \uncover<+->{
+    Note que compíladores competentes hacen esta modificación automáticamente,
+    verifique antes de hacerla a mano.
+  }
+  \uncover<+->{
+    Si arreglamos de forma de hacer la llamada recursiva para el tramo menor,
+    puede haber a lo más \(\log_2 n\) llamadas recursivas pendientes.
+  }
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Tercer esbozo}
+
+  \small
+  \begin{lstlisting}[gobble = 4]
+    int quicksort(type A[], int m, int n)
+    {
+        while(m + 1 < n) {
+            /* Partition A[m .. j; j + 1 .. n - 1] */
+            if(j - m > n - j) {
+                quicksort(A, j + 1, n); n = j + 1;
+            }
+            else {
+                quicksort(A, m, j + 1); m = j + 1;
+            }
+        }
+    }
+  \end{lstlisting}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Evitar recursión}
+
+  \uncover<+->{
+    Podemos eliminar completamente las llamadas recursivas
+    de la última versión
+    manejando una pila de rangos directamente.
+  }
+  \uncover<+->{
+    Manejar una pila de pares de índices
+    definitivamente será más eficiente
+    que una llamada y retorno a función.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Otras consideraciones}
+
+  \uncover<+->{
+    \foreignlanguage{english}{Quicksort}
+    es muy eficiente para manejar arreglos grandes,
+    pero ineficiente para arreglos pequeños.
+  }
+  \uncover<+->{
+    Una opción es cambiar a otro método cuando el tramo es corto.
+  }
+  \uncover<+->{
+    Resulta que ordenamiento por inserción hace trabajo proporcional
+    a la suma de las distancias de los elementos de sus posiciones finales,
+    con lo que una opción es simplemente cortar la recursión
+    con tramos cortos
+    y completar con inserción sobre el total.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desarrollo de un programa}
+  \framesubtitle{Otras consideraciones}
+
+  \uncover<+->{
+    Para evitar el peor caso,
+    puede monitorearse la profundidad de la recursión.
+    Si se hace demasiado grande,
+    abortar y usar un método más lento,
+    pero garantizadamente \(O(n \log n)\).
+  }
+  \uncover<+->{
+    Es la idea de \emph{\foreignlanguage{english}{Introsort}},
+    que cambia a \emph{\foreignlanguage{english}{Heapsort}}.
+  }
+\end{frame}
+
+\section{Análisis del algoritmo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del algoritmo básico}
+
+  \uncover<+->{
+    Solo analizaremos el algoritmo básico en detalle,
+    dando algunas pistas sobre las variantes.
+  }
+  \uncover<+->{
+    Como medida principal usaremos el número de comparaciones.
+  }
+\end{frame}
+
+\subsection{Número de comparaciones}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Número de comparaciones}
+
+  \uncover<+->{
+    Si \(C(n)\) es el número de comparaciones
+    que hace \foreignlanguage{english}{Quicksort}
+    al ordenar un arreglo de \(n\)~elementos,
+    vemos que particionar efectúa \(n - 1\) comparaciones,
+    y luego ordena recursivamente
+    tramos de \(k\) y \(n - 1 - k\) elementos para algún \(0 \le k \le n - 1\)
+    (excluimos el pivote,
+     en su posición final).
+  }
+  \uncover<+->{
+    Si todos los elementos son diferentes
+    y el pivote se elige al azar,
+    cada división es igualmente probable:
+    \begin{equation*}
+      C(n)
+        = \frac{1}{n - 1} \sum_{0 \le k \le n - 1} (C(k) + C(n - 1 - k))
+             + n - 1
+      \qquad
+      C(0)
+        = 0
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Número de comparaciones}
+
+  \uncover<+->{
+    Ajustando índices,
+    notando que estamos sumando los \(C(k)\)
+    en orden creciente y decreciente:
+    \begin{equation*}
+      C(n + 1)
+        = \frac{2}{n + 1} \sum_{0 \le k \le n} C(k) + n
+      \qquad
+      C(0)
+        = 0
+    \end{equation*}
+  }
+  \uncover<+->{
+    Reorganizando:
+    \begin{equation*}
+      (n + 1) C(n + 1)
+        = 2 \sum_{0 \le k \le n} C(k) + n (n + 1)
+      \qquad
+      C(0)
+        = 0
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Número de comparaciones}
+
+  \uncover<+->{
+    Definimos la función generatriz:
+    \begin{equation*}
+      g(z)
+        = \sum_{n \ge 0} C(n) z^n
+    \end{equation*}
+    Aplicando las propiedades respectivas a la recurrencia,
+    usando su condición inicial:
+    \begin{equation*}
+      z \frac{\mathrm{d}}{\mathrm{d} z} \frac{g(z)}{z} + \frac{g(z)}{z}
+        = \frac{2 g(z)}{1 - z}	+ \frac{2 z}{(1 - z)^3}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Número de comparaciones}
+
+  \uncover<+->{
+    Solución es:
+    \begin{equation*}
+      g(z)
+        = - 2 \frac{\ln (1 - z) + z}{(1 - z)^2}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Obtenemos:
+    \begin{align*}
+      C(n)
+        &=    [z^n] g(z) \\
+        &=    2 (n + 1) H_n - 4 n \\
+        &\sim 2 n \ln n
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Contraste con el número mínimo de comparaciones}
+
+  \uncover<+->{
+    Sabemos que para ordenar \(n\) elementos
+    se requieren al menos \(\lceil \log_2 n! \rceil\) comparaciones.
+  }
+
+  \uncover<+->{
+    Tenemos la fórmula de Stirling para el factorial:
+    \begin{align*}
+      n!
+        &\sim \sqrt{2 \pi n} \left( \frac{n}{\mathrm{e}} \right)^n \\
+      \log_2 n!
+        &\sim \log_2 \sqrt{2 \pi}
+                + \frac{1}{2} \log_2 n
+                + n \log_2 n
+                - n \log_2 \mathrm{e} \\
+        &\sim n \log_2 n
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Contraste con el número mínimo de comparaciones}
+
+  \uncover<+->{
+    Resulta para el número mínimo de comparaciones \(M(n)\):
+    \begin{align*}
+      M(n)
+        &\sim \log_2 n! \\
+        &\sim n \log_2 n \\
+        &= \frac{1}{\ln 2} n \ln n \\
+        &= \num{1,4430} \, n \ln n
+    \end{align*}
+  }
+  \uncover<+->{
+    \foreignlanguage{english}{Quicksort} en promedio no hace mucho más de las comparaciones requeridas.
+  }
+\end{frame}
+
+\subsection{Número de intercambios}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Número de intercambios}
+
+  \uncover<+->{
+    Para completar el análisis detallado del algoritmo,
+    hace falta contabilizar el número promedio de intercambios
+    en el proceso de particionamiento.
+  }
+  \uncover<+->{
+    En esta medida difieren las técnicas mostradas.
+  }
+  \\ \medskip
+  \uncover<+->{
+    En el proceso solo es relevante el orden relativo de los elementos,
+    si son todos diferentes
+    podemos suponer que son simplemente los números de \(1\) a~\(n\).
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Para hacer tratable el análisis,
+    supondremos que las \(n!\) permutaciones de los elementos
+    son igualmente probables.
+  }
+  \uncover<+->{
+    Una propiedad crucial de las técnicas de particionamiento planteadas
+    es que no reordenan los tramos resultantes:
+    si el tramo original está ordenado al azar,
+    lo están los tramos resultantes.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Intercambios en particionamiento de Lomuto}
+
+  \uncover<+->{
+    El particionamiento de Lomuto revisa el arreglo completo
+    e intercambia cada vez que encuentra un elemento mayor que el pivote.
+  }
+  \uncover<+->{
+    Si el pivote es \(p\),
+    efectúa \(p - 1\) intercambios.
+    En promedio,
+    suponiendo que el pivote se elige al azar:
+    \begin{equation*}
+      \frac{1}{n} \sum_{1 \le p \le n} (p - 1)
+        = \frac{n - 1}{2}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Intercambios en particionamiento de Hoare}
+
+  \uncover<+->{
+    Particionamiento de Hoare
+    busca elementos mayores que el pivote desde la izquierda
+    y elementos menores desde la derecha,
+    para intercambiarlos.
+  }
+  \uncover<+->{
+    Que siempre encuentra un par a intercambiar es parte de la demostración
+    de correctitud.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Intercambios en particionamiento de Hoare}
+
+  \uncover<+->{
+    El análisis en este caso es algo más enredado.
+    Si el pivote elegido es \(p\),
+    hay \(n - p\) elementos mayores en el arreglo.
+    De ellos elegimos los que caen antes del pivote,
+    en \(p - 1\)~posiciones.
+    En promedio,
+    el número de elementos mayores que el pivote antes de la posición \(p\)
+    (el número de pares que se intercambian)
+    es:
+    \begin{equation*}
+      \frac{(n - p) (p - 1)}{n - 1}
+    \end{equation*}
+    Promediando sobre las posiciones del pivote:
+    \begin{equation*}
+      \frac{1}{n} \sum_{1 \le p \le n} \frac{(n - p) (p - 1)}{n - 1}
+        = \frac{n - 2}{6}
+    \end{equation*}
+  }
+\end{frame}
+
+\section{Variantes}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del algoritmo mediana de tres}
+
+  \uncover<+->{
+    En el algoritmo básico la posición final del pivote
+    es una cualquiera en el rango \(1 .. n\).
+  }
+  \uncover<+->{
+    Si tomamos una muestra de \(3\) elementos
+    y elegimos la mediana de pivote,
+    el pivote está en la posición \(r + 1\) en el arreglo ordenado
+    es que elegimos uno entre los \(n - r - 1\)~mayores al pivote
+    y uno entre los \(r\)~menores.
+    En total,
+    la probabilidad es:
+    \begin{align*}
+      \frac{r (n - r - 1)}{\binom{n}{3}}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del algoritmo mediana de tres}
+
+  \uncover<+->{
+    La recurrencia es ahora,
+    después de reorganizar como antes
+    (son \(3\) comparaciones para hallar la mediana,
+     después de ordenar esos tres elementos quedan \(n - 2\) a clasificar):
+    \begin{equation*}
+      \binom{n}{3} C(n + 1)
+        = 2 \sum_{0 \le k \le n} (r - 1) (n - r) C(r)
+            + (n + 3 - 2) \binom{n}{3}
+      \qquad
+      C(3)
+        = 3
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis de las variantes}
+
+  \uncover<+->{
+    La recurrencia para mediana de tres
+    puede resolverse con técnicas similares a las anteriores.
+  }
+  \uncover<+->{
+    Resulta que se gana aproximadamente un \SI{6}{\percent} en rendimiento.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Poniendo como valores iniciales hasta \(C[M]\) el costo respectivo
+    del método simple para tramos cortos,
+    se obtiene una recurrencia que permite calcular el valor de \(M\)
+    óptimo.
+  }
+  \uncover<+->{
+    El mínimo depende de los detalles exactos,
+    pero se mueve alrededor de \num{10}.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    \foreignlanguage{english}{Quicksort} es un algoritmo muy importante.
+  \item
+    La idea general es simple,
+    pero hay muchas variantes a contrastar.
+  \item
+    El algoritmo es frágil,
+    debe tenerse mucho cuidado al escribir su propia versión.
+  \item
+    Sorprendentemente,
+    es posible analizar el algoritmo en forma muy detallada.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step english Quicksort particionar
+% LocalWords:  subtramos particionamiento Dutch national flag problem
+% LocalWords:  monitorearse garantizadamente Introsort Heapsort
+% LocalWords:  correctitud

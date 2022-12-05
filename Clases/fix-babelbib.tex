@@ -1,0 +1,28 @@
+% Kludge, moeve's answer to TeX.SE 544112
+\renewcommand\btxselectlanguage[1]{%
+  \bbbbifundefined{bibs#1}{%
+    \bbbbifundefined{date#1}{%
+      \PackageError{babelbib}{Language #1 in bibliography not loaded
+        by babel}{%
+        The language #1 hasn't been loaded by babel.
+        Add it to the\MessageBreak
+        options of the \string\usepackage{babel} command or to the
+        global options.}%
+    }{%
+      \ifbbbbfixlanguage
+        \PackageWarning{babelbib}{Language #1 in bibliography
+          unknown\MessageBreak
+          by babelbib. Hyphenation will be\MessageBreak
+          incorrect}%
+      \else
+        \PackageError{babelbib}{Language #1 in bibliography unknown by
+          babelbib}{%
+          There are no definitions for #1 available in the
+          current\MessageBreak
+          version of babelbib. Please contact harald.harders@gmx.de.}%
+      \fi
+    }%
+  }{%
+    \selectlanguage{#1}%
+  }%
+}

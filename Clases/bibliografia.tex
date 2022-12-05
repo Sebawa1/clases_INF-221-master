@@ -1,0 +1,36 @@
+\documentclass[czech, english, german, french, latin, spanish]{article}
+
+\usepackage{babel}
+\usepackage{babelbib}
+\usepackage{complexity}
+\usepackage[colorlinks, urlcolor = blue]{hyperref}
+
+\input{fix-babelbib}
+
+\hypersetup{pdftitle = {Algoritmos y Complejidad},
+            pdfsubject = {Bibliografía},
+            pdfauthor ={Horst H. von Brand},
+            unicode, pdfdisplaydoctitle
+           }
+\title{Bibliografía\\
+       Algoritmos y Complejidad\\
+       {\normalsize Versión \classversion}}
+\author{\href{mailto:vonbrand@inf.utfsm.cl}{Horst H. von Brand}}
+
+\begin{document}
+\selectlanguage{spanish}
+\input{class-version}
+\maketitle
+\thispagestyle{plain}
+\nocite{*}
+\bibliographystyle{babplain-fl}
+\bibliography{referencias}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  plain

@@ -1,0 +1,460 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[es-noquoting]{babel}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{csquotes}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{listings}
+\usepackage[basic]{complexity}
+\usepackage{tikz}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{[ANSI]C++}
+
+\usetikzlibrary{positioning}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Branch and bound}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        tabsize = 4,
+        showstringspaces = false
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{El problema}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Optimización}
+
+  \uncover<+->{
+    Muchos problemas solicitan el mejor objeto de entre una colección,
+    sujeto a ciertas condiciones.
+  }
+  \uncover<+->{
+    Para concretizar,
+    supondremos que buscamos maximizar \(f(v)\)
+    para el objeto \(v\).
+    La situación de buscar un mínimo es simétrica.
+  }
+
+  \uncover<+->{
+    Si la construcción del objeto se puede llevar a cabo en etapas,
+    podemos aplicar técnicas
+    afines a \emph{\foreignlanguage{english}{backtracking}}.
+  }
+  \uncover<+->{
+    Si contamos con una función de cota \(b(v)\)
+    que para un objeto parcial \(v\)
+    nos da una cota superior al valor de \(f\)
+    para todos los objetos que se pueden construir a partir de \(v\),
+    podemos usar el valor de \(b\) para podar.
+  }
+  \uncover<+->{
+    A esta idea se le llama \emph{\foreignlanguage{english}{branch and bound}}
+    (literalmente,
+     \textquote{ramificar y acotar} en inglés:
+     \emph{ramificar} para explorar alternativas,
+     \emph{acotar} descarta alternativas que sabemos no llevan al máximo).
+   }
+ \end{frame}
+
+ \begin{frame}
+   \setcounter{beamerpauses}{2}
+   \frametitle{Algoritmo genérico}
+
+   \uncover<+->{
+     Como ya se dijo,
+     tiene mucho en común con \emph{\foreignlanguage{english}{backtracking}}.
+     La idea es mantener el máximo valor
+     entre los objetos completos ya examinados,
+     cualquier objeto parcialmente construido con cota menor que ese valor
+     claramente es imposible que se complete al máximo,
+     puede descartarse.
+   }
+   \\ \medskip
+   \uncover<+->{
+     Modelamos nuestro algoritmo genérico
+     alrededor de búsqueda no recursiva,
+     por ser maleable.
+   }
+   \uncover<+->{
+     Nada impide combinar cotas con una heurística
+     que ordene el cómputo para explorar primero alternativas más prometedoras
+     (búsqueda mejor primero,
+      \emph{\foreignlanguage{english}{Best First Search}}).
+   }
+   \uncover<+->{
+     Puede ser que el valor de la función cota sea una heurística adecuada,
+     o puede que contemos con otro criterio.
+   }
+ \end{frame}
+
+ \begin{frame}
+   \setcounter{beamerpauses}{2}
+   \frametitle{Cotas}
+
+   \uncover<+->{
+     Una función \(b\) como se describe,
+     que siempre sobrestima el valor posible de \(f\),
+     se llama \emph{admisible}.
+   }
+   \uncover<+->{
+     De no tener esa garantía,
+     corremos el riesgo de descartar la solución óptima.
+   }
+   \\ \medskip
+   \uncover<+->{
+     Es claro que una función \(b\) que dé una cota más ajustada
+     es preferible,
+     pero hay que balancear el costo de calcular una cota cercana
+     (probablemente más costosa de calcular)
+     con el costo de revisar opciones que podrían haberse descartado.
+   }
+ \end{frame}
+
+ \section{El algoritmo genérico}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convenciones}
+
+  \uncover<+->{
+    Suponemos dado el ámbito de trabajo.
+  }
+  \uncover<+->{
+    Como antes,
+    usaremos \(N(v)\) para denotar los vecinos del objeto (parcial) \(v\).
+    La función \(g(v)\) dice si \(v\) es una meta
+    (objeto completo),
+    la función \(f(v)\) da el valor de un objeto meta \(v\),
+    mientras \(b(v)\) es la cota superior discutida antes.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Acá \(N(v)\),
+    los objetos vecinos al objeto (parcial) \(v\),
+    depende de nuestra
+    (probablemente arbitraria)
+    división en etapas.
+  }
+  \uncover<+->{
+    Es claro que \(g\) y \(f\) son parte de la descripción del problema.
+  }
+  \\ \medskip
+  \uncover<+->{
+    El algoritmo siguiente asume que si \(g(s)\) entonces \(b(s) = f(s)\)
+    (esto es simple de forzar en \(b\)).
+  }
+ \end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convenciones}
+
+  \uncover<+->{
+    Comenzamos la búsqueda con un objeto \(s\),
+    posiblemente el objeto \textquote{vacío}.
+  }
+  \uncover<+->{
+    Cota inferior obvia es menos infinito,
+    en la práctica dar un valor imposiblemente bajo.
+  }
+  \uncover<+->{
+    Otra idea es construir algún objeto inicial no demasiado malo,
+    si hay una forma simple de hacerlo.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Branch and Bound}
+
+  \small
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Function{\(\mathrm{BB}(b, s)\)}{
+      \(Q \leftarrow \mathrm{Queue}\);
+         \(\mathrm{enqueue}(Q, s)\) \;
+      \(C \leftarrow \{ s \}\) \;
+      \(B \leftarrow -\infty\) \;
+
+      \While{\(\neg \mathrm{empty}(Q)\)}{
+        \(s \leftarrow \mathrm{dequeue}(Q)\) \;
+        \If{\(s \notin C \wedge b(s) \ge B\)}{
+          \(C \leftarrow C \cup \{ s \}\);
+          \If{\(g(s)\)}{
+            \(B \leftarrow f(s)\) \;
+            \(M \leftarrow s\) \;
+          }
+          \ForEach{\(v \in N(s)\)}{
+            \If{\(v \notin C \wedge b(v) \ge B\)}{
+              \(\mathrm{enqueue}(Q, v)\) \;
+            }
+          }
+        }
+      }
+      \Return \(M\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\section{Ejemplos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Problema \textsc{Knapsack}}
+
+  \uncover<+->{
+    El problema \textsc{Knapsack}
+    (mochila),
+    pone un conjunto de objetos de pesos positivos \(w_i\)
+    con sus respectivos valores positivos \(v_i\),
+    y una capacidad de la mochila \(C\).
+    La idea es llenar la mochila
+    (no sobrepasar su capacidad),
+    logrando el valor máximo.
+  }
+  \\ \medskip
+  \uncover<+->{
+    En su momento demostramos que el problema de decisión respectivo
+    (¿puede lograrse al menos el valor \(c\)?)
+    es \NP\nobreakdash-completo,
+    por lo que no esperamos un algoritmo eficiente.
+  }
+  \uncover<+->{
+    Vale decir,
+    es extremadamente poco probable
+    que haya alguna manera \textquote{inteligente} de resolver esto,
+    habrá que recurrir a una búsqueda exhaustiva
+    revisando las distintas posibilidades.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\textsc{Knapsack} continuo}
+
+  \uncover<+->{
+    Resulta que hay un problema similar que sí admite una solución eficiente%
+  }%
+  \uncover<+->{%
+    : si permitimos fracciones de ítem,
+    demostraremos más adelante que la solución óptima
+    se obtiene considerando los objetos en orden de \(v_i / w_i\) descendiente,
+    colocando la máxima fracción del ítem que cabe en la mochila.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Relajamos la condición de ítem íntegro,
+    podemos usar la solución a este problema como cota a nuestro problema
+    (las soluciones necesariamente serán mejores).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estrategia para \textsc{Knapsack}}
+
+  \uncover<+->{
+    La estrategia para resolver \textsc{Knapsack} es entonces
+    ir considerando los ítem uno a uno,
+    viendo la opción de incluirlo o excluirlo.
+    Usamos el valor de la mochila con los objetos ya elegidos
+    sumado al resultado de \textsc{Knapsack} continuo para los aún no fijados
+    como función \(b\).
+  }
+  \\ \medskip
+  \uncover<+->{
+    Un orden natural para ello es el orden de \(v_i / w_i\) decreciente
+    impuesto por \textsc{Knapsack} continuo.
+  }
+  \uncover<+->{
+    Tiene sentido intentar primero la opción de agregar el ítem \(i\)
+    (si se puede),
+    dado que intuitivamente eso debiera dar valores mayores de \(b\)
+    (y finalmente de \(f\) cuando lleguemos a una decisión
+     sobre todos los ítem),
+    y vimos que una cota alta es deseable al maximizar.
+  }
+  \uncover<+->{
+    (Podemos considerar lo anterior
+     como usar una función heurística rudimentaria
+     que guía la expansión.)
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Encabezados}
+
+  \small
+  \lstinputlisting[firstline = 1, lastline = 4]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Variables globales --- el problema}
+
+  \small
+  \lstinputlisting[firstline = 6, lastline = 9]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Variables globales --- posición actual}
+
+  \small
+  \lstinputlisting[firstline = 11, lastline = 18]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Función cota}
+
+  \small
+  \lstinputlisting[firstline = 21, lastline = 33]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Función \lstinline!bb(int)!, prototipo/fin}
+
+  \small
+  \lstinputlisting[linerange = {35-37}]{knapsack.cc}
+  \hspace{4em}(Cuerpo de la función acá)
+  \lstinputlisting[linerange = {53-53}]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Función \lstinline!bb(int)!, fin (considerados todos)}
+
+  \small
+  \lstinputlisting[linerange = {37-44}]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Función \lstinline!bb(int)!, poda}
+
+  \small
+  \lstinputlisting[linerange = {45-46}]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Función \lstinline!bb(int)!, llamadas recursivas}
+
+  \small
+  \lstinputlisting[linerange = {47-52}]{knapsack.cc}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programa para \textsc{Knapsack}}
+  \framesubtitle{Programa principal}
+
+  \small
+  \lstinputlisting[linerange = {55-68}]{knapsack.cc}
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Discutimos la técnica de búsqueda
+    \emph{\foreignlanguage{english}{branch and bound}}.
+  \item
+    Mostramos una aplicación concreta,
+    el problema \textsc{Knapsack}.
+    \uncover<+->{
+      La estrategia planteada es la base para algoritmos eficientes
+      para resolver problemas de programación lineal entera.
+    }
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step english backtracking branch
+% LocalWords:  and bound Knapsack handout Best First Search

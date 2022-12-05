@@ -1,0 +1,27 @@
+#!/usr/bin/python3
+# Solve a_n = n a_{n - 1} + n^2 a_{n - 2} - n^4 - 3 n^2 + 5; a_0 = 5, a_1 = 9
+
+from sympy import *
+
+a, b, c, n = symbols('a b c n')
+
+def gop(exp):
+    return expand(exp(n) - n * exp(n - 1) - n * n * exp(n - 2))
+
+print("g(n) = 1:    ", gop(lambda n: 1))
+print("g(n) = n:    ", gop(lambda n: n))
+print("g(n) = n**2: ", gop(lambda n: n*n))
+
+coefs = solve(Eq(a * gop(lambda n: 1)
+	           + b * gop(lambda n: n)
+	           + c * gop(lambda n: n ** 2),
+                 - n ** 4 - 3 * n ** 2 + 5),
+              [a, b, c])
+
+print("a = {}, b = {}, c = {}".format(coefs[a], coefs[b], coefs[c]))
+
+def g(n):
+    return coefs[a] + coefs[b] * n + coefs[c] * n ** 2
+
+print("g(0) = {}, g(1) = {}".format(g(0), g(1)))
+

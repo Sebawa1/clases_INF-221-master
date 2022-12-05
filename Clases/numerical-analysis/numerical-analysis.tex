@@ -1,0 +1,548 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Análisis numérico}
+\label{cha:analisis-numerico}
+
+  El \emph{análisis numérico} trata de métodos computacionales
+  para obtener valores numéricos precisos para una variedad de objetos,
+  como funciones, integrales, soluciones de ecuaciones y sistemas de estas.
+  Adoptamos la definición de Trefethen~%
+    \cite{trefethen92:_definition_numerical_analysis},
+  que define el área como \emph{estudio de algoritmos para los problemas
+  de las matemáticas continuas}.
+  Una de las mayores revoluciones se inició en el siglo XVII
+  al desarrollarse el cálculo,
+  que con la física llevó a modelos precisos de muchos fenómenos de interés,
+  que luego se extendieron a otras ciencias.
+  Estos modelos rara vez se pueden resolver en forma exacta,
+  hay que recurrir a técnicas aproximadas.
+  Incluso se da que es más eficiente calcular una solución aproximada
+  que usar una engorrosa fórmula exacta.
+  El mismo Newton inventó métodos numéricos,
+  desarrollos de los cuales hoy llevan su nombre.
+  Algunos puntos de interés recientes son los algoritmos CORDIC~%
+    \cite{volder59:_cordic_computing_techninque,
+          volder59:_cordic_trigon_comput_techn}
+  y afines para calcular rápidamente funciones trigonométricas e hiperbólicas
+  dígito a dígito si la multiplicación es lenta,
+  y el truco~%
+    \cite{lomont03:_fast_inverse_square_root}
+  para aproximar el inverso de la raíz cuadrada
+  basado en la representación de números en punto flotante de IEEE,
+  usado por primera vez en el juego Quake~IV.
+
+  Esta es un área enorme,
+  en este curso cubriremos solo algunas áreas específicas
+  de interés más bien general.
+  Un texto general es el de Gautschi~%
+    \cite{gautschi12:_numerical_analysis},
+  otro buen compendio es el texto de Sauer~%
+    \cite{sauer11:_numerical_analysis},
+  una referencia útil es el texto de Kincaid y Cheney~%
+    \cite{kincaid02:_numerical_analysis}.
+  Hay numerosas colecciones de notas de clase disponibles,
+  como la de Olver~%
+    \cite{olver08:_ln_numerical_analysis},
+  de Cowley~%
+    \cite{cowley14:_numerical_analysis}
+  o de Philip~%
+    \cite{philip22:_num_math_i,philip22:_num_math_ii}.
+  Es recomendable el texto de Heinhold~%
+    \cite{heinhold13:_intuitive_guide_numer_methods},
+  que se centra en una visión intuitiva
+  y desde el usuario de distintos métodos.
+  Un texto que ilustra muchos de los algoritmos más importantes
+  en Python~3
+  es el de Kiusalaas~%
+    \cite{kiusalaas13:_numerical_meth_python3},
+  otro es el de Liu~%
+    \cite{liu20:_first_semes_num_anal_python}.
+  El texto de Máté~%
+    \cite{mate04:_intro_numerical_analysis_c}
+  discute la teoría y muestra cómo programar las técnicas en C.
+  El texto de Acton~%
+    \cite{acton90:_numer_methods_usual_work}
+  es bastante antiguo
+  (una reseña indica que muestra claramente su origen en épocas
+   de cálculo manual y computadores rudimentarios),
+  pero da una visión desde las trincheras en lenguaje coloquial.
+  El texto de Muller et al~%
+    \cite{muller18:_handb_float_point_arith}
+  da una visión muy detallada de aritmética en punto flotante
+  y cómo calcular con precisión un amplio rango de funciones de interés.
+
+  Para obtener valores numéricos de interés en una situación práctica
+  se debe construir un modelo de la situación,
+  extraer de él las relaciones relevantes,
+  y resolver las ecuaciones resultantes para obtener el resultado.
+  Hay varias fuentes de error en esto:
+  \begin{enumerate}[label={(\roman*)}]
+  \item
+    \label{enum:error:fisico}
+    El modelo físico es una simplificación de la realidad
+    (se omite la fricción del aire,
+     suponer que la aceleración de la gravedad es constante,
+     \ldots)
+   \item
+    \label{enum:error:parametros}
+     Los parámetros que entran al modelo se conocen con precisión finita
+   \item
+    \label{enum:error:aproximacion}
+     Aproximaciones usadas para resolver el modelo matemático
+   \item
+    \label{enum:error:redondeo}
+     Errores de redondeo en los cálculos
+  \end{enumerate}
+  El punto~\ref{enum:error:fisico} es tema de modelamiento matemático,
+  no nos concierne acá.
+  De~\ref{enum:error:parametros} se preocupa quien monta el experimento.
+  El punto~\ref{enum:error:redondeo} tiene que ver con la representación
+  de infinitos números reales en espacio finito,
+  que trataremos someramente más adelante
+  (sección~\ref{sec:floating-point}).
+  El punto~\ref{enum:error:aproximacion} es el tema central de interés
+  para nosotros.
+
+  Hay dos formas principales de cuantificar el error:
+  \begin{definition}
+    \label{def:error-computacional}
+    Sea \(x\) un valor real,
+    y \(x^*\) una aproximación.
+    El \emph{error absoluto} de la aproximación \(x^* \approx x\)
+    es \(\lvert x^* - x \rvert\),
+    el \emph{error relativo} (siempre que \(x \ne 0\))
+    es \(\lvert x^* - x \rvert / \lvert x \rvert\).
+  \end{definition}
+  Por ejemplo,
+  \num{1000} es una aproximación de \num{1024} con error absoluto de \num{24}
+  y error relativo de \num{0,023}.
+  Diremos que la aproximación
+  \emph{tiene \(k\) dígitos decimales significativos}
+  si el error relativo es menor que \(10^{-k + 1}\),
+  o sea,
+  después del primer dígito decimal no cero hay \(k\) dígitos correctos.
+  En nuestro caso,
+  es \(k = 2\)
+  (porque \(0,023 < 10^{-1}\)),
+  con lo que \num{1\,000} es una aproximación de \num{2}~cifras significativas
+  a \num{1\,024}.
+
+  La misma idea puede aplicarse si estamos hablando de vectores,
+  solo que en tal caso usaremos normas,
+  \(\lVert \mathbf{x}^* - \mathbf{x} \rVert\) es el error absoluto
+  y \(\lVert \mathbf{x}^* - \mathbf{x} \rVert / \lVert \mathbf{x} \rVert\)
+  el relativo.
+
+\section{Propiedades de punto flotante}
+\label{sec:floating-point}
+
+  Hay que tener presente que los cálculos en punto flotante
+  \emph{no} cumplen las conocidas leyes.
+  Por ejemplo,
+  exactamente:
+  \begin{align*}
+    \frac{301}{4000} - \frac{300}{4001}
+      &=       \frac{301 \cdot 4001 - 300 \cdot 4000}{4000 \cdot 4001} \\
+      &=       \frac{4301}{16004000} \\
+      &\approx 0,0002687453
+  \end{align*}
+  Si hacemos los cálculos intermedios con \num{3} cifras,
+  obtenemos:
+  \begin{align*}
+    \frac{301}{4000}
+      &= 0,0753 \\
+    \frac{300}{4001}
+      &= 0,0750 \\
+    \frac{301}{4000} - \frac{300}{4001}
+      &= 0,0003
+  \end{align*}
+  El resultado no tiene ni una sola cifra correcta.
+  Escribiendo:
+  \begin{align*}
+    \frac{301}{4000} - \frac{300}{4001}
+      &= \frac{301 \cdot 4001 - 300 \cdot 4000}{4000 \cdot 4001} \\
+      &= \frac{1,20 \cdot 10^6 - 1,20 \cdot 10^6}{1,60 \cdot 10^7} \\
+      &= 0
+  \end{align*}
+  Esto claramente es incorrecto.
+
+  Los cálculos en punto flotante son aproximaciones de números reales.
+  Los formatos y operaciones se han definido
+  (por el estándar IEEE~745~%
+    \cite{IEEE19:_754_floating_point},
+   también estándar internacional~%
+    \cite{ISO11:_floating_point})
+   de forma que las operaciones cumplen una regla simple:
+   \begin{equation}
+     \label{eq:fp-def}
+     \mathrm{fl}(x)
+       = x (1 + \delta)
+       \quad  \lvert \delta \rvert \le \varepsilon
+   \end{equation}
+   Acá \(\varepsilon\) describe la precisión de los valores,
+   se le conoce como \emph{epsilon de la máquina}.
+   En C este valor se define en el encabezado
+   \lstinline[language = C]!float.h!
+   para los distintos tipos estándar de punto flotante
+   (\lstinline[language = C]!FLT_EPSILON! para \lstinline[language = C]!float!,
+    \lstinline[language = C]!DBL_EPSILON!
+      para \lstinline[language = C]!double!,
+    \lstinline[language = C]!LDBL_EPSILON!
+     para \lstinline[language = C]!long double!),
+   en C++ el encabezado \lstinline[language = C++]!limits!
+   define \lstinline[language = C++]!std::numeric_limits<T>::epsilon()!
+   para los diferentes tipos \lstinline[language = C++]!T!.
+   Otros lenguajes,
+   o bibliotecas que ofrezcan precisiones no estándar,
+   documentarán el valor alguna forma.
+
+   Con estas cotas,
+   tenemos por ejemplo:
+   \begin{align*}
+     \mathrm{fl}(\operatorname{fl}(x) \cdot \operatorname{fl}(y))
+       &= \mathrm{fl}(x (1 + \delta_x) \cdot y (1 + \delta_y)) \\
+       &= (x (1 + \delta_x) \cdot y (1 + \delta_y)) (1 + \delta_{x y}) \\
+       &= x y
+           (1 + \delta_x + \delta_y + \delta_{x y}
+              + \delta_x \delta_y
+                  + \delta_x \delta_{x y}
+                  + \delta_y \delta_{x y}
+              + \delta_x \delta_y \delta_{x y})
+   \end{align*}
+   El error relativo cumple:
+   \begin{align*}
+     \delta_x + \delta_y + \delta_{x y}
+        + \delta_x \delta_y
+            + \delta_x \delta_{x y}
+            + \delta_y \delta_{x y}
+        + \delta_x \delta_y \delta_{x y}
+        \le 3 \varepsilon + 3 \varepsilon^2 + \varepsilon^3
+   \end{align*}
+   O sea,
+   aproximadamente \(3 \varepsilon\).
+   Un desarrollo similar vale para división.
+
+   El caso de sumas y restas es diferente:
+   \begin{align*}
+     \mathrm{fl}(\operatorname{fl}(x) + \operatorname{fl}(y))
+       &= \mathrm{fl}(x (1 + \delta_x) + y (1 + \delta_y)) \\
+       &= (x (1 + \delta_x) + y (1 + \delta_y)) (1 + \delta_{x + y}) \\
+       &= x + y
+            + x (\delta_x + \delta_{x + y} + \delta_x \delta_{x + y})
+            + y (\delta_y + \delta_{x + y} + \delta_y \delta_{x + y})
+   \end{align*}
+   El error absoluto cumple:
+   \begin{equation*}
+     x (\delta_x + \delta_{x + y} + \delta_x \delta_{x + y})
+       + y (\delta_y + \delta_{x + y} + \delta_y \delta_{x + y})
+       \le (\lvert x \rvert + \lvert y \rvert) (2 \varepsilon + \varepsilon^2)
+   \end{equation*}
+   Si ambos operandos son del mismo signo,
+   el error relativo es aproximadamente \(2 \varepsilon\);
+   si tienen signo opuesto puede producirse cancelación catastrófica,
+   para \(\lvert x \rvert \le \lvert y \rvert\)
+   el error relativo está acotado por:
+   \begin{equation*}
+     \frac{\lvert x \rvert + \lvert y \rvert}
+          {\lvert y \rvert - \lvert x \rvert}
+       \cdot 2 \varepsilon
+   \end{equation*}
+   donde el primer factor es arbitrariamente grande.
+
+   Una discusión más detallada ofrece Haberman~%
+     \cite{haberman14:_float_point_demystified_part1,
+           haberman16:_float_point_demystified_part2}
+   o el clásico texto de Goldberg~%
+     \cite{goldberg91:_what_every_cs_should_know_fp}.
+
+\section{Propagación de errores}
+\label{sec:propagacion-errores}
+
+  Considere calcular el valor \(y = f(x)\).
+  Solo podemos calcular una aproximación \(y^*\),
+  hay dos maneras de cuantificar el error asociado a esta aproximación.
+  Para simplificar,
+  supondremos que la función \(f\) es conocida,
+  por lo discutido antes es común que solo se conozca en forma aproximada.
+
+\subsection{Hacia adelante}
+\label{sec:error-adelante}
+
+  En inglés,
+  se habla de \emph{\foreignlanguage{english}{forward error}}.
+  Es una medida de la diferencia entre la aproximación \(y^*\)
+  y el valor correcto \(y\),
+  ya sea absoluto o relativo.
+  Como no conocemos \(y\),
+  solo podemos obtener una cota superior.
+  Suele ser difícil obtener cotas ajustadas.
+
+  Una técnica es aproximar la función por la serie de Taylor
+  centrada en \(x\),
+  o sea usar:
+  \begin{align*}
+    f(x^*)
+      = f(x) + f'(x) (x^* - x) + \frac{1}{2} f''(x) (x^* - x)^2 + \dotsb
+  \end{align*}
+  Suponiendo que el error \(\Delta x = x^* - x\) es de pequeña magnitud,
+  obtenemos una aproximación razonable truncando luego del término lineal
+  (considerar términos de grado mayor
+   complica las cosas,
+   para \(\Delta x\) pequeño no aporta mucho).
+  Además formalmente solo podemos acotar la magnitud del error,
+  no conocemos su signo.
+  Una cota aproximada para el error en \(y\) es entonces:
+  \begin{equation*}
+    \lvert y^* - y \rvert
+      \approx \lvert f'(x) \rvert \cdot \lvert \Delta x \rvert
+  \end{equation*}
+  En caso que hayan más datos de entrada,
+  se usa la serie de Taylor en múltiples variables,
+  conservando los términos lineales únicamente.
+
+\subsection{Hacia atrás}
+\label{sec:error-atras}
+
+  En inglés,
+  \emph{\foreignlanguage{english}{backward error}}.
+  Acá la pregunta es,
+  conozco \(y^*\),
+  que es respuesta a algún problema \(f(x^*)\).
+  Específicamente,
+  nos interesa el mínimo \(\Delta x\) tal que:
+  \begin{equation*}
+    y^*
+      = f(x^* + \Delta x)
+  \end{equation*}
+  A tal \(\lvert \Delta x \rvert\)
+  (o \(\lvert \Delta x \rvert / \lvert x^* \rvert\))
+  se le llama el error hacia atrás.
+  Suele ser más fácil de calcular,
+  y obtener cotas ajustadas.
+
+  Por ejemplo,
+  si nos interesa \(y = \sqrt{2}\) y tenemos el valor aproximado \(y^* = 1,4\),
+  el error es:
+  \begin{description}
+  \item[Hacia adelante:]
+    \(\lvert \Delta y \rvert
+        = \lvert 1,4 - 1,41421\ldots \rvert
+        \approx 0,0121\)
+  \item[Hacia atrás:]
+    \(\lvert \Delta x \rvert
+        = \lvert (1,4)^2 - 2 \rvert
+        = 0,04\)
+  \end{description}
+
+\section{Estabilidad y condicionamiento}
+\label{sec:estabilidad-condicionamiento}
+
+  Consideremos el problema de valor inicial:
+  \begin{equation*}
+    u'(t) - 2 u(t)
+      = - \mathrm{e}^{-t}
+      \quad u(0) = \frac{1}{3}
+  \end{equation*}
+  La solución es un simple ejercicio:
+  \begin{equation*}
+    u(t)
+      = \frac{1}{3} \mathrm{e}^{-t}
+  \end{equation*}
+  Esto decae exponencialmente cuando \(t \to \infty\).
+
+  En un computador,
+  con precisión finita en binario,
+  no podemos representar \(1/3\) en forma exacta,
+  en el mejor caso estamos resolviendo algo como:
+  \begin{equation*}
+    v' - 2 v
+      = - \mathrm{e}^{-t}
+      \quad v(0) = \frac{1}{3} + \varepsilon
+  \end{equation*}
+  donde \(\varepsilon\) es el error en la representación de \(1/3\).
+  Su solución es:
+  \begin{equation*}
+    v(t)
+      = \frac{1}{3} \mathrm{e}^{-t} + \varepsilon \mathrm{e}^{2 t}
+  \end{equation*}
+  Esta solución crece exponencialmente,
+  el error cometido solo en el valor inicial
+  pronto abruma la verdadera solución.
+  Note que estamos resolviendo el problema en forma exacta,
+  el error es inherente al problema,
+  no a nuestra técnica de solución.
+
+  Vale decir,
+  hay problemas cuyas soluciones son muy sensibles a los datos de entrada,
+  se les llama \emph{mal condicionados}
+  (en inglés \emph{\foreignlanguage{english}{ill-conditioned}}).
+  Podemos considerar un problema como una función \(f(x)\)
+  de un dato de entrada,
+  suele cuantificarse la condición del problema \(y = f(x)\) mediante
+  el \emph{número de condición},
+  el error relativo de \(y\) dividido por el de \(x\):
+  \begin{align*}
+    \frac{\frac{\lvert \Delta y \rvert}{\lvert y \rvert}}
+         {\frac{\lvert \Delta x \rvert}{\lvert x \rvert}}
+      &=       \frac{\lvert \Delta y \rvert}{\lvert \Delta x \rvert}
+                 \cdot \left\lvert \frac{x}{y} \right\rvert \\
+      &\approx \left\lvert \frac{x f'(x)}{f(x)} \right\rvert
+  \end{align*}
+  Si el número de condición es alto,
+  el problema es mal condicionado.
+  Definiciones similares se aplican cuando hay más datos de entrada.
+
+  Un ejemplo simple de este tipo de fenómeno se da
+  al calcular \(f(x) = \ln x\)
+  para \(x\) cercano a \num{1}.
+  El número de condición para este problema puede aproximarse por:
+  \begin{align*}
+    \frac{\lvert x f'(x) \rvert}{\lvert f(x) \rvert}
+      &=  \frac{\lvert x \cdot 1 / x \rvert}{\lvert \ln x \rvert} \\
+      &=  \frac{1}{\lvert \ln x \rvert}
+  \end{align*}
+  Para \(x\) cercano a \num{1},
+  \(\ln x\) es cercano a \num{0},
+  el problema es mal condicionado.
+  Para ayudar a evitar este problema,
+  POSIX especifica la función \lstinline[language = C]!log1p(3)!,
+  que retorna el logaritmo natural de \(1 + x\).
+
+  Wilkinson~%
+    \cite{wilkinson59:_ill_conditioned-_poly-I,
+          wilkinson59:_ill_conditioned-_poly-II}
+  al probar un conjunto de rutinas de punto flotante
+  para un computador temprano
+  por casualidad se tropezó con el fenómeno que discutiremos.
+  Da un resumen divertido en~%
+    \cite{wilkinson84:_perfidious_polynomial}.
+  Calculó los coeficientes de un polinomio con ceros conocidos,
+  y luego calculó numéricamente los ceros del polinomio resultante.
+  Obtuvo resultados muy extraños,
+  lo que lo llevó a una semana de búsqueda de errores en sus rutinas,
+  sin hallar nada.
+  Finalmente cayó en cuenta que mínimas diferencias en los coeficientes
+  (como los introducidos al redondear)
+  pueden tener gran efecto sobre los ceros.
+
+  Para ilustrar el fenómeno,
+  consideremos el polinomio:
+  \begin{equation*}
+    p(x)
+      = (x - 1) (x - 2) \dotsm (x - 10)
+  \end{equation*}
+  Conocemos sus ceros en forma exacta.
+  Introduciremos una pequeña perturbación en un solo término.
+  Cabe esperar que los ceros del polinomio:
+  \begin{equation*}
+    q(x)
+      = p(x) + x^5
+  \end{equation*}
+  sean cercanos,
+  la diferencia está en los términos
+  \(- 902055 x^5\) en \(p\)
+  y \(- 902054 x^5\) en \(q\),
+  una diferencia de \(0,0001\%\) en un coeficiente.
+  Pero los ceros de \(q(x)\) son:
+  \begin{align*}
+    &1,0000027558, \quad 1,99921, \quad 3,02591, \quad 3,82275, \\
+    &5,24676 \pm 0,751485 \mathrm{i}, \quad
+       7,57271 \pm 1,11728 \mathrm{i}, \quad
+       9,75659 \pm 0,368389 \mathrm{i}
+  \end{align*}
+  El menor cero es cercano,
+  los demás se alejan crecientemente
+  y los últimos seis mutan a complejos conjugados.
+  Cerca de un cero de \(p\),
+  \(q(x) \approx x^5\),
+  que para \(x\) grande es muy grande.
+
+  Otro fenómeno se produce cuando errores intermedios del algoritmo
+  se amplifican,
+  posiblemente abrumando el resultado.
+  Esta situación se llama \emph{inestabilidad}.
+  Un ejemplo es calcular la integral:
+  \begin{equation}
+    \label{eq:integral-recurrencia}
+    I_n
+      = \int_0^1 x^n \mathrm{e}^{x - 1} \, \mathrm{d} x
+  \end{equation}
+  Por integración por partes obtenemos la recurrencia:
+  \begin{equation*}
+    I_n
+      = 1 - n I_{n - 1}
+      \quad I_0 = 1 - \mathrm{e^{-1}}
+  \end{equation*}
+  Esta es una forma exacta y eficiente de calcular \(I_n\),
+  sin embargo si se efectúa con \num{6} cifras
+  el valor calculado de \(I_9\) es negativo.
+
+  Note que estas dos situaciones son diferentes,
+  el condicionamiento es inherente al problema,
+  la estabilidad es una característica del algoritmo.
+  Obtener una solución a un problema mal condicionado será difícil,
+  incluso con un algoritmo estable.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-01previa}
+
+  \begin{enumerate}
+  \item
+    En la fórmula tradicional para los ceros de la función cuadrática:
+    \begin{equation*}
+      a x^2 + b x + c
+    \end{equation*}
+    \begin{equation*}
+      x_1, x_2
+        = \frac{-b \pm \sqrt{b^2 - 4 a c}}{2 a}
+    \end{equation*}
+    si \(b^2\) es mucho mayor que \(4 a c\),
+    en uno de los casos se restan términos parecidos,
+    y el resultado es muy poco preciso.
+    Proponga una técnica para obtener valores precisos de ambos ceros
+    usando la fórmula de Vieta,
+    \(x_1 x_2 = c / a\).
+    Considere además los diferentes casos especiales que se producen,
+    si \(a \approx 0\) o \(c \approx 0\).
+    Prográmela en Python.
+  \item
+    Calcule el valor de \(\mathrm{e}^{-5.3}\),
+    usando \num{4} cifras significativas en los valores intermedios:
+    \begin{enumerate}
+    \item
+      Usando directamente la serie de Maclaurin
+    \item
+      Mediante la identidad:
+      \begin{equation*}
+        \mathrm{e}^{-5,3}
+          = \frac{1}{\mathrm{e}^{5,3}}
+      \end{equation*}
+      y calculando la exponencial mediante la serie
+    \end{enumerate}
+    Compare con el valor exacto \num{0,00499159390691021621}.
+  \item
+    Complete el ejemplo de algoritmo inestable
+    de cálculo de la integral~\eqref{eq:integral-recurrencia}
+    efectuando los cálculos indicados.
+    Analice la estabilidad de la iteración.
+  \item
+    Analice la iteración:
+    \begin{equation*}
+      x_{n + 2}
+        = a x_{n + 1} + b x_n
+    \end{equation*}
+    desde el punto de vista de estabilidad,
+    para distintos valores de \(a\) y \(b\).
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  XVII CORDIC IEEE Quake IV epsilon modelamiento C ill
+% LocalWords:  operandos english forward backward conditioned POSIX
+% LocalWords:  crecientemente recurrencia Prográmela et fl eq

@@ -1,0 +1,63 @@
+\documentclass[spanish, fleqn]{standalone}
+\usepackage{babel}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\pgfplotsset{compat = 1.16}
+
+\usetikzlibrary{arrows}
+
+\begin{document}
+  \begin{tikzpicture}
+    \begin{axis}[domain = 0:1,
+                 axis x line = bottom, axis y line = left,
+                 xmin = 0, xmax = 1,
+                 ymin = 0, ymax = 1,
+                 xtick = {0.1, 0.5000066, 0.678700259368431587, 0.7312996515938205, 0.74701294446039, 0.7518459248664618, 0.7533485113148211, 0.75},
+                 xticklabels = {\(x_0^{\phantom{\ast}}\),
+                                \(x_1^{\phantom{\ast}}\),
+                                \(x_2^{\phantom{\ast}}\),
+                                \(\),
+                                \(\),
+                                \(\),
+                                \(\),
+                                \(x^{\ast}_{\phantom{0}}\)},
+                 ytick style = {draw = none},
+                 yticklabels = {}]
+
+      \addplot[mark = none, blue] {x};
+      \addplot[mark = none, red]
+        {680 * x^3 / 1521 - 1270 * x^2 / 1521 + 16409 * x / 20280 + 5773 / 13520};
+
+    \draw [blue, very thin, dashed]
+       (axis cs:0.1, 0) -- (axis cs:0.1, 0.5000066);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.1, 0.5000066) -- (axis cs:0.5000066, 0.5000066);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.5000066, 0.5000066) -- (axis cs:0.5000066, 0.678700259368431587);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.5000066, 0.678700259368431587) -- (axis cs:0.678700259368431587, 0.678700259368431587);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.678700259368431587, 0.678700259368431587) -- (axis cs:0.678700259368431587, 0.7312996515938205);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.678700259368431587, 0.678700259368431587) -- (axis cs:0.678700259368431587, 0.7312996515938205);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.678700259368431587, 0.7312996515938205) -- (axis cs:0.7312996515938205, 0.7312996515938205);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.7312996515938205, 0.7312996515938205) -- (axis cs:0.7312996515938205, 0.74701294446039);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.7312996515938205, 0.7312996515938205) -- (axis cs:0.7312996515938205, 0.74701294446039);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.7312996515938205, 0.74701294446039) -- (axis cs:0.74701294446039, 0.74701294446039);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.74701294446039, 0.74701294446039) -- (axis cs:0.74701294446039, 0.7518459248664618);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.74701294446039, 0.74701294446039) -- (axis cs:0.74701294446039, 0.7518459248664618);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.74701294446039, 0.7518459248664618) -- (axis cs:0.7518459248664618, 0.7518459248664618);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.7518459248664618, 0.7518459248664618) -- (axis cs:0.7518459248664618, 0.7533485113148211);
+    \draw [blue, very thin, dashed]
+       (axis cs:0.7518459248664618, 0.7533485113148211) -- (axis cs:0.7533485113148211, 0.7533485113148211);
+    \end{axis}
+  \end{tikzpicture}
+\end{document}

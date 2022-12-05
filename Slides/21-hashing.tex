@@ -1,0 +1,859 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{mathrsfs}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{siunitx}
+\usepackage{listings}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+\DeclareMathOperator{\var}{var}
+
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Hashing}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{La idea}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Idea de hashing}
+
+  \uncover<+->{
+    Si queremos guardar datos asociados a alguna clave,
+    lo maś simple es ponerlos en un arreglo usando la clave como índice.
+  }
+  \uncover<+->{
+    Pero muchas veces un arreglo de tamaño suficiente
+    para contener todas las posibles claves
+    es prohibitivamente grande.
+  }
+
+  \uncover<+->{
+    Por ejemplo,
+    un arreglo con los sansanos,
+    organizado por rol.
+  }
+  \uncover<+->{
+    Son demasiados roles posibles.
+  }
+  \uncover<+->{
+    Si extraemos parte del rol para usarlo de índice,
+    habrán muchos repetidos.
+  }
+  \\ \medskip
+  \uncover<+->{
+    La idea central
+    es elegir una \emph{función de hashing} \(h\)
+    que mapea toda clave posible \(x\)
+    a un entero pequeño \(h(x)\).
+    Almacenamos el objeto asociado a \(x\)
+    en la posición \(h(x)\) de un arreglo,
+    este arreglo es la \emph{tabla \foreignlanguage{english}{hash}}.
+  }
+  \uncover<+->{
+    En inglés,
+    \emph{\foreignlanguage{english}{to hash}} es \emph{picar},
+    lo que viene de la figura de hacer picadillo de la clave
+    y usar
+    (parte de)
+    el resultado como índice.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Características de hashing}
+
+  \uncover<+->{
+    La descripción somera inmediatamente plantea interrogantes:
+  }
+  \begin{itemize}
+  \item
+    ¿Qué hacemos con claves que van a dar al mismo casillero?
+  \item
+    ¿Qué desempeño podemos esperar?
+    \uncover<+->{
+      ¿Cómo analizar estructuras de datos o algoritmos
+      que no tienen comportamiento determinado?
+    }
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Características de hashing}
+
+  \uncover<+->{
+    La importancia de esta idea
+    es que ofrece algoritmos que dan tiempos de búsqueda
+    constantes,
+    independientes del número de datos almacenados.
+  }
+  \uncover<+->{
+    Por esta razón es la técnica de búsqueda preferida.
+  }
+  \uncover<+->{
+    Lo malo es que el buen rendimiento es solo en valor esperado,
+    los peores casos son \emph{muy} malos
+    (pero extremadamente poco probables si se toman precauciones apropiadas).
+  }
+  \\ \medskip
+  \uncover<+->{
+    El análisis de los algoritmos discutidos
+    requiere rudimentos de probabilidades.
+    Usaremos varias cotas simples,
+    pero extraordinariamente útiles.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algunos resultados previos}
+
+  \uncover<+->{
+    Primero un límite clásico:
+  }
+  \begin{lemma}<+->
+    Para todo \(x \in \mathbb{R}\) se tiene que:
+    \begin{equation*}
+      \lim_{n \to \infty} \left( 1 + \frac{x}{n} \right)^n
+        = \mathrm{e}^x
+    \end{equation*}
+  \end{lemma}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algunos resultados previos}
+
+  \begin{proof}<+->
+    Como \(\mathrm{e}^x\) es continua,
+    podemos escribir:
+    \begin{align*}
+      \lim_{n \to \infty} \left( 1 + \frac{x}{n} \right)^n
+        &= \exp\left(
+                 \lim_{n \to \infty} n \ln \left( 1 + \frac{x}{n} \right)
+               \right) \\
+        &= \exp\left(
+                  \lim_{n \to \infty} \frac{\ln (1 + x / n)}{1/n}
+               \right) \\
+        &= \exp\left(
+                  \lim_{n \to \infty}
+                   \frac{\frac{- x / n^2}{1 + x / n}}{- 1 / n^2}
+               \right) \\
+        &= \mathrm{e}^x
+    \end{align*}
+    Acá usamos l'Hôpital para calcular el límite interno.
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algunos resultados previos}
+
+  \uncover<+->{
+    Luego un par de cotas extremadamente útiles.
+  }
+  \begin{lemma}<+->
+    Para todo \(x \ge 0\):
+    \begin{equation*}
+      1 + x
+        \le \left( 1 + \frac{x}{n} \right)^n
+        \le \mathrm{e}^x
+    \end{equation*}
+  \end{lemma}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algunos resultados previos}
+
+  \uncover<+->{
+    \textcolor{blue}{Demostración.} \\
+    Para la primera desigualdad,
+    del teorema del binomio:
+    \begin{align*}
+      \left( 1 + \frac{x}{n} \right)^n
+        &=   \sum_k \binom{n}{k} \left( \frac{x}{n} \right)^k \\
+        &=   1 + x
+               + \sum_{k \ge 2} \binom{n}{k} \left( \frac{x}{n} \right)^k \\
+        &\ge 1 + x
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algunos resultados previos}
+
+  \uncover<+->{
+    Para la segunda desigualdad
+    escribimos por el teorema del binomio:
+    \begin{align*}
+      \left( 1 + \frac{x}{n} \right)^n
+        &= \sum_{k \ge 0} \binom{n}{k} \left( \frac{x}{n} \right)^k \\
+        &= \sum_{k \ge 0} \frac{n^{\underline{k}}}{n^k} \frac{x^k}{k!}
+    \end{align*}
+    Comparando con la serie para \(\mathrm{e}^x\),
+    ambas son series de términos positivos ya que \(x\) no es negativo,
+    como \(n^{\underline{k}} / n^k \le 1\)
+    los términos de la segunda acotan a los de la primera por arriba.
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algunos resultados previos}
+
+  \uncover<+->{
+    Otro resultado que requeriremos es la cota siguiente:
+  }
+  \begin{lemma}<+->
+    Para \(n > t > 0\) se cumple:
+    \begin{equation*}
+      \binom{n}{t}
+        \le \frac{n^n}{t^t (n - t)^{n - t}}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}<+->
+    La demostración es bastante larga,
+    vea el detalle en el apunte.
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Hashing}
+
+  \uncover<+->{
+    Interesa almacenar \(n\) objetos,
+    de un universo \(\mathscr{U}\).
+  }
+  \uncover<+->{
+    La tabla \emph{\foreignlanguage{english}{hash}}
+    es un arreglo \(T[0..m - 1]\),
+    donde \(m\) es el tamaño de la tabla.
+    Buscamos que \(m\) no sea mucho mayor que \(n\) para ahorrar espacio.
+  }
+  \uncover<+->{
+    En estos términos:
+    \begin{equation*}
+      h \colon \mathscr{U} \to [0, m - 1]
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Hashing}
+
+  \uncover<+->{
+    En caso que \(m < \lvert \mathscr{U} \rvert\)
+    necesariamente debemos manejar \emph{colisiones},
+    situaciones en que queremos almacenar dos objetos \(x \ne y\)
+    tales que \(h(x) = h(y)\).
+    Para esto hay tres alternativas de solución:
+  }
+  \begin{description}
+  \item[Direccionamiento cerrado:]
+    Objetos que colisionan se almacenan en una estructura secundaria,
+    como una lista.
+  \item[Direccionamiento abierto:]
+    Si se produce una colisión,
+    almacenamos uno de los objetos en alguna ubicación libre de la tabla.
+  \item[Hashing perfecto:]
+    Si conocemos los objetos a almacenar de antemano,
+    podemos elegir \(h\) de forma que no hayan colisiones
+    para una tabla de tamaño adecuado.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Hashing perfecto}
+
+  \uncover<+->{
+    Las funciones de \emph{\foreignlanguage{english}{hashing}} perfectas
+    son relativamente raras.
+  }
+  \uncover<+->{
+    Hay técnicas razonablemente eficientes para construir funciones de hashing
+    perfectas si las claves son \emph{\foreignlanguage{english}{string}}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Importancia del azar}
+
+  \uncover<+->{
+    Si aparecen muchos objetos que caen en la misma posición,
+    ya sea por mala suerte o por elección maliciosa,
+    el rendimiento será horrible.
+  }
+  \uncover<+->{
+    Es un riesgo de seguridad
+    al procesar datos controlados
+    por un adversario
+    (ataques de complejidad algorítmica).
+  }
+  \\ \medskip
+  \uncover<+->{
+    La solución práctica es elegir la función al azar
+    entre una colección suficientemente grande.
+  }
+  \uncover<+->{
+    Específicamente,
+    fijamos una colección de funciones \(\mathscr{H}\)
+    de \(\mathscr{U}\) a \([0, m - 1]\),
+    y elegimos \(h \in \mathscr{H}\) al azar según alguna distribución.
+    Distintos conjuntos de funciones y distribuciones
+    dan garantías teóricas diferentes.
+  }
+\end{frame}
+
+\section{Propiedades de colecciones de funciones}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Colecciones de funciones}
+  \framesubtitle{Hashing ideal al azar}
+
+  \uncover<+->{
+    El análisis teórico es más simple
+    si se suponen funciones \emph{\foreignlanguage{english}{hash}}
+    \emph{ideales al azar},
+    se elige \(h\) uniformemente al azar
+    entre todas las funciones de \(\mathscr{U}\) a \([0, m - 1]\).
+  }
+  \uncover<+->{
+    Es un modelo simple y limpio,
+    pero requiere elegir el valor de \(h(x)\) al azar para cada \(x\).
+    Con eso estamos de vuelta al comienzo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Colecciones de funciones}
+  \framesubtitle{Uniformidad}
+
+  \uncover<+->{
+    En la práctica,
+    nos restringimos a familias de funciones
+    \textquote{lo suficientemente al azar}
+    para dar buen rendimiento.
+  }
+
+  \uncover<+->{
+    La familia de funciones \(\mathscr{H}\) se llama \emph{uniforme}
+    si eligiendo una función \(h\) uniformemente al azar de \(\mathscr{H}\)
+    cada valor es igualmente probable para cada objeto del universo:
+    \begin{equation*}
+      \Pr_{h \in \mathscr{H}}[ h(x) = i ]
+        = \frac{1}{m}
+        \quad\text{para todo \(x \in \mathscr{U}\)
+                   y todo \(i \in [0, m - 1]\)}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Sin embargo,
+    esto no es particularmente relevante.
+    Considere la familia \(\mathscr{K}\) de funciones
+    definidas como \(\mathrm{const}_a(x) = a\) para todo \(x\).
+    La familia \(\mathscr{K}\) es perfectamente uniforme y totalmente inútil.
+  }
+
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Colecciones de funciones}
+  \framesubtitle{Universalidad}
+
+  \uncover<+->{
+    Lo que buscamos realmente es minimizar colisiones.
+    La familia \(\mathscr{H}\) se llama \emph{universal}
+    si la probabilidad de colisión entre dos objetos diferentes
+    es la menor posible:
+    \begin{equation*}
+      \Pr_{h \in \mathscr{H}}[ h(x) = h(y) ]
+        \le \frac{1}{m}
+        \quad\text{para todo \(x \ne y\)}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Colecciones de funciones}
+  \framesubtitle{\(k\)-uniformidad}
+
+  \uncover<+->{
+    Análisis más detallado
+    requiere considerar colisiones en grupos mayores de objetos.
+  }
+  \uncover<+->{
+    Para cada entero \(k\) se dice que la familia \(\mathscr{H}\)
+    es \emph{fuertemente \(k\)\nobreakdash-universal}
+    o \emph{\(k\)\nobreakdash-uniforme}
+    si para toda colección de \(k\) objetos distintos
+    y de \(k\) índices:
+    \begin{equation*}
+      \Pr_{h \in \mathscr{H}}
+         \left[
+           \bigwedge_{1 \le j \le k} h(x_j) = i_j
+         \right]
+         = \frac{1}{m^k}
+        \quad\text{}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Familias de funciones \emph{\foreignlanguage{english}{hash}} ideales al azar
+    son \(k\)\nobreakdash-uniformes para todo \(k\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Una familia de funciones hash universal}
+
+  \uncover<+->{
+    Una familia universal explícita es la dada por:
+  }
+  \begin{theorem}<+->
+    Sea \(p\) primo.
+    Para cualquier par de enteros \((a, b)\)
+    con \(1 \le a < p\) y \(0 \le b < p\)
+    y \(m \le p\)
+    defina:
+    \begin{equation*}
+      h_{a, b}(x)
+        = ((a x + b) \bmod p) \bmod m
+    \end{equation*}
+    Esta familia es universal.
+  \end{theorem}
+  \uncover<+->{
+    Para aplicar esto en la práctica,
+    al momento de crear la tabla se eligen \(a\) y \(b\)
+    uniformemente al azar y se usan durante su existencia.
+  }
+\end{frame}
+
+\section{Direccionamiento cerrado}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+
+  \uncover<+->{
+    Esta situación es la más sencilla de analizar matemáticamente,
+    usando herramientas simples de probabilidades.
+    Suponemos \emph{\foreignlanguage{english}{hashing}} ideal.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Elementos esperados por posición}
+
+  \uncover<+->{
+    Suponemos \(n\) elementos que se almacenan en una tabla de tamaño \(m\).
+  }
+
+  \uncover<+->{
+    Sea \(X_i\) el número de objetos en la posición \(i\) de la tabla.
+    Es claro que:
+    \begin{equation*}
+      \sum_i X_i
+        = n
+    \end{equation*}
+  }
+  \uncover<+->{
+    Por linealidad sabemos entonces:
+    \begin{equation*}
+      \sum_i \Exp[ X_i ]
+        = n
+    \end{equation*}
+  }
+  \uncover<+->{
+    Por simetría,
+    \(\Exp[ X_i ]\) no depende de \(i\):
+    \begin{equation*}
+      \Exp[ X_i ]
+        = \frac{n}{m}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Elementos esperados por posición}
+
+  \uncover<+->{
+    Hemos demostrado:
+  }
+  \begin{theorem}<+->
+    Con \emph{\foreignlanguage{english}{hashing}} ideal,
+    al almacenar \(n\) objetos en una tabla de tamaño \(m\),
+    el número esperado de objetos en cada posición es \(n/m\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Número esperado de posiciones libres}
+
+  \uncover<+->{
+    Después de agregar un objeto a la tabla,
+    la probabilidad que la posición \(i\) esté vacía es \(1 - 1/m\).
+  }
+  \uncover<+->{
+    Después de \(n\) objetos agregados a la tabla,
+    la probabilidad que siga vacío es \((1 - 1/m)^n\)
+    (son \(n\) intentos independientes).
+  }
+  \uncover<+->{
+    Consideremos la misma secuencia de objetos,
+    y sea \(X_i = 1\) si la posición \(i\) está libre,
+    \(X_i = 0\) en caso contrario.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Número esperado de posiciones libres}
+
+  \uncover<+->{
+    El número de posiciones libres es:
+    \begin{equation*}
+      \sum_i X_i
+    \end{equation*}
+  }
+  \uncover<+->{
+    Nuevamente por linealidad,
+    como \(\Exp[ X_i ] = (1 - 1/m)^n\),
+    tenemos:
+    \begin{align*}
+      \Exp\left[ \sum_i X_i \right]
+        &= \sum_i \Exp[X_i] \\
+        &= \sum_i \left( 1 - \frac{1}{m} \right)^n \\
+        &= m \left( 1 - \frac{1}{m} \right)^n
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Número esperado de posiciones libres}
+
+  \uncover<+->{
+    Hemos demostrado:
+  }
+  \begin{theorem}<+->
+    Al hashear \(n\) objetos a una tabla de \(m\) ubicaciones,
+    el número esperado de ubicaciones vacías es \(m (1 - 1/m)^n\).
+  \end{theorem}
+  \uncover<+->{
+    Incidentalmente,
+    si \(n = m\),
+    la fracción esperada de espacios libres es \((1 - 1/m)^m\).
+    Cuando \(m \to \infty\),
+    por el límite clásico
+    la fracción de espacios libres es \(\mathrm{e}^{-1}\),
+    esperamos \(m/\mathrm{e}\) espacios libres,
+    casi \SI{37}{\percent}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Hashing de \emph{\foreignlanguage{english}strings}}
+
+  \uncover<+->{
+    Una función de hash popular para \emph{\foreignlanguage{english}{strings}}
+    es la de Peter J. Weinberger,
+    acá en la versión usada en el formato ELF (32 bits).
+  }
+  \uncover<+->{
+    Reducimos el rango al tamaño de la tabla mediante módulo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Hashing de \emph{\foreignlanguage{english}strings}}
+
+  \uncover<+->{
+    \lstinputlisting[firstline = 8]{ElfHash.c}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Rendimiento}
+
+  \uncover<+->{
+    Usaremos listas para cada casillero,
+    por ser lo más simple.
+    El \emph{factor de carga}
+    \(\alpha = n / m\) nunca debe ser muy grande,
+    las listas serán cortas.
+  }
+  \uncover<+->{
+    Suponemos hashing ideal.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Consideramos costos de inserción,
+    búsquedas exitosas y fallidas.
+    La unidad de costo es el número de nodos revisados.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Algoritmos}
+
+  \uncover<+->{
+    Damos algunos programas C para ilustrar los algoritmos básicos.
+  }
+  \uncover<+->{
+    Encabezado con las definiciones y declaraciones es:
+    \lstinputlisting[linerange = 4-10]{hashing.h}
+
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Algoritmos}
+
+  \uncover<+->{
+    La tabla es un arreglo de listas
+    (punteros):
+    \lstinputlisting[linerange = 9-9]{hashing.c}
+  }
+  \smallskip
+  \uncover<+->{
+    Insertar al comienzo de una lista es sencillo:
+    \lstinputlisting[linerange = 21-27]{hashing.c}
+
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Algoritmos}
+
+  \uncover<+->{
+    Insertar en la tabla es simple:
+    \lstinputlisting[linerange = 33-39]{hashing.c}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Algoritmos}
+
+  \uncover<+->{
+    Buscar es sencillo:
+    \lstinputlisting[linerange = 41-49]{hashing.c}
+
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Inserción}
+
+  \uncover<+->{
+    El número de posiciones consideradas es constante
+    (no revisamos si el elemento a insertar ya está).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Búsqueda exitosa}
+
+  \uncover<+->{
+    Sea la secuencia en que se ingresaron los objetos
+    \(\langle x_i \rangle\),
+    que suponemos todos diferentes entre sí.
+  }
+  \uncover<+->{
+    Buscamos hallar el costo promedio de búsqueda de los objetos,
+    suponiendo que cada uno es buscado con la misma frecuencia.
+    Como insertamos nuevos objetos a cada lista al comienzo,
+    debemos comparar y pasar sobre los insertados después.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Búsqueda exitosa}
+
+  \uncover<+->{
+    Sean \(X_{i j}\) variables indicadoras,
+    \(X_{i j} = [h(x_i) = h(x_j)]\).
+    Por la suposición sobre la función \(h\)
+    para todo \(i \ne j\) tenemos:
+    \begin{equation*}
+      \Exp[X_{i j}]
+        = \frac{1}{m}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Búsqueda exitosa}
+
+  \uncover<+->{
+    Comparamos con los elementos arribados después.
+    El valor esperado del número de posiciones revisadas
+    es:
+    \begin{align*}
+      \Exp\left[
+            \frac{1}{n} \sum_{1 \le i \le n}
+                          \left(
+                            1 + \sum_{i + 1 \le j \le n} \Exp[X_{i j}]
+                          \right)
+            \right]
+        &= \frac{1}{n} \sum_{1 \le i \le n}
+                            \left(
+                              1 + \sum_{i + 1 \le j \le n} \Exp[X_{i j}]
+                            \right) \\
+        &=	   \frac{1}{n} \sum_{1 \le i \le n}
+                            \left(
+                              1 + \frac{1}{m} (n - i)
+                            \right) \\
+        &=	   1 + \frac{n}{2 m} - \frac{1}{2 m} \\
+        &=	   1 + \frac{\alpha}{2} - \frac{\alpha}{2 n} \\
+        &\sim 1 + \frac{\alpha}{2}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento cerrado}
+  \framesubtitle{Búsqueda fallida}
+
+  \uncover<+->{
+    La situación es la misma anterior,
+    solo que en este caso debemos revisar la lista completa:
+  }
+  \uncover<+->{
+    \begin{align*}
+      \Exp\left[
+            \frac{1}{n} \sum_{1 \le i \le n}
+                          \left(
+                            1 + \sum_{1 \le j \le n} X_{i j}
+                          \right)
+          \right]
+        &=	   \frac{1}{n} \sum_{1 \le i \le n}
+                            \left(
+                              1 + \sum_{1 \le j \le n} \Exp[X_{i j}]
+                            \right) \\
+        &=	   \frac{1}{n} \sum_{1 \le i \le n}
+                            \left(
+                              1 + \frac{1}{m} n
+                            \right) \\
+        &=	   1 + \frac{n}{m} \\
+        &=	   1 + \alpha
+    \end{align*}
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Planteamos la idea de hashing.
+  \item
+    Definimos algunas características de interés de funciones de hashing:
+    uniformidad,
+    universalidad,
+    \(k\)\nobreakdash-uniformidad,
+    funciones ideales.
+  \item
+    Describimos las opciones de direccionamiento cerrado y abierto.
+  \item
+    El análisis de direccionamiento cerrado es sencillo.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode hashing sansanos english hash to blue
+% LocalWords:  hashear string strings Peter Weinberger ELF

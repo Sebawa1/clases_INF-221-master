@@ -1,0 +1,23 @@
+# Makefile - para presentaciones
+
+CC	= clang
+CFLAGS	= -O2 -Wall
+LIBS	= -lm
+
+PROGS	= bisection newton secant
+all: $(PROGS) fpi
+
+$(PROGS:=.o) testcases.o: testcases.h
+
+$(PROGS): %: %.o testcases.o
+	  $(CC) $(CFLAGS) -o $@ $< testcases.o -lm
+
+fpi: fpi.o
+	$(CC) $(CFLAGS) -o $@ $< -lm
+
+clean:
+	rm -f $(PROGS) fpi
+	rm -f $(PROGS:=.o) testcases.o fpi.o
+
+.PHONY: all clean
+

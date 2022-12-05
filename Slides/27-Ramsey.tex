@@ -1,0 +1,244 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{tikz}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+\DeclareMathOperator{\var}{var}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Cotas inferiores a números de Ramsey}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Números de Ramsey}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Números de Ramsey}
+
+  \uncover<+->{
+    El teorema de Ramsey dice que todo grafo de tamaño \(R(r, s)\)
+    contiene una \emph{\foreignlanguage{english}{clique}} de tamaño \(r\)
+    (un \(K_r\))
+    o un conjunto independiente
+    (vértices no unidos por arcos)
+    de tamaño \(s\).
+  }
+  \uncover<+->{
+    El punto del teorema es que \(R(r, s)\) es finito.
+  }
+  \uncover<+->{
+    Obtener valores de \(R(r, s)\)
+    ha demostrado ser extraordinariamente difícil.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Suele plantearse en términos de \(K_n\)
+    algunos de cuyos arcos se colorean de rojo
+    (presentes en el grafo)
+    los demás en azul
+    (ausentes),
+    diciendo que contiene un \(K_r\) rojo o un \(K_s\) azul.
+ }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Valor de \(R(3, 3)\)}
+
+  \uncover<+->{
+    Un ejemplo simple es:
+  }
+  \begin{theorem}<+->
+    \(R(3, 3) = 6\)
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Valor de \(R(3, 3)\)}
+
+  \uncover<+->{
+    \textcolor{blue}{Demostración.} \\
+    Consideremos \(K_6\),
+    con sus arcos coloreados de rojo o azul.
+    Elija \(v\) entre sus vértices,
+    entre los vértices restantes
+    hay al menos \(3\) unidos con arcos del mismo color a \(v\),
+    digamos rojo.
+    Si un par de estos \(3\) vértices están conectados por un arco rojo,
+    con \(v\) forman un \(K_3\) rojo.
+    Si no,
+    están unidos por arcos azules entre sí,
+    y forman un \(K_3\) azul.
+    Esto demuestra que \(R(3, 3) \le 6\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Valor de \(R(3, 3)\)}
+
+  \uncover<+->{
+    Por otro lado,
+    la figura muestra \(K_5\)
+    con arcos coloreados de rojo y azul
+    que no contiene \(K_3\) del mismo color,
+    mostrando que \(R(3, 3) > 5\).
+    \begin{center}
+      % Idea for drawing filched from
+      %	   http://www.texample.net/tikz/examples/combinatorial-graphs
+      \begin{tikzpicture}[every node/.style
+                            = {shape = circle, fill = black!75, draw = black}]
+        \draw[thick, blue] \foreach \x in {18, 90, ..., 378}
+        {
+          (\x:1.5) -- (\x+72:1.5)
+        };
+        \draw[thick, red] \foreach \x in {18, 162, ..., 738}
+        {
+          (\x:1.5) node{} -- (\x+144:1.5)
+        };
+      \end{tikzpicture}
+    \end{center}
+    \qed
+  }
+\end{frame}
+
+\section{El método probabilístico}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El método probabilístico}
+
+  \uncover<+->{
+    El método probabilístico
+    consiste en demostrar usando herramientas de probabilidades
+    que un objeto existe.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas inferiores a \(R(r, r)\)}
+
+  \uncover<+->{
+    Coloreemos \(K_n\) al azar,
+    asignándole el color rojo o azul a cada arco independientemente
+    con la misma probabilidad.
+  }
+  \uncover<+->{
+    Para un conjunto \(S\) de vértices,
+    sea \(X(S) = 1\)
+    si todos los arcos entre vértices en \(S\) son del mismo color,
+    \(X(S) = 0\) en caso contrario.
+    El número de \(K_r\) monocromáticos es simplemente la suma de \(X(S)\)
+    sobre todos los subconjuntos de \(r\) vértices.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas inferiores a \(R(r, r)\)}
+
+  \uncover<+->{
+    Sea \(S\) un conjunto de \(r\) vértices.
+    La probabilidad de que todos los arcos entre ellos
+    sean del mismo color es:
+    \begin{equation*}
+      2 \cdot 2^{- \binom{r}{2}}
+    \end{equation*}
+    (el factor \(2\) es por los dos colores).
+  }
+  \uncover<+->{
+    El número esperado de \(r\)\nobreakdash-subgrafos monocromáticos es:
+    \begin{align*}
+      \Exp\left[ \sum_{\lvert S \rvert = r} X(S) \right]
+        &=  \sum_{\lvert S \rvert = r} \Exp[X(S)] \\
+        &= \binom{n}{r} 2^{1 - \binom{r}{2}}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas inferiores a \(R(r, r)\)}
+
+  \uncover<+->{
+    Si el número esperado de \(K_r\) monocromáticos es menor a \(1\),
+    debe haber grafos sin \(K_r\) monocromáticos.
+  }
+  \uncover<+->{
+    O sea,
+    si:
+    \begin{equation*}
+      \binom{n}{r}
+        < 2^{\binom{r}{2} - 1}
+    \end{equation*}
+    hay un coloreo de los arcos de \(K_n\)
+    tal que no contiene \(K_r\) rojos ni azules.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Planteamos el método probabilísitico.
+  \item
+    Discutimos números de Ramsey.
+  \item
+    Demostramos \(R(3, 3) = 6\).
+  \item
+    Hallamos una cota inferior a \(R(r, r)\).
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode english clique blue subgrafos
+% LocalWords:  probabilísitico

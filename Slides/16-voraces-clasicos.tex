@@ -1,0 +1,864 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+%\usepackage{beamerarticle}
+
+\usepackage{ifpdf}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{babel}
+\usepackage{csquotes}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{tikz}
+
+\mode<article>{\usepackage[colorlinks, urlcolor = blue]{hyperref}}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usetikzlibrary{automata, positioning}
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Algoritmos voraces clásicos}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Introducción}
+
+\begin{frame}
+  \frametitle{Justificación}
+
+  \uncover<+->{
+    Algunos algoritmos importantes con grafos
+    son algoritmos voraces.
+  }
+
+  \uncover<+->{
+    Veremos cuatro de ellos.
+  }
+\end{frame}
+
+\section{Árbol recubridor mínimo}
+
+\begin{frame}
+  \frametitle{Definición}
+
+  \uncover<+->{
+    Un \emph{árbol recubridor del grafo \(G\)}
+    (en inglés,
+     \emph{\foreignlanguage{english}{spanning tree}})
+    es un árbol subgrafo de \(G\) que incluye todos los vértices de \(G\).
+  }
+
+  \uncover<+->{
+    Considere un grafo conexo \(G = (V, E)\),
+    con arcos rotulados con números positivos.
+  }
+  \uncover<+->{
+    Un \emph{árbol recubridor mínimo de \(G\)}
+    (en inglés,
+     \emph{\foreignlanguage{english}{minimal spanning tree}},
+     abreviado MST)
+    es un árbol recubridor de \(G\) la suma de los rótulos de cuyos arcos
+    es mínima.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Propiedad fundamental}
+
+  \begin{theorem}
+    Sea \(G = (V, E)\) un grafo como indicado,
+    y sea \(\{ V_1, V_2 \}\) una partición de \(V\).
+    Si el arco \(v_1 v_2\) tiene costo mínimo entre los arcos
+    entre \(V_1\) y \(V_2\),
+    hay un árbol recubridor mínimo de \(G\) que incluye el arco \(v_1 v_2\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedad fundamental}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Sea el grafo \(G = (V, E)\) con costos \(c \colon E \to \mathbb{R}\).
+    Sea \(V_1, V_2\) una partición de \(V\),
+    y \(e = v_1 v_2\) un arco de costo mínimo
+    con \(v_1 \in V_1\) y \(v_2 \in V_2\).
+  }
+  \uncover<+->{
+    Consideremos un árbol recubridor de costo mínimo \(T\),
+    cuyo costo anotamos \(c(T)\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedad fundamental}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Si \(e \in T\),
+    estamos listos.
+  }
+  \uncover<+->{
+    En caso contrario,
+    el grafo \(T \cup e\) tiene un único ciclo,
+    que debe incluir otros arcos entre \(V_1\) y \(V_2\).
+  }
+  \uncover<+->{
+    Sea \(e' = v_1' v_2'\) con \(v_1' \in V_1\) y \(v_2' \in V_2\),
+    \(e' \ne e\),
+    un arco del ciclo de costo mínimo.
+    Como \(e\) es mínimo entre \(V_1\) y \(V_2\),
+    \(c(e') \ge c(e)\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedad fundamental}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Intercambiando \(e\) con \(e'\),
+    obtenemos un árbol recubridor \(T'\)
+    de costo total:
+    \begin{equation*}
+      c(T') = c(T) + c(e) - c(e') \le c(T)
+    \end{equation*}
+    Como \(T\) es de costo mínimo,
+    esto debe cumplirse con igualdad,
+    esto a su vez significa \(c(e) = c(e')\),
+    el árbol recubridor~\(T'\) que incluye a~\(e'\) también es mínimo.
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Los algoritmos clásicos}
+
+  \uncover<+->{
+    Discutiremos los algoritmos clásicos
+    conocidos como de Prim y de Kruskal
+    (ninguno de ellos originado por quienes dan el nombre).
+  }
+  \uncover<+->{
+    El que resultados importantes
+    comúnmente se atribuyan a personas que no los originaron
+    se conoce como \emph{ley de eponimia de Stigler}
+    -- que Stigler mismo atribuye a Merton,
+       aunque fue expuesta antes.
+  }
+
+  \uncover<+->{
+    Es un problema muy importante,
+    hay una variedad de algoritmos adicionales.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El algoritmo de Prim}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Procedure{\(\mathrm{Prim}(G, c)\)}{
+      Sort \(E_G\) in order of increasing \(c(e)\) \;
+      \BlankLine \;
+      Select vertex \(u \in V_G\) \;
+      \(T \leftarrow (\{ u \}, \varnothing)\) \;
+      \For{\(u v \in E_G\) such that \(u \in V_T\), \(v \notin V_T\)}{
+        \(T \leftarrow (V_T \cup \{ v \}, E_T \cup \{ u v \})\) \;
+      }
+      \Return \(T\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \frametitle{El algoritmo de Kruskal}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Procedure{\(\mathrm{Kruskal}(G, c)\)}{
+      Sort \(E_G\) in order of increasing \(c(e)\) \;
+      \BlankLine \;
+      \(T \leftarrow (V_G, \varnothing)\) \;
+      \For{\(u v \in E_G\)}{
+        \If{\(u v\) doesn't form a cycle in \(T\)}{
+          \(T \leftarrow (V_G,
+                          E_T \cup \{ u v \})\) \;
+        }
+      }
+      \Return \(T\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Demostración de correctitud}
+
+  \uncover<+->{
+    Ambos son algoritmos voraces.
+  }
+  \uncover<+->{
+    Construyen el árbol recubridor de forma distinta:
+  }
+  \begin{itemize}
+  \item
+    Prim inicia con un árbol
+    (inicialmente un único vértice),
+    que extiende paso a paso con arcos que no forman ciclos.
+  \item
+    Kruskal mantiene un bosque
+    (colección de árboles,
+     inicialmente cada vértice por separado),
+    que va conectando con arcos entre ellos
+    (no formando ciclos).
+  \end{itemize}
+
+  \uncover<+->{
+    Para demostrar la crucial propiedad de Elección Voraz
+    usamos la propiedad fundamental.
+  }
+
+  \uncover<+->{
+    Las otras dos propiedades
+    (Subestructura Inductiva
+     ---no hay restricciones externas---
+     y Subestructura Óptima)
+    son evidentes.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmo de Prim}
+  \framesubtitle{Demostrar Elección Voraz}
+
+  \uncover<+->{
+    Demostrar Elección Voraz
+    es tomar como las particiones de los vértices de \(G\)
+    los vértices actualmente en el árbol que el algoritmo va construyendo
+    y los demás.
+  }
+  \uncover<+->{
+    La propiedad fundamental nos dice que hay un árbol recubridor mínimo
+    que incluye el arco elegido.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmo de Kruskal}
+  \framesubtitle{Demostrar Elección Voraz}
+
+  \uncover<+->{
+    Si tomamos como una de las partes
+    los vértices de uno cualquiera de los árboles del bosque
+    que ha construido el algoritmo de Kruskal,
+    y la otra parte como los demás vértices,
+    la propiedad fundamental nos dice que el arco de menor costo
+    entre ambas partes es parte de un árbol recubridor mínimo.
+  }
+  \uncover<+->{
+    Esto vale en particular para uno de los árboles
+    que el arco de menor costo elegido conecta.
+  }
+  \uncover<+->{
+    Hay un árbol recubridor mínimo que incluye el arco elegido.
+  }
+\end{frame}
+
+\section{Caminos más cortos desde un origen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Caminos más cortos}
+
+  \uncover<+->{
+    Otro problema importante en grafos rotulados como los descritos
+    es hallar el camino más corto entre dos vértices.
+  }
+  \uncover<+->{
+    Esto se logra si se calcula el camino de mínimo costo
+    desde un vértice a todos los demás.
+  }
+
+  \uncover<+->{
+    Un algoritmo para resolver este problema
+    si no hay arcos de costo negativo
+    lleva el nombre de Dijkstra.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo de Dijkstra}
+
+  \uncover<+->{
+    Llamamos \(\delta(v)\)
+    al costo de un camino de mínimo costo desde el origen \(s\) a \(v\).
+  }
+  \uncover<+->{
+    Funciona como sigue:
+    mantiene una partición de los vértices,
+    \(S\) y \(V \smallsetminus S\).
+  }
+  \uncover<+->{
+    En cada instante,
+    \(S\) es el conjunto de vértices
+    a los cuales ya se conocen los caminos más cortos.
+  }
+  \uncover<+->{
+    Inicialmente \(S = \{ s \}\),
+    extendemos \(S\) cada vez que conocemos a ciencia cierta
+    el costo del camino más corto hasta un vértice.
+  }
+  \uncover<+->{
+    El algoritmo realmente no mantiene un conjunto explícito \(S\),
+    lo agregamos para poder demostrar correctitud más adelante.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo de Dijkstra}
+
+  \uncover<+->{
+    Para cada vértice \(v \in V\) tenemos una variable
+    \(d[v]\) que es el costo del mejor camino desde \(s\) a \(v\)
+    que se ha hallado.
+    Los vértices se organizan en una cola de prioridad \(Q\),
+    con prioridad \(d[v]\).
+  }
+  \uncover<+->{
+    El algoritmo requiere actualizar prioridades en la cola.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El algoritmo de Dijkstra}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \ForEach{\(v \in V\)}{
+      \(d[v] \leftarrow \infty\) \;
+    }
+    \(d[s] \leftarrow 0\) \;
+    Initialize \(Q\) as empty \;
+    \ForEach{\(v \in V\)}{
+      Insert \(v\) in \(Q\) with priority \(d[v]\) \;
+    }
+    \(S \leftarrow \{ s \}\) \;
+    \While{\(Q\) not empty}{
+      \(u \leftarrow \mathrm{DeleteMin}(Q)\);
+      \(S \leftarrow S \cup \{ u \}\) \;
+      \ForEach{\(v\) neighbor of \(u\)}{
+        \If{\(d[v] > d[u] + c(u, v)\)}{
+          \(d[v] \leftarrow d[u] + c(u, v)\) \;
+          Update priority of \(v\) in \(Q\) to \(d[v]\) \;
+        }
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo de Dijkstra}
+  \framesubtitle{Demostración de correctitud}
+
+  \uncover<+->{
+    Acá el esquema de las tres propiedades no ayuda mucho.
+  }
+  \uncover<+->{
+    Recurrimos a demostrar que durante la ejecución
+    se cumple el invariante:
+    \begin{equation*}
+      \forall v \in S, d[v] = \delta[v]
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo de Dijkstra}
+  \framesubtitle{Demostración de correctitud}
+
+  \begin{description}
+  \item[Base:]
+    Al inicio es \(S = \{ s \}\),
+    es \(d[s] = \delta(s) = 0\).
+  \item[Inducción:]
+    Supongamos que cuando \(\lvert S \rvert = k\)
+    el invariante se cumple.
+    Sea \(v\) el siguiente vértice extraído de \(Q\),
+    \(p\) un camino de \(s\) a \(v\) de costo \(d[v]\)
+    Sea \(u\) el vértice inmediatamente predecesor de \(v\) en \(p\),
+    \(u \in S\) y \(d[u] = \delta[u]\) por inducción.
+
+    Aparte demostraremos por contradicción
+    que \(p\) es un camino de costo mínimo de \(s\) a \(v\).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo de Dijkstra}
+  \framesubtitle{Demostración de correctitud}
+
+  \uncover<+->{
+    Supongamos que hay un camino \(p^*\) de \(s\) a \(v\)
+    tal que \(c(p^*) = \delta(v) < c(p)\).
+  }
+  \uncover<+->{
+    Como \(p^*\) conecta al vértice \(s \in S\)
+    con el vértice \(v \in V \smallsetminus S\),
+    debe haber un primer arco \(a b \in p^*\)
+    con \(a \in S\) y \(b \in V \smallsetminus S\).
+  }
+  \uncover<+->{
+    Podemos dividir el camino en \(p_1, p_2\),
+    con \(p_1\) de \(s\) a \(a\) y \(p_2\) de \(b\) a \(v\).
+  }
+  \uncover<+->{
+    Por inducción,
+    \(d[a] = \delta[a]\).
+    Como \(p^*\) es un camino más corto,
+    \(p_1, b\) es un camino más corto de \(s\) a \(b\).
+  }
+  \uncover<+->{
+    Después de agregar \(a\) a \(S\)
+    se consideró el arco \(a b\),
+    con lo que después de actualizarlo \(d[b] = \delta[b]\).
+    Como \(v\) se agregó a \(S\) mientras \(b\) estaba en \(Q\),
+    es \(\delta[v] \le d[b]\).
+  }
+  \uncover<+->{
+    Como los pesos son no negativos,
+    \(\delta[v] = c(p^*) \ge d[b]\).
+    En conjunto con \(d[v] \le d[b]\)
+    resulta \(c(p^*) \ge d[v] = c(p)\),
+    contradiciendo que \(c(p^*) < c(p)\).
+
+  }
+\end{frame}
+
+\section{Código Huffman}
+
+\begin{frame}
+  \frametitle{Compresión de texto}
+
+  \uncover<+->{
+    En texto los distintos caracteres son de frecuencia muy desigual.
+  }
+  \uncover<+->{
+    Por ejemplo,
+    en el Quijote de la Mancha aparecen \num{355 906}~espacios,
+    \num{222 289}~veces `e',
+    \num{192 406}~veces `a',
+    pero solo \num{127}~veces `k'.
+  }
+
+  \uncover<+->{
+    Si queremos comprimir texto,
+    una forma es representar caracteres frecuentes con códigos cortos.
+  }
+  \uncover<+->{
+    Lo que buscamos es hallar un código óptimo.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Compresión de texto}
+
+  \uncover<+->{
+    Nos interesan códigos que tengan decodificación única.
+  }
+  \uncover<+->{
+    Condición suficiente para evitar ambigüedades es que
+    ningún código sea prefijo de otro
+    (en inglés,
+     \textquote{\emph{\foreignlanguage{english}{prefix-free code}}}
+     o \textquote{\emph{\foreignlanguage{english}{prefix code}}}).
+  }
+  \uncover<+->{
+    Puede demostrarse
+    que si un código puede decodificarse en forma única,
+    hay un código prefijo con códigos del mismo largo para cada símbolo.
+    Esto es importante porque un código prefijo es eficiente de decodificar.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Códigos prefijo binarios}
+
+  \uncover<+->{
+    Podemos describir un código prefijo binario como un árbol binario,
+    las hojas son los símbolos y el camino desde la raíz a la hoja es el código
+    (por ejemplo,
+     ir al hijo izquierdo es 0,
+     ir al derecho 1).
+  }
+\end{frame}
+
+\begin{frame}[t]
+  \frametitle{Códigos prefijo binarios}
+
+  El código siguiente se representa como árbol como se indica:
+  \\ \medskip
+  \begin{center}
+    \begin{tabular}[b]{cl}
+      \hline
+        \(a\) & \(0\)	\\
+        \(b\) & \(100\) \\
+        \(c\) & \(11\)	\\
+        \(d\) & \(101\) \\
+      \hline
+      & \\  % Bletcherous kludge to (somewhat) align vertically
+      &
+    \end{tabular}
+    \hspace*{3em}
+    \begin{tikzpicture}[scale = 0.75]
+      \coordinate (r)	 at (3, 3);
+      \coordinate (0)	 at (0, 2);
+      \coordinate (1)	 at (6, 2);
+      \coordinate (10)	 at (4, 1);
+      \coordinate (100)	 at (3, 0);
+      \coordinate (101)	 at (5, 0);
+      \coordinate (11)	 at (8, 1);
+
+      \draw (r)	 -- node [above] {\(0\)} (0);
+      \draw (r)	 -- node [above] {\(1\)} (1);
+      \draw (1)	 -- node [above] {\(0\)} (10);
+      \draw (1)	 -- node [above] {\(1\)} (11);
+      \draw (10) -- node [above left] {\(0\)} (100);
+      \draw (10) -- node [above right] {\(1\)} (101);
+
+      \draw [fill] (r)	 circle [radius = 3pt];
+      \draw [fill] (1)	 circle [radius = 3pt];
+      \draw [fill] (10)	 circle [radius = 3pt];
+
+      \node [below = 0.1 of 0]	 {\(a\)};
+      \node [below = 0.1 of 100] {\(b\)};
+      \node [below = 0.1 of 101] {\(d\)};
+      \node [below = 0.1 of 11]	 {\(c\)};
+    \end{tikzpicture}
+  \end{center}
+  \medskip
+  Un bit \(0\) va a un hijo izquierdo,
+  un bit \(1\) a uno derecho.
+  Así \(b\),
+  código \(100\),
+  es a la izquierda de la izquierda de la derecha de la raíz
+  (sí,
+   se lee de atrás adelante).
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Códigos prefijo binarios}
+
+  \uncover<+->{
+    Un par de observaciones sobre códigos óptimos:
+  }
+  \begin{itemize}
+  \item
+    Todo nodo interno tiene dos descendientes.
+    \uncover<+->{
+      (En caso de haber un nodo con un único hijo,
+       podemos acortar los códigos de sus descendientes
+       simplemente eliminándolo del árbol.)
+    }
+  \item
+    Las hojas a máxima profundidad en el árbol
+    tienen hojas hermanas.
+    \uncover<+->{
+      (Por la observación anterior,
+       el padre de una hoja profunda tiene dos hijos,
+       ambos hojas.)
+    }
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Códigos prefijo binarios}
+
+  \uncover<+->{
+    Dadas las frecuencias con que aparecen los símbolos en las hojas,
+    podemos asignar frecuencias a nodos internos del árbol
+    como la suma de las frecuencias de todas las hojas descendientes.
+  }
+  \\ \medskip
+  \uncover<+->{
+    El algoritmo de Huffman crea el árbol desde las hojas:
+    los símbolos de mínima frecuencia los hace hojas hermanas,
+    al padre de éstas le asigna la suma de las frecuencias.
+  }
+  \uncover<+->{
+    Considera los nuevos nodos así creados igual que las hojas,
+    agrupando siempre los nodos de menor frecuencia acumulada
+    como hijos de un nuevo nodo.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Optimalidad del código Huffman}
+
+  \begin{theorem}
+    El código Huffman es óptimo.
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Optimalidad del código Huffman}
+
+  \uncover<+->{
+    Antes de ir a la demostración,
+    algunas definiciones:
+  }
+  \begin{description}
+  \item[\(f_x\):]
+    La frecuencia del símbolo \(x\).
+  \item[\(\ell_x\):]
+    La hoja que corresponde al símbolo \(x\).
+  \item[\(R_{x y}\):]
+    El (sub)árbol de las hojas \(x\) e \(y\) con su padre.
+  \item[\(d(\ell_x)\):]
+    La profundidad de la hoja con símbolo \(x\).
+  \end{description}
+  \medskip
+  \uncover<+->{
+    Con las anteriores,
+    el número total de bits para codificar el texto \(L\)
+    con las profundidades dadas es:
+    \begin{equation*}
+      \sum_x f_x d(\ell_x)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Llamaremos \(B(R)\) al número de bits
+    que usa el código representado por el árbol \(R\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Optimalidad del código Huffman}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Usamos nuestro teorema general sobre algoritmos voraces.
+  }
+  \begin{description}
+  \item[Elección voraz:]
+    Si \(a\), \(b\) son los símbolos menos frecuentes,
+    hay un árbol óptimo que incluye \(R_{a b}\).
+
+    \uncover<+->{
+      Sea \(R\) óptimo para \(L\).
+      Si \(R_{a b}\) no es parte de \(R\),
+      sean \(\ell_x\), \(\ell_y\) dos hojas hermanas en \(R\),
+      con \(\delta = d(\ell _x) = d(\ell_y)\) máximo.
+      Consideramos el caso en que \(x, y\) y \(a, b\) son diferentes,
+      la situación en que alguno coincide es similar.
+    }
+    \uncover<+->{
+      Obtenga \(R^*\)
+      intercambiando \(x \leftrightarrow a\), \(y \leftrightarrow b\).
+      En \(R^*\):
+      \begin{equation*}
+        B(R^*)
+          = B(R) - (f_x- f_a) (\delta + d(\ell_a))
+                  - (f_y - f_b) (\delta + d(\ell_b))
+      \end{equation*}
+      Todos los términos son positivos o cero.
+      Pero \(R\) es óptimo.
+    }
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Optimalidad del código Huffman}
+  \framesubtitle{Demostración}
+
+  \begin{description}
+    \item[Estructura inductiva:]
+      Elegir un (sub)árbol no interfiere con los demás.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Optimalidad del código Huffman}
+  \framesubtitle{Demostración}
+
+  \begin{description}
+    \item[Subestructura óptima:]
+      Sea \(R'\) un árbol óptimo para el problema con el \textquote{símbolo}
+      \(x y\) con frecuencia \(f_x + f_y\).
+      Debemos demostrar que el árbol \(R\),
+      con \(x y\) reemplazado por el subárbol respectivo con \(x\) e \(y\)
+      es óptimo.
+      Usaremos primas para distinguir valores en \(R'\) de valores en \(R\).
+      Primeramente:
+      \begin{align*}
+        B(R)
+          &= \sum_{s \in \Sigma \smallsetminus \{ x, y \}} f_s d(\ell_s)
+               + f_x d(\ell_x) + f_y d(\ell_y) \\
+          &= \sum_{s \in \Sigma \smallsetminus \{ x, y \}} f_s d(\ell_s)
+               + (f_x + f_y) (d'(\ell_{x y}) + 1) \\
+          &= B(R') + f_x + f_y
+      \end{align*}
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Optimalidad del código Huffman}
+  \framesubtitle{Demostración}
+
+  \begin{description}
+  \item[]
+    Para llegar a una contradicción,
+    suponga que \(R\) no es óptimo,
+    y sea \(T\) un árbol óptimo con \(\ell_x\) e \(\ell_y\) de hojas hermanas
+    (sabemos que existe por lo anterior).
+    Sea \(T'\) el árbol que resulta de eliminar \(\ell_x\) e \(\ell_y\).
+    Podemos ver \(T'\) como un árbol
+    para el alfabeto \(\Sigma \smallsetminus \{ x, y \} \cup \{ x y \}\)
+    (agrupa \(x\) con \(y\)).
+    Podemos repetir el cálculo anterior para obtener
+    \(B(T) = B(T') + f_x + f_y\).
+    O sea:
+    \begin{align*}
+      B(R')
+        &= B(R) - f_x - f_y \\
+        &> B(T) - f_x - f_y \\
+        &= B(T')
+    \end{align*}
+    Pero supusimos que \(R'\) era óptimo.
+  \end{description}
+  \qed
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Comentarios finales}
+
+  \uncover<+->{
+    Lo anterior demuestra que el código Huffman es óptimo
+    si solo consideramos la frecuencia de los símbolos.
+  }
+  \uncover<+->{
+    Se logra mejor compresión
+    considerando secuencias de caracteres
+    (por ejemplo,
+     representar en forma compacta secuencias repetidas).
+  }
+  \uncover<+->{
+    Algoritmos prácticos de compresión de datos
+    usan código Huffman en algún nivel.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Planteamos el problema de árbol recubridor mínimo.
+  \item
+    Dos algoritmos clásicos para este problema son los de Prim y de Kruskal.
+    Son algoritmos voraces,
+    con demostración de correctitud estándar.
+  \item
+    Otro problema importante es el de hallar el camino más corto
+    de un vértice dado a los demás.
+  \item
+    Un algoritmo que resuelve este problema es el de Dijkstra.
+    Es un algoritmo voraz,
+    cuya demostración usa una técnica diferente
+    (un invariante).
+  \item
+    Planteamos el problema de código óptimo
+    para símbolos con frecuencias dadas.
+  \item
+    El código Huffman es ampliamente usado.
+    \uncover<+->{
+      Lo genera un algoritmo voraz,
+      cuya correctitud demostramos.
+    }
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Continue continue Break MST
+% LocalWords:  break KwStep step presentation english spanning tree
+% LocalWords:  correctitud prefix free code cl sub Loop loop subgrafo
+% LocalWords:  recubridor Optimalidad handout minimal eponimia Sort
+% LocalWords:  in order of increasing Select vertex such that doesn
+% LocalWords:  form cycle Initialize empty Insert with priority not
+% LocalWords:  neighbor Update to

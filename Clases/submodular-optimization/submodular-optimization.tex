@@ -1,0 +1,824 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Optimización de funciones submodulares}
+\label{cha:optimizacion-submodulares}
+
+  Vimos que muchos problemas de búsqueda importantes
+  son \NP\nobreakdash-completos,
+  con lo que la esperanza de obtener soluciones exactas es muy remota
+  para instancias grandes.
+  Una tentación obvia es usar un algoritmo voraz
+  para obtener soluciones aproximadas.
+  Sorprendentemente,
+  para muchas situaciones naturales el algoritmo voraz
+  garantiza una aproximación bastante buena.
+  La exposición siguiente sigue a Horel~%
+    \cite{horel15:_notes_greedy_algo_submodular},
+  y toma de Kun~%
+    \cite{kun14:_greedy_algo_good_enough}.
+  El punto es que las funciones submodulares,
+  que estudiaremos a continuación,
+  son comunes como objetivos de optimización
+  (por su descripción como retornos decrecientes).
+  \begin{definition}
+    \label{def:submodular}
+    Sea \(\mathscr{U}\) un conjunto
+    (el \emph{conjunto base}),
+    y una función \(f \colon 2^{\mathscr{U}} \to \mathbb{R}\).
+    Se dice que \(f\) es \emph{submodular} si para todos los conjuntos
+    \(\mathscr{A} \subseteq \mathscr{B} \subseteq \mathscr{U}\)
+    y todo elemento \(e \in \mathscr{U} \smallsetminus \mathscr{B}\):
+    \begin{equation}
+      \label{eq:submodular-def}
+      f(\mathscr{A} \cup \{ e \}) - f(\mathscr{A})
+        \ge f(\mathscr{B} \cup \{ e \}) - f(\mathscr{B})
+    \end{equation}
+  \end{definition}
+  Esta definición dice esencialmente
+  que el aporte de un elemento dado al valor de \(f\)
+  no aumenta al crecer el conjunto.
+  Es lo que suelen llamar \textquote{ley de retornos decrecientes},
+  lo que se puede ganar disminuye conforme aumenta lo que ya tenemos.
+  Kun da un ejemplo:
+  suponga que tiene un programa radial,
+  hay una colección de estaciones radiales que pueden emitirlo.
+  Cuenta con una estimación precisa de cuántos oyentes alcanza
+  para cada combinación de radios contratadas.
+  Nuestro conjunto base son las emisoras de radio.
+  Agregar una radio dada a un conjunto de radios contratadas
+  a lo más aporta el total de sus oyentes,
+  como sus oyentes pueden traslapar con otras radios,
+  agregarla a un conjunto mayor no puede hacer más aporte que en uno menor.
+  \begin{definition}
+    \label{def:submodular-monotone}
+    Sea \(f\) una función submodular sobre el conjunto base \(\mathscr{U}\).
+    Se dice que \(f\) es \emph{monótona}
+    si para todo \(\mathscr{A} \subseteq \mathscr{B} \subseteq \mathscr{U}\)
+    es \(f(\mathscr{A}) \le f(\mathscr{B})\).
+  \end{definition}
+  Vale decir,
+  \(f\) nunca disminuye al agregar elementos.
+
+  Un ejemplo simple de función submodular monótona
+  sobre \(\mathscr{U} = \{1, 2, 3, 4, 5, 6\}\) es el máximo de un subconjunto.
+  Por ejemplo,
+  si \(\mathscr{A} = \{1, 2, 4\}\) y \(\mathscr{B} = \{1, 2, 4, 5\}\),
+  para \(e \in \mathscr{U} \smallsetminus \mathscr{B} = \{3, 6\}\) tenemos:
+  \begin{alignat*}{4}
+    f(\mathscr{A} \cup \{3\}) - f(\mathscr{A})
+      &= 4 - 4 = 0
+      &\qquad&
+      f(\mathscr{B} \cup \{3\}) - f(\mathscr{B})
+      &= 5 - 5 = 0 \\
+    f(\mathscr{A} \cup \{6\}) - f(\mathscr{A})
+      &= 6 - 4 = 2
+      &\qquad&
+      f(\mathscr{B} \cup \{6\}) - f(\mathscr{B})
+      &= 6 - 5 = 1
+  \end{alignat*}
+  Demostrar que en general para \(\mathscr{U} = [1, n]\) la función
+  \(\max \colon 2^{\mathscr{U}} \to \mathbb{R}\) es submodular monótona
+  es simple,
+  y queda de ejercicio.
+  \begin{definition}
+    \label{def:marginal-utility}
+    Sea \(f\) una función submodular sobre \(\mathscr{U}\),
+    sea \(\mathscr{A} \subseteq \mathscr{U}\)
+    y sea \(e \in \mathscr{U}\).
+    Definimos la \emph{ganancia marginal} de \(e\) para \(\mathscr{A}\)
+    como:
+    \begin{equation*}
+      \Delta(e \mid \mathscr{A})
+        = f(\mathscr{A} \cup \{e\}) - f(\mathscr{A})
+    \end{equation*}
+    Extendemos lo anterior a conjuntos \(\mathscr{X} \subseteq \mathscr{U}\):
+    \begin{equation*}
+      \Delta(\mathscr{X} \mid \mathscr{A})
+        = f(\mathscr{A} \cup \mathscr{X}) - f(\mathscr{A})
+    \end{equation*}
+  \end{definition}
+  Nuestros primeros resultados describen funciones submodulares
+  en formas distintas.
+  \begin{theorem}
+    \label{theo:submodular-intersection-union}
+    La función \(f\) sobre \(\mathscr{U}\) es submodular
+    si y solo si para todo \(\mathscr{S}, \mathscr{T} \subseteq \mathscr{U}\):
+    \begin{equation}
+      \label{eq:submodular-intersection-union}
+      f(\mathscr{S} \cap \mathscr{T}) + f(\mathscr{S} \cup \mathscr{T})
+       \le f(\mathscr{S}) + f(\mathscr{T})
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    Demostramos implicancia en ambas direcciones.
+
+    Primero,
+    supongamos que \(f\) es submodular.
+    Como \(\mathscr{S} \cap \mathscr{T} \subseteq \mathscr{T}\),
+    aplicando sucesivamente la definición~\eqref{eq:submodular-def}
+    a cada elemento de \(\mathscr{S} \smallsetminus \mathscr{T}\)
+    vemos que:
+    \begin{equation*}
+      f(\mathscr{S} \cup \mathscr{T}) - f(\mathscr{T})
+        \le f(\mathscr{S}) - f(\mathscr{S} \cap \mathscr{T})
+    \end{equation*}
+    Reorganizando obtenemos~\eqref{eq:submodular-intersection-union}.
+
+    Por otro lado,
+    si se cumple~\eqref{eq:submodular-intersection-union},
+    consideremos conjuntos
+      \(\mathscr{A} \subseteq \mathscr{B} \subseteq \mathscr{U}\)
+    y un elemento \(e \in \mathscr{U} \smallsetminus \mathscr{B}\).
+    Tomando \(\mathscr{S} = \mathscr{A} \cup \{e\}\)
+    y \(\mathscr{T} = \mathscr{B}\)
+    queda:
+    \begin{align*}
+      f(\mathscr{S} \cap \mathscr{T}) + f(\mathscr{S} \cup \mathscr{T})
+        &= f(\mathscr{A}) + f(\mathscr{B} \cup \{e\}) \\
+      f(\mathscr{S}) + f(\mathscr{T})
+        &= f(\mathscr{A} \cup \{e\}) + f(\mathscr{B})
+    \end{align*}
+    Substituyendo esto en~\eqref{eq:submodular-intersection-union}
+    y reorganizando:
+    \begin{align*}
+      f(\mathscr{A}) + f(\mathscr{B} \cup \{e\})
+        &\le f(\mathscr{A} \cup \{e\}) + f(\mathscr{B}) \\
+      f(\mathscr{A} \cup \{e\}) - f(\mathscr{A})
+        &\ge f(\mathscr{B} \cup \{e\}) - f(\mathscr{B})
+    \end{align*}
+    que es exactamente~\eqref{eq:submodular-def}.
+  \end{proof}
+  Otra propiedad interesante es la siguiente:
+  \begin{definition}
+    \label{def:subaditive}
+    Una función \(f \colon \mathscr{A} \to \mathscr{B}\)
+    se dice \emph{subaditiva} si para todo \(x, y \in \mathscr{A}\):
+    \begin{equation*}
+      f(x + y)
+        \le f(x) + f(y)
+    \end{equation*}
+  \end{definition}
+  Resulta,
+  si interpretamos la suma de conjuntos como unión:
+  \begin{corollary}
+    \label{cor:submodular-subadditive}
+    Si \(f\) es una función submodular no negativa,
+    \(f\) es subaditiva.
+  \end{corollary}
+  \begin{proof}
+    Si \(f\) es submodular sobre \(\mathscr{U}\),
+    no negativa,
+    por el teorema~\ref{theo:submodular-intersection-union}
+    para todo \(\mathscr{A}, \mathscr{B} \subseteq \mathscr{U}\):
+    \begin{align*}
+      f(\mathscr{A} \cup \mathscr{B}) + f(\mathscr{A} \cap \mathscr{B})
+        &\le f(\mathscr{A}) + f(\mathscr{B}) \\
+      f(\mathscr{A} \cup \mathscr{B})
+        &\le f(\mathscr{A}) + f(\mathscr{B})
+    \end{align*}
+    Exactamente lo prometido.
+  \end{proof}
+  Caracterizaciones alternativas de funciones submodulares
+  ofrece:
+  \begin{theorem}
+    \label{theo:submodular-equivalent}
+    Son equivalentes las siguientes:
+    \begin{enumerate}[label = \roman*, ref = (\roman*)]
+    \item
+      \label{item:f-submodular}
+      La función \(f\) es submodular sobre \(\mathscr{U}\).
+    \item
+      \label{item:marginal-submodular}
+      Para todo \(\mathscr{S} \subseteq \mathscr{U}\),
+      la función \(\Delta(e \mid \mathscr{S})\) es submodular.
+    \item
+      \label{item:marginal-subadditive}
+      Para todo \(\mathscr{S} \subseteq \mathscr{U}\),
+      la función \(\Delta(\mathscr{X} \mid \mathscr{S})\) es subaditiva.
+    \end{enumerate}
+  \end{theorem}
+  \begin{proof}
+    Demostraremos un ciclo de implicancias.
+    \begin{description}
+    \item[\boldmath\(
+            \ref{item:f-submodular}
+              \Rightarrow \ref{item:marginal-submodular}
+          \)\unboldmath:]
+      Supongamos \(f\) submodular,
+      sean conjuntos cualquiera \(\mathscr{S} \subseteq \mathscr{U}\),
+      \(\mathscr{A} \subseteq \mathscr{B} \subseteq \mathscr{U}\).
+      Por definición:
+      \begin{align*}
+        \Delta(\mathscr{A} \cup \{e\} \mid \mathscr{S})
+          - \Delta(\mathscr{A} \cup \mathscr{S})
+          &= f(\mathscr{A} \cup \{e\} \cup \mathscr{S})
+                 - f(\mathscr{S})
+               -(f(\mathscr{A} \cup \mathscr{S})
+                 - f(\mathscr{S})) \\
+          &= f(\mathscr{A} \cup \{e\} \cup \mathscr{S})
+               - f(\mathscr{A} \cup \mathscr{S}) \\
+        \Delta(\mathscr{B} \cup \{e\} \mid \mathscr{S})
+          - \Delta(\mathscr{B} \cup \mathscr{S})
+          &= f(\mathscr{B} \cup \{e\} \cup \mathscr{S})
+               - f(\mathscr{B} \cup \mathscr{S})
+      \end{align*}
+      Si \(e \in \mathscr{S}\),
+      ambas se anulan y la desigualad se cumple.
+      Si \(e \notin \mathscr{S}\),
+      la desigualdad pedida resulta por submodularidad de \(f\)
+      y \(\mathscr{A} \cup \mathscr{S}
+            \subseteq \mathscr{B} \cup \mathscr{S}\).
+    \item[\boldmath\(
+            \ref{item:marginal-submodular}
+               \Rightarrow \ref{item:marginal-subadditive}
+          \)\unboldmath:]
+      Si \(\Delta(e \mid \mathscr{S})\) es submodular,
+      por el corolario~\ref{cor:submodular-subadditive} es subaditiva.
+    \item[\boldmath\(
+            \ref{item:marginal-subadditive}
+              \Rightarrow \ref{item:f-submodular}
+          \)\unboldmath:]
+      Sea \(f\) una función que cumple~\ref{item:marginal-subadditive},
+      y sean \(\mathscr{A}, \mathscr{B} \subseteq \mathscr{U}\),
+      definamos
+        \(\mathscr{X} = \mathscr{A} \smallsetminus \mathscr{B}\),
+        \(\mathscr{Y} = \mathscr{B} \smallsetminus \mathscr{A}\),
+        \(\mathscr{S} = \mathscr{A} \cap \mathscr{B}\).
+      Como \(\Delta(\mathscr{X} \mid \mathscr{S})\)
+      es subaditiva:
+      \begin{align*}
+        \Delta(\mathscr{X} \cup \mathscr{Y} \mid \mathscr{S})
+          &\le \Delta(\mathscr{X} \mid \mathscr{S})
+                 + \Delta(\mathscr{X} \mid \mathscr{S}) \\
+        f(\mathscr{X} \cup \mathscr{Y} \cup \mathscr{S})
+          - f(\mathscr{S})
+          &\le f(\mathscr{X} \cup \mathscr{S}) - f(\mathscr{S})
+                 + f(\mathscr{Y} \cup \mathscr{S}) - f(\mathscr{S}) \\
+        f(\mathscr{X} \cup \mathscr{Y} \cup \mathscr{S})
+          + f(\mathscr{S})
+          &\le f(\mathscr{X} \cup \mathscr{S})
+                 + f(\mathscr{Y} \cup \mathscr{S}) \\
+        f(\mathscr{A} \cup \mathscr{B}) + f(\mathscr{A} \cap \mathscr{B})
+          &\le f(\mathscr{A}) + f(\mathscr{B})
+      \end{align*}
+      Por el teorema~(\ref{theo:submodular-intersection-union})
+      vemos que \(f\) es submodular.
+    \end{description}
+    Cerramos el ciclo,
+    las tres aseveraciones son equivalentes.
+  \end{proof}
+
+\section{Restricción de cardinalidad}
+\label{sec:submocular-cardinality}
+
+  Un caso típico de optimización es hallar un conjunto de cardinalidad \(k\)
+  que maximice una función dada.
+  En su máxima generalidad,
+  esto claramente es \NP\nobreakdash-duro
+  (por ejemplo,
+   dado un grafo hallar un conjunto de vértices de tamaño \(k\)
+   que maximice el número de arcos entre ellos
+   es equivalente a \textsc{Clique}).
+  Si la función es submodular,
+  obtenemos una cota bastante buena para el algoritmo voraz obvio~%
+    \ref{alg:submodular-cardinality}.
+
+  \begin{algorithm}
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{GreedyMaximize}(f)\)}{
+      \(\mathscr{S} \gets \varnothing\) \;
+      \For{\(i \gets 1 \; \KwTo \; k\)}{
+        \(\displaystyle
+            \mathscr{S}
+              \gets \mathscr{S}
+                           \cup \{ \argmax_{x \notin \mathscr{S}}
+                                     \{ f(\mathscr{S} \cup \{x\}) \}\}\) \;
+      }
+      \Return \(\mathscr{S}\) \;
+    }
+    \caption{Algoritmo voraz de maximización}
+    \label{alg:submodular-cardinality}
+  \end{algorithm}
+
+  \begin{theorem}
+    \label{theo:submodular-cardinality-approximation}
+    Sea \(f\) una función submodular monótona no negativa.
+    Entonces el algoritmo~\ref{alg:submodular-cardinality}
+    da un factor de aproximación de \((1 - 1 / \mathrm{e})\).
+  \end{theorem}
+  \begin{proof}
+    Sea \(\mathscr{S}_i\) el conjunto en el algoritmo en el paso \(i\)
+    con \(\mathscr{S}_0 = \varnothing\),
+    sea \(\mathscr{S}^* = \{ x_1^*, \dotsc, x_k^* \}\)
+    un conjunto óptimo
+    (el orden en que listamos los elementos es irrelevante).
+    Lo siguiente no es más que una manera extraña de reescribir:
+    \begin{equation}
+      \label{eq:sma-1}
+      f(\mathscr{S}^* \cup \mathscr{S}_i)
+        = f(\mathscr{S}_i)
+           + \sum_{1 \le j \le k}
+               \left(
+                 f(\mathscr{S}_i \cup \{ x_1^*, \dotsc, x_j^* \})
+                   - f(\mathscr{S}_i \cup \{ x_1^*, \dotsc, x_{j - 1}^* \})
+               \right)
+    \end{equation}
+    Como suponemos \(f\) monótona,
+    \(f(\mathscr{S}^*) \le f(\mathscr{S}^* \cup \mathscr{S}_i)\).
+    Como \(f\) es submodular,
+    por definición tenemos:
+    \begin{equation*}
+      f(\mathscr{S}_i \cup \{ x_1^*, \dotsc, x_j^* \})
+           - f(\mathscr{S}_i \cup \{ x_1^*, \dotsc, x_{j - 1}^* \})
+        \le f(\mathscr{S}_i \cup \{  x_j^* \})
+              - f(\mathscr{S}_i)
+    \end{equation*}
+    A su vez,
+    elegimos el elemento a agregar a \(\mathscr{S}_i\)
+    vorazmente,
+    por lo que para cada \(j\) tenemos:
+    \begin{equation*}
+      f(\mathscr{S}_i \cup \{  x_j^* \})
+         - f(\mathscr{S}_i)
+        \le f(\mathscr{S}_{i + 1})
+              - f(\mathscr{S}_i)
+    \end{equation*}
+    Esto nos da una cota:
+    \begin{equation*}
+      f(\mathscr{S}^*)
+        \le f(\mathscr{S}_i)
+              + k \left(
+                    f(\mathscr{S}_{i + 1})
+                      - f(\mathscr{S}_i)
+                  \right)
+    \end{equation*}
+    Si definimos \(a_i = f(\mathscr{S}^*) - f(\mathscr{S}_i)\),
+    la cota se traduce en:
+    \begin{align*}
+      a_i
+        &\le k (a_i - a_{i + 1}) \\
+      a_{i + 1}
+        &\le \left(1 - \frac{1}{k}\right) a_i
+    \end{align*}
+    Por inducción,
+    junto con la cota \(1 - x \le \mathrm{e}^{-x}\),
+    esto nos da:
+    \begin{align*}
+      a_i
+        &\le \left(1 - \frac{1}{k}\right)^i a_0 \\
+        &\le \mathrm{e}^{- i/k} a_0 \\
+      f(\mathscr{S}^*) - f(\mathscr{S}_i)
+        &\le \mathrm{e}^{- i/k} f(\mathscr{S}^*) \\
+      f(\mathscr{S}_i)
+        &\ge \left( 1 - \mathrm{e}^{- i/k} \right) f(\mathscr{S}^*)
+    \end{align*}
+    Con \(i = k\) obtenemos lo prometido.
+  \end{proof}
+  Note que la demostración nos da una estimación de lo que podríamos ganar
+  al relajar la condición de número de elementos a elegir.
+
+  La demostración parece dejar mucho espacio para mejora,
+  pero Feige~%
+    \cite{feige98:_threshold_approximating_set_cover}
+  demostró que si \(\cP \ne \NP\)
+  para el problema \textsc{Set~Cover}
+  (en este caso,
+   hallar el máximo conjunto que puede cubrirse con \(k\)~conjuntos)
+  solo puede lograrse una aproximación \(1 - 1/\mathrm{e}\) eficientemente.
+  Ver también la exposición de Filmus~%
+    \cite{filmus11:_hardness_approximating_set_cover}
+  que resume este resultado.
+
+  Minoux~%
+    \cite{minoux78:_accel_greed_algor_maxim_submod_set_funct}
+  describe una manera simple de acelerar el algoritmo voraz
+  para funciones submodulares.
+  Observa que si llamamos \(\mathscr{S}_i\) al conjunto en la iteración \(i\),
+  claramente \(\mathscr{S}_i \subset \mathscr{S}_j\) si \(i < j\),
+  con lo que para cualquier elemento \(e \notin \mathscr{S}_j\)
+  por submodularidad
+  es \(\Delta(e \mid \mathscr{S}_i) \ge \Delta(e \mid \mathscr{S}_j)\).
+  Vale decir,
+  solo se requiere calcular \(\Delta(e \mid \mathscr{S})\)
+  para aquellos elementos para los cuales antes hemos obtenido valores grandes.
+  El detalle es el algoritmo~\ref{alg:Minoux}.
+  Supone una cola de prioridad \(Q\).
+  \begin{algorithm}[htbp]
+     \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{GreedyMaxAD}(f, \mathscr{U})\)}{
+      \ForEach{\(e \in \mathscr{U}\)}{
+        \(\mathrm{Insert}(Q, e, \Delta(e \mid \varnothing))\) \;
+      }
+      \((e, \delta)
+           \gets \mathrm{DeleteMax}(Q)\) \;
+      \(\mathscr{S} \gets \{e\}\) \;
+      \For{\(j \gets 2 \; \KwTo \; k\)}{
+        \((e_{\text{max}}, \delta_{\text{max}})
+             \gets \mathrm{DeleteMax}(Q)\) \;
+        \Loop{
+          \((e, \delta)
+             \gets \mathrm{DeleteMax}(Q)\) \;
+          \If{\(\delta < \delta_{\text{max}}\)}{
+            \Break \;
+          }
+          \(\delta \gets \Delta(e \mid \mathscr{S})\) \;
+          \eIf{\(\delta > \delta_{\text{max}}\)}{
+            \(\mathrm{Insert}(Q, e_{\text{max}},
+                                    \delta_{\text{max}})\) \;
+            \((e_{\text{max}}, \delta_{\text{max}})
+                \gets (e, \delta)\) \;
+          }
+          {
+            \(\mathrm{Insert}(Q, e, \delta)\) \;
+          }
+        }
+        \(\mathscr{S} \gets \mathscr{S} \cup \{e_{\text{max}}\}\) \;
+      }
+      \Return \(\mathscr{S}\) \;
+    }
+    \caption{El algoritmo voraz adaptativo de Minoux}
+    \label{alg:Minoux}
+  \end{algorithm}
+  Esto no cambia el peor caso,
+  pero en la práctica mejora los tiempos de ejecución
+  en varios órdenes de magnitud.
+  Minoux reporta que en casos de prueba los tiempos de ejecución
+  disminuyen de horas a minutos.
+
+\section{Restricción de presupuesto}
+\label{sec:submodular-knapsack}
+
+  Otra variante de interés es una restricción de mochila
+  (\emph{\foreignlanguage{english}{knapsack restriction}} en inglés):
+  cada ítem tiene un costo,
+  y hay un presupuesto finito a gastar en elementos a agregar.
+  Cabría esperar que la extensión obvia
+  de agregar cada vez el elemento que maximiza el aumento del valor de \(f\)
+  por unidad de costo
+  (dentro del presupuesto)
+  da buenos resultados,
+  pero este algoritmo puede dar resultados arbitrariamente malos,
+  como vimos en la sección~\ref{sec:mochila-aproximado}.
+  Sin embargo,
+  Leskovec et al~%
+    \cite{leskovec07:_cost_effective_outbreak_detection_networks}
+  demuestran que si se ejecuta el algoritmo así extendido
+  y el algoritmo que ignora los costos,
+  al menos uno de los dos da una aproximación de al menos 30\%.
+
+  Extendemos la función de costos a conjuntos de forma obvia:
+  \begin{equation*}
+    c(\mathscr{S})
+      = \sum_{e \in \mathscr{S}} c(e)
+  \end{equation*}
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{GreedyKnapsack}(\mathscr{U}, B, f, c)\)}{
+      \(\mathscr{S} \gets \varnothing\) \;
+      \While{\(\mathscr{U} \ne \varnothing\)}{
+        \(e^*
+           \gets \argmax_{e \in \mathscr{U}}
+                        \frac{\Delta(e \mid \mathscr{S})}{c(e)}\) \;
+        \If{\(c(\mathscr{S}) + c(e) \le	 B\)}{
+          \(\mathscr{S} \gets \mathscr{S} \cup \{e\}\) \;
+        }
+        \(\mathscr{U} \gets \mathscr{U} \smallsetminus \{e\}\) \;
+      }
+      \Return \(\mathscr{S}\) \;
+    }
+    \caption{El algoritmo voraz para restricción de mochila}
+    \label{alg:GreedyKnapsack}
+  \end{algorithm}
+  Tenemos el siguiente resultado:
+  \begin{lemma}
+    \label{lem:greedy-knapsack}
+    Cuando en el algoritmo~\ref{alg:GreedyKnapsack}
+    la condición \(c(\mathscr{S}) + c(e) \le  B\) es falsa
+    es \(f(\mathscr{S} \cup \{e\}) \ge f(\mathscr{S}^*)\).
+  \end{lemma}
+  \begin{proof}
+    Sea \(\mathscr{S}_i = \{e_1, e_2, \dotsc, e_i\}\)
+    el conjunto \(\mathscr{S}\) cuando contiene \(i\) elementos,
+    listados en el orden que se agregaron.
+    Por submodularidad y el hecho que el algoritmo es voraz:
+    \begin{align*}
+     f(\mathscr{S}^*)
+       &\le f(\mathscr{S}_i)
+               + \sum_{e \in \mathscr{S}^* \smallsetminus \mathscr{S}_{i - 1}}
+                   \Delta(e \mid \mathscr{S}_{i - 1}) \\
+       &\le f(\mathscr{S}_i)
+               + \sum_{e \in \mathscr{S}^* \smallsetminus \mathscr{S}_{i - 1}}
+                   c(e) \frac{\Delta(e \mid \mathscr{S}_{i - 1})}{c(e)} \\
+       &\le f(\mathscr{S}_i)
+               + \frac{f(\mathscr{S}_i) - f(\mathscr{S}_{i - i})}{c(e_i)}
+                   \cdot \sum_{e \in \mathscr{S}^*
+                               \smallsetminus \mathscr{S}_{i - 1}} c(e) \\
+       &\le f(\mathscr{S}_i)
+               + \frac{B}{c(e_i)} (f(\mathscr{S}_i) - f(\mathscr{S}_{i - i})
+    \end{align*}
+    Al final usamos que \(c(S^*) \le B\).
+    Restando \(B/c(e_i)\) y reorganizando se llega a la recurrencia:
+    \begin{equation*}
+      f(\mathscr{S}_i) - f(\mathscr{S}^*)
+        \ge \left(1 - \frac{c(e_i)}{B}\right)
+             (f(\mathscr{S}_{i - 1}) - f(\mathscr{S}^*))
+    \end{equation*}
+    cuya solución es:
+    \begin{equation*}
+      f(\mathscr{S}_i)
+        \ge \left(
+               1 - \prod_{1 \le k \le i}
+                      \left(
+                         1 - \frac{c(e_i)}{B}
+                      \right)
+             \right) f(\mathscr{S}^*)
+    \end{equation*}
+    Usando la desigualdad \(1 - x \le \mathrm{e}^{-x}\):
+    \begin{equation*}
+      f(\mathscr{S}_i)
+        \ge \left(
+               1 - \exp\left(
+                         - \frac{c(S_i)}{B}
+                       \right)
+             \right) f(\mathscr{S}^*)
+    \end{equation*}
+    Podemos aplicar esto a \(e\) elegido por el algoritmo voraz
+    antes de considerar la restricción de presupuesto:
+    \begin{equation*}
+      f(\mathscr{S} \cup \{e\})
+        \ge \left(
+               1 - \exp\left(
+                         - \frac{c(S) - c(e)}{B}
+                       \right)
+             \right) f(\mathscr{S}^*)
+    \end{equation*}
+    Suponemos que el elemento elegido sobrepasa el presupuesto,
+    con lo que \(c(\mathscr{S}) + c(e) > B\),
+    y resulta lo prometido.
+  \end{proof}
+  Podemos aprovechar esto
+  para construir un algoritmo con razón de aproximación garantizada:
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{GreedyKnapsackA}(\mathscr{U}, B, f, c)\)}{
+      \(e^*
+          \gets \argmax_{e \in \mathscr{U},
+                              c(e) \le B} f(e)\) \;
+      \(\mathscr{S}
+          \gets \mathrm{GreedyKnapsack}(\mathscr{U}, B, f, c)\) \;
+      \Return \(\argmax\{f(\mathscr{S}), f(\{e^*\})\}\) \;
+    }
+    \caption{El algoritmo voraz para restricción de mochila,
+             corrección simple}
+    \label{alg:GreedyKnapsack-A}
+  \end{algorithm}
+  \begin{theorem}
+    \label{theo:greedy-knapsack-A}
+    Sea \(\mathscr{S}\) el conjunto
+    retornado por el algoritmo~\ref{alg:GreedyKnapsack-A}.
+    Entonces:
+    \begin{equation*}
+      f(\mathscr{S})
+        \ge \frac{1}{2} \left(1 - \frac{1}{\mathrm{e}}\right) f(\mathscr{S}^*)
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Sea \(\mathscr{S}_G\) el conjunto
+    que retorna el algoritmo~\ref{alg:GreedyKnapsack}
+    y \(e\) el elemento siguiente
+    (el primero rechazado después de completar \(\mathscr{S}_G\)):
+    \begin{align*}
+      2 f(\mathscr{S})
+        &\ge f(\mathscr{S}_G) + f(\{e^*\}) \\
+        &\ge f(\mathscr{S}_G) + f(\{e\}) \\
+        &\ge f(\mathscr{S}_G \cup \{e\}) \\
+        &\ge \left(
+               1 - \frac{1}{\mathrm{e}}
+             \right) f(\mathscr{S}^*)
+    \end{align*}
+    La primera desigualdad es de la definición de \(\mathscr{S}\),
+    la segunda viene de la definición de \(e^*\),
+    la tercera es por ser \(f\) subaditiva,
+    la última usa el lema~\ref{lem:greedy-knapsack}.
+  \end{proof}
+  Khuller, Moss y~Naor~%
+    \cite{khuller99:_budget_max_cover_problem}
+  refinan el análisis del teorema~\ref{theo:greedy-knapsack-A}
+  y mejoran el factor a \(1 - 1 / \sqrt{\mathrm{e}}\).
+
+  Pero podemos hacer mejor.
+  En vez de iniciar el algoritmo voraz con el conjunto vacío,
+  iniciamos con todos los conjuntos de tamaño \(d\)
+  (fijaremos \(d\) más adelante)
+  y elegimos el mejor de los resultados.
+  Llamaremos
+    \(\mathrm{GreedyKnapsack}'(\mathscr{U}, \mathscr{S}, B, f, c)\)
+  a la variante del algoritmo~\ref{alg:GreedyKnapsack}
+  que inicia con \(\mathscr{S}\).
+  El algoritmo~\ref{alg:GreedyKnapsack-B} da detalles.
+  \begin{algorithm}[htbp]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{GreedyKnapsackB}(\mathscr{U}, B, f, c)\)}{
+      \(\mathscr{S}_1
+          \gets \argmax_{\mathscr{S} \subseteq \mathscr{U},
+                              c(\mathscr{S}) \le B,
+                              \lvert \mathscr{S} \rvert < d}
+                         f(\mathscr{S})\) \;
+      \(\mathscr{S_2} \gets \varnothing\) \;
+      \ForAll{\(\mathscr{S} \subseteq \mathscr{U},
+                \lvert \mathscr{S} \rvert = d,
+                c(\mathscr{S}) \le B\)}{
+         \(\mathscr{S}_G
+             \gets \mathrm{GreedyKnapsack}'
+                (\mathscr{U} \smallsetminus \mathscr{S}_G, \mathscr{S}_G,
+                 B, f, c)\) \;
+         \If{\(f(\mathscr{S}_G) > f(\mathscr{S}_2)\)}{
+           \(\mathscr{S}_2 \gets \mathscr{S}_G\) \;
+         }
+      }
+      \Return \(\argmax\{f(\mathscr{S}_1), f(\mathscr{S}_2)\}\) \;
+    }
+    \caption{El algoritmo voraz para restricción de mochila,
+             enumeración parcial}
+    \label{alg:GreedyKnapsack-B}
+  \end{algorithm}
+  Resulta:
+  \begin{theorem}
+    \label{theo:greedy-knapsack-B}
+    Para \(d = 3\) el conjunto retornado
+    por el algoritmo~\ref{alg:GreedyKnapsack-B} cumple:
+    \begin{equation*}
+      f(\mathscr{S})
+        \ge \left(1 - \frac{1}{\mathrm{e}}\right) f(\mathscr{S}^*)
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Sin pérdida de generalidad,
+    \(\lvert \mathscr{S}^* \rvert > d\),
+    ya que en caso contrario obtenemos el óptimo.
+    Escribimos \(\mathscr{S}^* = \{e_1^*, e_2^*, \dotsc, e_n^*\}\)
+    y \(\mathscr{S}_i^* = \{e_1^*, e_2^*, \dotsc, e_i^*\}\),
+    donde:
+    \begin{equation*}
+      e_i^*
+        = \argmax_{e \in \mathscr{S}^* \smallsetminus \mathscr{S}_{i - 1}^*}
+             \Delta(e \mid \mathscr{S}_{i - 1}^* )
+    \end{equation*}
+    Consideremos la iteración que considera \(\mathscr{S}_d^*\).
+    La llamada a \(\mathrm{GreedyKnapsack}'\)
+    es equivalente a llamarla con la función \(\Delta(e \mid \mathscr{S}_d^*)\)
+    sobre el conjunto \(\mathscr{U} \smallsetminus \mathscr{S}_d^*\).
+    Consideremos la primera vez
+    que la condición en el algoritmo~\ref{alg:GreedyKnapsack} es falsa
+    para \(x^* \in \mathscr{S}^* \smallsetminus \mathscr{S}^*_d\).
+    Por el lema~\ref{lem:greedy-knapsack}:
+    \begin{equation}
+      \label{eq:gk-B-1}
+      f(\mathscr{S}_G \cup \{x^*\}) - f(\mathscr{S}_d^*
+        \ge \left(1 - \frac{1}{\mathrm{e}}\right)
+              (f(\mathscr{S}^*) - f(\mathscr{S}_d^*))
+    \end{equation}
+    Por submodularidad y el ordenamiento de \(\mathscr{S}_d^*\):
+    \begin{equation*}
+      \Delta(x^* \mid \mathscr{S}_G)
+        \le \Delta(x^* \mid \mathscr{S}_i^*)
+        \le F(\mathscr{S}_i^*) - f(\mathscr{S}_{i - 1}^*)
+    \end{equation*}
+    Sumando para \(1 \le i \le d\):
+    \begin{equation}
+      \label{eq:gk-B-2}
+      f(\mathscr{S}_G \cup \{x^*\})
+        \le f(\mathscr{S}_G) + \frac{1}{d} f(\mathscr{S}_d^*)
+    \end{equation}
+    Combinando~\eqref{eq:gk-B-1} con~\eqref{eq:gk-B-2} da:
+    \begin{equation*}
+      f(\mathscr{S}_G)
+        \ge \left(1 - \frac{1}{\mathrm{e}}\right) f(\mathscr{S}^*)
+              + \left(\frac{1}{\mathrm{e}} - \frac{1}{d}\right)
+                  f(\mathscr{S}_d^*)
+    \end{equation*}
+    Con \(d \ge 3\) el segundo término es positivo,
+    completando la demostración.
+  \end{proof}
+
+\section{Otras restricciones}
+\label{sec:submodular-other}
+
+  Hay otras condiciones naturales a considerar,
+  como es hallar el menor conjunto \(\mathscr{S}\)
+  tal que \(f(\mathscr{S}) \ge q\).
+  Wolsey~%
+    \cite{wolsey82:_analy_greed_algor_submod_set_cover_probl}
+  muestra que una variante simple del algoritmo voraz
+  logra un conjunto un factor \(1 + \ln \max_x \{f(\{x\})\}\)~mayor
+  que el óptimo.
+
+  Krause y Golovin~%
+    \cite{krause14:_submodular_survey}
+  discuten distintos ámbitos en que aparecen funciones submodulares
+  y algoritmos de maximización aproximados.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-submodular}
+
+  \begin{enumerate}
+  \item
+    Demuestre que en general para \(\mathscr{U} = [1, n]\) la función
+    \(\max \colon 2^{\mathscr{U}} \to \mathbb{R}\) es submodular monótona.
+  \item
+    Demuestre que para \(\mathscr{U}\) la función
+    \(\mathrm{card} \colon \mathscr{U} \to \mathbb{R}\)
+    tal que \(\mathrm{card}(\mathscr{A}) = \lvert \mathscr{A} \rvert\)
+    (cardinalidad)
+    es submodular monótona.
+  \item
+    Sea \(w \colon \mathscr{S} \to \mathbb{R}\)
+    una función de peso no negativa.
+    Defina:
+    \begin{equation*}
+      f(\mathscr{S})
+        = \sum_{e \in \mathscr{S}} w(e)
+    \end{equation*}
+    Demuestre que \(f\) es submodular monótona.
+    Muchos ejemplos de optimización
+    (como el caso del conjunto óptimo de radios planteado por Kun)
+    son variaciones sobre esto.
+  \item
+    Demuestre que las siguientes funciones son submodulares:
+    \begin{enumerate}
+    \item
+      \(f(\mathscr{S}) = \sum_{x \in \mathscr{S}} g(x)\),
+      si \(g \colon \mathscr{U} \to \mathbb{R}\) es una función cualquiera.
+    \item
+      \(f(\mathscr{S})
+           = \lvert \mathscr{S} \rvert (\lvert \mathscr{S} \rvert - 1) / 2
+               + \sum_{x \in \mathscr{S}} g(x)\),
+      si \(g \colon \mathscr{U} \to \mathbb{R}\) es una función cualquiera.
+    \end{enumerate}
+  \item
+    Considere un grafo conexo \(G = (V, E)\),
+    sea \(w \colon E \to \mathbf{R}\) con \(w(e) > 0\) para todo \(e \in E\)
+    el costo de los arcos.
+    Defina para \(\mathscr{S} \subseteq E\):
+    \begin{equation*}
+      w(\mathscr{S})
+        = \sum_{e \in \mathscr{S}} w(e)
+    \end{equation*}
+    Defina además:
+    \begin{equation*}
+      f(\mathscr{S})
+        = \begin{cases}
+            - w(E \smallsetminus \mathscr{S}) &
+                \text{si \(G_{\mathscr{S}}
+                             = (V, E \smallsetminus \mathscr{S})\)
+                      es conexo} \\
+            - \infty			      &
+                \text{caso contrario}
+          \end{cases}
+    \end{equation*}
+    Demuestre que \(f\) es submodular.
+  \item
+    Demuestre que si \(f_1, f_2, \dotsc, f_n\)
+    son funciones submodulares sobre \(\mathscr{U}\),
+    y \(\alpha_1, \alpha_2, \dotsc, \alpha_n\) son constantes positivas,
+    es submodular
+    \(f(\mathscr{X})
+        = \alpha_1 f_1(\mathscr{X}) + \alpha_2 f_2(\mathscr{X})
+            + \dotsb
+            + \alpha_n f_n(\mathscr{X})\).
+  \item
+    Se define el \emph{truncamiento} (en \(c\)) de la función \(f\)
+    mediante:
+    \begin{equation*}
+      f_T(x)
+        = \min \{ f(x), c \}
+    \end{equation*}
+    Demuestre que si \(f\) es submodular monótona y \(c\) es una constante,
+    su truncamiento es submodular.
+  \item
+    Exhiba una función submodular que no es monótona.
+  \item
+    Demuestre que la función \(f(x) = x^\alpha\)
+    para \(x > 0\) y \(0 \le \alpha \le 1\) es subaditiva.
+  \item
+    ¿Cuántas veces se invoca la función \(f\)
+    en los algoritmos~\ref{alg:GreedyKnapsack-A}
+    y~\ref{alg:GreedyKnapsack-B}?
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  submodulares submodular eq def intersection union Set
+% LocalWords:  subaditiva submodularidad Clique maximización Cover et
+% LocalWords:  english knapsack restriction gk

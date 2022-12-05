@@ -1,0 +1,164 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Comentarios finales\\
+         Análisis numérico}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Áreas que vimos y que no vimos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Áreas que revisamos}
+
+  \uncover<+->{
+    Vimos
+    (someramente)
+    tema de errores en las operaciones
+    y su propagación.
+  }
+  \uncover<+->{
+    Discutimos cómo evaluar y describir errores en los algoritmos.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Las áreas que discutimos en algún detalle
+    son la solución de ecuaciones,
+    interpolación
+    y cuadratura.
+  }
+  \uncover<+->{
+    De ellas vimos algunos de los algoritmos y técnicas más importantes,
+    discutiendo técnicas para acotar errores.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Áreas sin discutir}
+
+  \uncover<+->{
+    El análisis numérico es un área enorme.
+    Temas que no tocamos incluyen:
+  }
+  \begin{itemize}
+  \item
+    Operaciones aritméticas
+    (algo se ve en \emph{Arquitectura y Organización de Computadores}, INF-245)
+  \item
+    Cálculo de las funciones elementales%
+    \uncover<+->{%
+      (calcular \(\sqrt{x}\),
+       potencias,
+       logaritmos o funciones trigonométricas
+       no es para nada trivial)
+     }
+  \item
+    Cálculo de funciones comunes en ciencia e ingeniería,
+    como ser \(\Gamma\)
+    (extensión de factoriales a los reales o complejos),
+    funciones cumulativas de distribuciones de probabilidad,
+    funciones de Bessel o la función \(W\) de Lambert,
+    requieren técnicas especializadas.
+  \item
+    Está el amplio tema del cálculo de una variedad de constantes:
+    \(\pi\), \(\gamma\), \ldots{}
+    Cada una con su propia subindustria.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Áreas sin discutir}
+  \begin{itemize}
+   \item
+     Resolver sistemas de ecuaciones lineales es un tema importante.
+   \item
+     Es común resolver sistemas de ecuaciones no lineales.
+   \item
+     Está el área gigantesca de solución de ecuaciones diferenciales,
+     tanto ordinarias como parciales.
+  \end{itemize}
+\end{frame}
+
+% \begin{frame}
+%   \setcounter{beamerpauses}{2}
+%   \frametitle{Cálculo de \(\pi\)}
+
+%   \uncover<+->{
+%     La técnica clásica
+%     (desde Arquímedes)
+%     es aproximar \(\pi\)
+%     mediante el perímetro de polígonos regulares inscrito y circunscrito
+%     al círculo.
+%   }
+%   \uncover<+->{
+%     Considerando el hexágono inscrito
+%     (de perímetro \(6 r\)
+%     concluimos \(3 < \pi\).
+%   }
+%   \uncover<+->{
+%     El hexágono circunscrito está formado por triángulos equiláteros
+%     de altura \(r\),
+%     de lado \(2 r / \sqrt{3}\),
+%     dando \(\pi < 6 / \sqrt{3} = 3,4610\).
+%   }
+%   \uncover<+->{
+%     Promediando ambos valores obtenemos \(3,3221\).
+%   }
+
+%   \end{frame}
+
+%   Método de Newton (con serie binomial, etc)
+%   Series de Machin
+%   Ramanujan (?)
+%   Spigot series
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode INF subindustria

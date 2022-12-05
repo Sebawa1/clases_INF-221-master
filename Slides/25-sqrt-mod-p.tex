@@ -1,0 +1,351 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{dcolumn}
+\usepackage[noline, noend]{algorithm2e}
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Raíces cuadradas módulo un primo}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{El problema}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema}
+
+  \uncover<+->{
+    Los residuos módulo un primo \(p\) forman el campo \(\mathbb{Z}_p\).
+  }
+  \uncover<+->{
+    En un campo,
+    si \(x^2 = 1\) es \(x = \pm 1\).
+  }
+
+  \uncover<+->{
+    Los elementos no cero de \(\mathbb{Z}_p\)
+    forman su \emph{grupo de unidades}
+    \(\mathbb{Z}_p^\times\).
+    Este grupo es cíclico,
+    con lo que si \(p\) es un primo impar
+    módulo \(p\) exactamente la mitad de los elementos son cuadrados
+    (\emph{residuos cuadráticos}).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema}
+
+  \uncover<+->{
+    Interesa calcular raíces cuadradas en \(\mathbb{Z}_p\),
+    o sea,
+    resolver la ecuación \(x^2 = a\).
+  }
+  \\ \bigskip
+  \uncover<+->{
+    En adelante,
+    \(p\) es un primo impar.
+    Como la mayoría de las equivalencias son módulo \(p\),
+    omitiremos mencionarlo en esos casos en aras de la brevedad.
+  }
+\end{frame}
+
+\section{Teoría}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Teoría}
+
+  \uncover<+->{
+    Sabemos que los elementos de \(\mathbb{Z}_p^\times\)
+    cumplen la ecuación \(x^{p - 1} = 1\),
+    con lo que para \(x \ne 0\)
+    (criterio de Euler):
+    \begin{equation*}
+      x^{(p - 1) / 2}
+        = \begin{cases}
+              1 & \text{\(x\) es residuo cuadrático} \\
+             -1 & \text{\(x\) no es residuo cuadrático}
+          \end{cases}
+    \end{equation*}
+  }
+  \medskip
+  \uncover<+->{
+    Como \(\mathbb{Z}_p^\times\) es cíclico,
+    podemos expresar sus elementos como potencias de una \emph{raíz primitiva};
+    son cuadrados exactamente las potencias pares.
+    El producto de dos cuadrados o dos no\nobreakdash-cuadrados
+    es un cuadrado,
+    el producto de un cuadrado y un no\nobreakdash-cuadrado
+    es un no\nobreakdash-cuadrado.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El caso \(p \equiv 3 \pmod{4}\)}
+
+  \uncover<+->{
+    Si \(p \equiv 3 \pmod{4}\) hay una solución simple:
+    escriba \(p = 4 k + 3\),
+    y considere \(x = a^{k + 1}\).
+  }
+  \uncover<+->{
+    Por el criterio de Euler:
+  }
+  \begin{align*}
+    \uncover<+->{
+      x^2
+        &\equiv a^{2 k + 2} \\
+    }
+    \uncover<+->{
+        &\equiv a^{2 k + 1} \cdot a^k \\
+    }
+    \uncover<+->{
+        &\equiv a^{(p - 1) / 2} \cdot a	 \\
+    }
+    \uncover<+->{
+        &\equiv a
+    }
+  \end{align*}
+  \uncover<+->{
+    Tenemos una fórmula para \(p \equiv 3 \pmod{4}\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El caso \(p \equiv 1 \pmod{4}\)}
+
+  \uncover<+->{
+    Si \(p \equiv 1 \pmod{4}\),
+    \((p - 1) / 2\) es par.
+    El truco anterior no funciona.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El caso \(p \equiv 1 \pmod{4}\)}
+
+  \uncover<+->{
+    Sabemos \(a^{(p - 1) / 2} \equiv 1\),
+    extrayendo raíz cuadrada sucesivamente
+    (o sea,
+     dividiendo el exponente por \(2\))
+    obtendremos una secuencia de \(1\)
+    hasta finalmente llegar ya sea a \(a^s \equiv 1\) con \(s\) impar,
+    estamos listos,
+    raíz es \(a^{(s + 1) / 2}\);
+    o a \(a^s \equiv -1\) con \(s\) par.
+  }
+  \uncover<+->{
+    En el segundo caso,
+    si \(b\) es un residuo no cuadrático
+    por el criterio de Euler es \(b^{(p - 1) / 2} \equiv -1\)
+    y \(a^s b^{(p - 1) / 2} \equiv 1\).
+  }
+  \uncover<+->{
+    El punto es que conocemos su raíz cuadrada
+    \(a^{s / 2} b^{(p - 1) / 4}\),
+    podemos reiniciar el proceso de disminuir el exponente de \(a\).
+  }
+  \uncover<+->{
+    Como hemos llegado a \(s\)
+    por sucesivas divisiones de \((p - 1) / 2\) por \(2\),
+    no llegaremos a un exponente impar de \(b\) antes que de \(a\).
+    Si tropezamos con \(-1\)
+    nuevamente ajustamos multiplicando por \(b^{(p - 1) / 2}\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El caso \(p \equiv 5 \pmod{8}\)}
+
+  \uncover<+->{
+    En este caso \(2\) es residuo no cuadrático,
+    los ahorramos la búsqueda de \(b\)
+    y algo se simplifica el resto.
+  }
+\end{frame}
+
+\section{El algoritmo}
+
+% Filched from https://users.encs.concordia.ca/~chvatal/notes/sqrt.html;
+% use b = 2 for p \equiv 5 \pmod{4}
+% Check https://empslocal.ex.ac.uk/people/staff/rjchapma/courses/nt13/sqrt.pdf
+% for the theory.
+
+\begin{frame}
+  \frametitle{Caso \(p \equiv 3 \pmod{4}\)}
+
+  \small
+  \begin{algorithm}[H]
+    \Function{\(\mathrm{sqrt}(a, p)\)}{
+      \uIf{\(p \equiv 3 \pmod{4}\)}{
+        \Return \(a^{(p + 1) / 4} \bmod{p}\) \;
+      }
+      \uElseIf{\(p \equiv 5 \pmod{8}\)}{
+        \Return \(\mathrm{sqrt\_5}(a, p)\) \;
+      }
+      \Else{
+        \Return \(\mathrm{sqrt\_1}(a, p)\) \;
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Caso \(p \equiv 5 \pmod{8}\)}
+
+  \small
+  \begin{algorithm}[H]
+    \Function{\(\mathrm{sqrt\_5}(a, p)\)}{
+      \eIf{\(a^{(p + 3) / 8} = 1\)}{
+        \Return \(a^{(p + 3) / 8} \bmod{p}\) \;
+      }
+      {
+        \Return \(2^{(p - 1) / 4} \cdot a^{(p + 3) / 8} \bmod{p}\) \;
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Caso \(p \equiv 1 \pmod{8}\)}
+
+  \small
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Function{\(\mathrm{sqrt\_1}(a, p)\)}{
+      \(s \leftarrow (p - 1) / 4\); \(t \leftarrow (p - 1) / 2\) \;
+      \While{\(a^s = 1\)}{
+        \leIf{\(\mathrm{odd}(s)\)}{
+          \Return \(a^{(s + 1) / 2} \bmod{p}\) \;
+        }
+        {
+          \(s \leftarrow s / 2\) \;
+        }
+      }
+      \(b \leftarrow \mathrm{select\_b}(p)\) \;
+      \While{\(\neg \mathrm{odd}(s)\)}{
+        \(s \leftarrow s / 2\); \(t \leftarrow t / 2\) \;
+        \If{\(a^s \cdot b^t \equiv -1\)}{
+          \(t \leftarrow t + (p - 1) / 2\) \;
+        }
+      }
+      \Return \(a^{(s + 1) / 2} \cdot b^{t / 2} \bmod{p}\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Función auxiliar}
+
+  \small
+  \begin{algorithm}[H]
+    \Function{\(\mathrm{select\_b}(p)\)}{
+      \Repeat{\(b^{(p - 1) / 2} = -1\)}{
+        Select \(b\) at random from \(1, \dotsc, p - 1\) \;
+      }
+      \Return \(b\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis}
+
+  \uncover<+->{
+    Requerimos un no\nobreakdash-cuadrado,
+    que buscamos al azar.
+  }
+  \uncover<+->{
+    Como la mitad de los elementos de \(\mathbb{Z}_p^\times\) son
+    no\nobreakdash-cuadrados,
+    en promedio hallaremos uno al segundo intento.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Este algoritmo es un ejemplo de uso de elementos elegidos al azar.
+  \item
+    Solo usa conceptos básicos de teoría de números,
+    y el algoritmo en sí es simple.
+  \item
+    Hay formas más eficientes
+    de determinar si un elemento es residuo cuadrático,
+    se sabe por ejemplo que si \(p \not\equiv 1, 7 \pmod{8}\)
+    \(2\) no es residuo cuadrático.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step Select at random from

@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+
+
+import numpy
+import scipy.interpolate
+import matplotlib.pyplot as plt
+
+def f(x):
+    return 1 / (1 + 25 * x ** 2)
+
+x = numpy.arange(-1, 1, 0.01)
+
+fig = plt.figure()
+plt.plot(x, f(x))
+fig.savefig('runge.pdf')
+
+for n in range(4, 12, 2):
+    ip = scipy.interpolate.BarycentricInterpolator(
+	    [-1 + 2 / n * i for i in range(n + 1)],
+	    [f(-1 + 2 / n * i) for i in range(n + 1)])
+
+    fig = plt.figure()
+    plt.ylim(-1, 2)
+    plt.plot(x, f(x), x, ip(x), 'r')
+    fig.savefig('runge-{}.pdf'.format(n))

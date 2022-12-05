@@ -1,0 +1,99 @@
+#!/usr/bin/python3
+
+fin = open('X.txt'); X = []
+for line in fin:
+    X.append(line.strip())
+fin.close()
+
+fin = open('Y.txt'); Y = []
+for line in fin:
+    Y.append(line.strip())
+fin.close()
+
+
+res = open('lcs-X.tex', 'w')
+res.write('    \\begin{tabular}{l}\n')
+for l in X[:-1]:
+    res.write('	     %s \\\\\n' % l)
+else:
+    res.write('	     %s\n' % X[-1])
+res.write('    \\end{tabular}\n')
+res.close()
+
+res = open('lcs-Y.tex', 'w')
+res.write('    \\begin{tabular}{l}\n')
+for l in Y[:-1]:
+    res.write('	     %s \\\\\n' % l)
+else:
+    res.write('	     %s\n' % Y[-1])
+res.write('    \\end{tabular}\n')
+res.close()
+
+L  = [([0]  * (len(Y) + 1)) for i in range(len(X) + 1)]
+op = [([''] * (len(Y) + 1)) for i in range(len(X) + 1)]
+
+for i in range(len(X)):
+    for j in range(len(Y)):
+	m = L[i + 1][j]
+	mop = '+'
+	m2 = L[i][j + 1]
+	if m2 > m:
+	    m = m2
+	    mop = '-'
+	if X[i] == Y[j]:
+	    m2 = 1 + L[i][j]
+	    if m2 > m:
+		m = m2
+		mop = ' '
+	L[i + 1][j + 1] = m
+	op[i + 1][j + 1] = mop
+
+print(L[len(X)][len(Y)] - 1); print()
+
+tab = open('lcs-table.tex', 'w')
+tab.write('  \\begin{table}[ht]\n')
+tab.write('    \\centering\n')
+tab.write('    \\begin{tabular}{>{\\bfseries}r<{\\normalfont}'
+	    + '*{%d}{|r}|}\n' % len(Y))
+for j in range(len(Y) - 1):
+    tab.write('	       & \\multicolumn{1}{|c}{\\textbf{%d}}\n' % (j + 1))
+tab.write('	   & \\multicolumn{1}{|c}{\\textbf{%d}} \\\\\n' % len(Y))
+tab.write('	   \\hline\n')
+for i in range(len(X)):
+    line = ' ' * 8 + '%d & ' % (i + 1)
+    for j in range(len(Y) - 1):
+	line += '%d(%s) & ' % (L[i + 1][j + 1],
+			       op[i + 1][j + 1] if op[i + 1][j + 1] != ' '
+						   else '\\phantom{+}' )
+    line += '%d(%s) \\\\\n' % (L[i + 1][len(Y)], op[i + 1][len(Y)])
+    tab.write(line)
+tab.write('	   \\hline\n')
+tab.write('    \\end{tabular}\n')
+tab.write('    \\caption{Tabla para subsecuencia más larga}\n')
+tab.write('    \\label{tab:lcs-tabla}\n')
+tab.write('  \\end{table}\n')
+tab.close()
+
+out = []
+i = len(X) - 1; j = len(Y) - 1
+while (i >= 0) or (j >= 0):
+    if op[i + 1][j + 1] == ' ':
+	out.append('  ' + X[i])
+	i = i - 1; j = j - 1
+    elif op[i + 1][j + 1] == '+':
+	out.append('+ ' + Y[j])
+	j = j - 1
+    else:
+	out.append('- ' + X[i])
+	i = i - 1
+
+out.reverse()
+for l in out:
+    print(l)
+
+res = open('lcs-result.tex', 'w')
+res.write('    \\begin{tabular}{>{\\(}c<{\\)}l}\n')
+for l in out:
+    res.write('	     %s & %s \\\\\n' % (l[0], l[2:]))
+res.write('    \\end{tabular}\n')
+res.close()

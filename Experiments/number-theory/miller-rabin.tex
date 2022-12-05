@@ -1,0 +1,108 @@
+\documentclass[english, german, spanish, fleqn]{article}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{babel, babelbib}
+\usepackage[colorlinks, urlcolor = blue]{hyperref}
+\usepackage[ruled, noline, nofillcomment]{algorithm2e}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+
+\title{Prueba de primalidad}
+\author{\href{mailto:vonbrand@inf.utfsm.cl}{Horst H. von Brand}}
+
+\begin{document}
+\bibliographystyle{babplain-fl}
+
+\maketitle
+\thispagestyle{empty}
+
+  Discutiremos la prueba de primalidad de Miller-Rabin~%
+    \cite{miller76:_Riemann_hypot_tests_primality,
+          rabin80:_probab_algor_test_primality},
+  un algoritmo aleatorizado para detectar números compuestos.
+
+\section{Preliminares}
+\label{sec:preliminares}
+
+  Si \(p\) es primo,
+  las únicas raíces cuadradas de \(1\)
+  (soluciones de \(x^2 - 1 \equiv 0 \pmod{p}\))
+  son \(\pm 1\).
+  Esto porque \(p \mid x^2 - 1\) es lo mismo que \(p \mid (x + 1) (x - 1)\),
+  con lo que por el lema de Euclides \(p \mid x + 1\) o \(p \mid x - 1\).
+  Por el pequeño teorema de Fermat sabemos que \(a^{p - 1} \equiv 1 \pmod{p}\)
+  si \(p\) es primo y \(p \not\mid a\).
+
+  Si \(p\) es impar,
+  \(p - 1 = q \cdot 2^s\) con \(q\) impar y \(s \ge 1\).
+  Vale decir,
+  \(a^{q \cdot 2^{s - 1}}\) es raíz cuadrada de \(1\),
+  si es \(1\) lo es su raíz cuadrada \(a^{q \cdot 2^{s - 2}}\),
+  \ldots
+  Descendiendo de esta forma llegaremos a que \(a^q \equiv 1 \pmod{p}\)
+  o que para algún \(0 \le k < s\) es \(a^{q \cdot 2^k} \equiv -1 \pmod{p}\).
+  El contrapositivo de la observación precedente
+  es que si hallamos \(a\) y \(0 \le k < s\)
+  tales que \(a^{q \cdot 2^k} \equiv 1 \pmod{p}\)
+  pero \(a^{q \cdot 2^{k - 1}} \not\equiv \pm 1 \pmod{p}\)
+  entonces \(p\) es compuesto.
+  Resulta que en tal caso a lo más una cuarta parte de los \(a\)
+  mienten.
+
+  El algoritmo~\ref{alg:is-prime} es la modificación aleatorizada de Rabin~%
+     \cite{rabin80:_probab_algor_test_primality}
+  al algoritmo determinista de Miller~%
+     \cite{miller76:_Riemann_hypot_tests_primality}.
+  Supone \(p > 3\) impar.
+  Generalmente se repite la prueba cierto número de veces
+  para obtener mayor confianza en el resultado.
+  Esta es la prueba de primalidad en más extenso uso hoy día,
+  la provee por ejemplo la biblioteca LibTomMath~%
+    \cite{teamtom19:_libtommath_1.2.0},
+  descrita en detalle por St~Denis y Rose~%
+    \cite{st_denis06:_bignum_math}.
+  \begin{algorithm}
+    \selectlanguage{english}
+    \DontPrintSemicolon
+
+    \Function{\(\operatorname{is\_prime}(p)\)}{
+      Write \(p = q \cdot 2^s + 1\) with \(q\) odd \;
+      Pick \(a\) at random from \([2, n - 2]\) \;
+      \(x \leftarrow a^q \bmod p\) \;
+      \eIf{\(x = 1 \vee x = p - 1\)} {
+        \Return Probably prime \;
+      }{
+        \For{\(k \leftarrow 1 \KwTo s - 1\)}{
+          \(x \leftarrow x^2 \bmod p\) \;
+          \If{\(x = p - 1\)}{
+            \Return Probably prime \;
+          }
+          \Return Composite \;
+        }
+      }
+    }
+    \selectlanguage{spanish}
+    \caption{Prueba de primalidad}
+    \label{alg:miller-rabin}
+  \end{algorithm}
+  \bibliography{referencias}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  empty Select at random from primalidad aleatorizado St
+% LocalWords:  contrapositivo aleatorizada LibTomMath Denis Write odd
+% LocalWords:  with Pick Probably Composite

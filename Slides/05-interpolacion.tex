@@ -1,0 +1,610 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{pgfplots}
+
+\pgfplotsset{compat=newest}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Interpolación}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{El problema}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema de interpolación}
+
+  \uncover<+->{
+    Es común conocer los valores de alguna función solo en algunos puntos:
+    son mediciones,
+    resultados de experimentos,
+    valores históricos,
+    incluso resultados de cálculos aproximados
+    que solo dan valores en puntos discretos.
+  }
+
+  \uncover<+->{
+    Pero queremos alguna representación aproximada que sea continua,
+    por ejemplo tener valores en puntos intermedios
+    para poder graficar los valores.
+  }
+
+  \uncover<+->{
+    Solía ser una habilidad esencial interpolar cuando funciones trigonométricas
+    y logaritmos venían en libros,
+    las famosas \emph{tablas de logaritmos}\ldots
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El problema de interpolación}
+
+  \uncover<+->{
+    Si buscamos una función que aproxime los puntos dados
+    (posiblemente con errores)
+    estamos hablando del problema de \emph{ajuste de curvas};
+    si nos contentamos con funciones que aproximen tramos,
+    típicamente polinomios,
+    donde imponemos alguna condición de continuidad
+    en los puntos de encuentro,
+    es \emph{interpolación por splines}
+    (en inglés \emph{\foreignlanguage{english}{spline}}
+     es una regla flexible ---cercha--- que se usa para dibujar curvas
+     pasando por puntos dados,
+     la curva que sigue se puede describir por un polinomio por tramos).
+  }
+  \uncover<+->{
+    Para describir curvas suaves
+    se usan curvas de Bezier
+    (inicialmente carrocerías de auto;
+     hoy describen las formas de letras,
+     movimientos de brazos de robot industriales,
+     objetos en juegos de vídeo,
+     entre muchas otras aplicaciones).
+  }
+\end{frame}
+
+\section{Interpolar por polinomios}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Funciones continuas simples}
+
+  Posiblemente las funciones continuas más simples de manipular
+  son los polinomios.
+
+  \uncover<+->{
+    Así,
+    podemos plantear nuestro problema formalmente:
+
+    \emph{Dados valores de la función \(f\) en puntos discretos
+          \(x_0, x_1, \dotsc, x_n\),
+          construir un polinomio que pase por los puntos \((x_i, f(x_i))\).
+         }
+  }
+  \uncover<+->{
+    Note que estamos suponiendo que los valores \(f(x_i)\) son exactos
+    y que buscamos un polinomio para todo el rango.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Interpolación por polinomios}
+
+  \uncover<+->{
+    Formalmente,
+    nuestro problema es:
+    dados puntos \((x_i, y_i)\) para \(0 \le i \le n\),
+    donde suponemos que los \(x_i\) son todos diferentes,
+    hallar un polinomio que pase por ellos.
+  }
+  \uncover<+->{
+    Son \(n + 1\) puntos,
+    podemos aspirar a hallar \(n + 1\)~coeficientes,
+    vale decir,
+    un polinomio de grado \(n\):
+    \begin{equation*}
+      p(x)
+        = a_n x^n + a_{n - 1} x^{n - 1} + \dotsb + a_0
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Sistema de ecuaciones}
+
+  Esto sugiere el sistema de ecuaciones:
+  \begin{equation*}
+    \begin{pmatrix}
+      1	     & x_0    & x_0^2  & \cdots & x_0^n	 \\
+      1	     & x_1    & x_1^2  & \cdots & x_1^n	 \\
+      \vdots & \vdots & \vdots & \ddots & \vdots \\
+      1	     & x_n    & x_n^2  & \cdots & x_n^n	 \\
+    \end{pmatrix}
+      \cdot \begin{pmatrix}
+               a_0    \\
+               a_1    \\
+               \vdots \\
+               a_n
+            \end{pmatrix}
+      =	 \begin{pmatrix}
+            y_0	   \\
+            y_1	   \\
+            \vdots \\
+            y_n
+          \end{pmatrix}
+  \end{equation*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Preguntas obvias}
+
+  \uncover<+->{
+    ¿Cuándo tiene solución este sistema?
+  }
+
+  \uncover<+->{
+    Si hay solución,
+    ¿es única?
+  }
+  \\ \bigskip
+  \uncover<+->{
+    ¿Hay maneras mejores
+    (más simples/directas)
+    de expresar el polinomio \(p(x)\)?
+  }
+\end{frame}
+
+\subsection{Cuándo existe y es único el polinomio interpolador}
+
+\begin{frame}
+  \frametitle{Determinante de Vandermonde}
+
+  Sabemos que el sistema de ecuaciones:
+  \begin{equation*}
+    \mathbf{A} \cdot \mathbf{x}
+      = \mathbf{y}
+  \end{equation*}
+  (con \(\mathbf{A}\) una matriz cuadrada,
+   \(\mathbf{x}\) e \(\mathbf{y}\) vectores columna)
+  tiene solución única para \(\mathbf{x}\) si y solo si
+  el determinante \(\lvert \mathbf{A} \rvert \ne 0\).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Determinante de Vandermonde}
+
+  \begin{theorem}
+      El determinante de Vandermonde vale:
+    \begin{equation*}
+      \begin{vmatrix}
+        1 & a_1 & a_1^2 & \cdots & a_1^{n - 1} \\
+        1 & a_2 & a_2^2 & \cdots & a_2^{n - 1} \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        1 & a_n & a_n^2 & \cdots & a_n^{n - 1}
+      \end{vmatrix}
+        = \prod_{1 \le i < j \le n} (a_j - a_i)
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Determinante de Vandermonde}
+
+  \textbf{\large\textcolor{blue}{Demostración}}
+
+  Por inducción sobre \(n\).
+  Llamaremos \(V_n\) al determinante con \(a_i\) de \(1 \le i \le n\).
+  \begin{description}
+  \item[Base:]
+    El caso \(n = 1\) es trivial.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Determinante de Vandermonde (cont)}
+
+  \begin{description}
+  \item[Inducción:]
+    Supongamos que vale para \(k\),
+    consideremos el determinante de \((k + 1) \times (k + 1)\):
+    \begin{equation*}
+      \begin{vmatrix}
+        1 & a_1 & a_1^2 & \cdots & a_1^k \\
+        \vdots & \vdots & \vdots & \ddots & \vdots \\
+        1 & a_k & a_k^2 & \cdots & a_k^k \\
+        1 & x	  & x^2	  & \cdots & x^k \\
+      \end{vmatrix}
+    \end{equation*}
+    Expandiendo por la última fila
+    obtenemos un polinomio \(f(x)\),
+    \(\deg(f) \le k\).
+    Determinantes con filas iguales son cero,
+    concluimos \(f(a_i) = 0\):
+    \begin{equation*}
+      f(x)
+        = c \prod_{1 \le i \le k} (x - a_i)
+    \end{equation*}
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Determinante de Vandermonde (cont)}
+
+  \begin{description}
+  \item[]
+    La expansión muestra que el coeficiente de \(x^k\) es \(V_k\).
+    Con \(x \mapsto a_{k + 1}\) obtenemos:
+    \begin{align*}
+      V_{k + 1}
+        &= V_k \cdot \prod_{1 \le i \le k} (a_{k + 1} - a_i) \\
+        &= \prod_{1 \le i < j \le k} (a_j - a_i)
+             \cdot \prod_{1 \le i \le k} (a_{k + 1} - a_i) \\
+        &= \prod_{1 \le i < j \le k + 1} (a_j - a_i)
+    \end{align*}
+  \end{description}
+  \qed
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cuándo hay polinomio interpolador único}
+
+  En resumen,
+  hay un único polinomio de grado a lo más~\(n\)
+  que interpola los \(n + 1\)~puntos
+  \(x_i, y_i)\) para \(0 \le i \le n\)
+  siempre y cuando los \(x_i\) sean todos diferentes.
+\end{frame}
+
+\subsection{Forma de Lagrange}
+
+\begin{frame}
+  \frametitle{Forma de Lagrange}
+
+  \uncover<+->{
+    Los \emph{polinomios base de Lagrange}:
+    \begin{equation*}
+      \ell_i(x)
+      = \frac{(x - x_n) \dotsm (x - x_{i + 1})
+                 (x - x_{i - 1}) \dotsm (x - x_0)}
+             {(x_i - x_n) \dotsm (x_i - x_{i + 1})
+                 (x_i - x_{i - 1}) \dotsm (x_i - x_0)}
+   \end{equation*}
+   cumplen:
+   \begin{equation*}
+     \deg(\ell_i)
+       = n
+     \qquad
+     \ell_i(x_k)
+       = [i = k]
+    \end{equation*}
+  }
+  \uncover<+->{
+    El polinomio:
+    \begin{equation*}
+      p(x)
+        = \sum_{0 \le k \le n} y_k \ell_k(x)
+    \end{equation*}
+    es de grado a lo más \(n\)
+    y toma los valores \(p(x_k) = y_k\) para \(0 \le k \le n\).
+  }
+\end{frame}
+
+\subsection{Fenómeno de Runge}
+
+\begin{frame}
+  \frametitle{El fenómeno de Runge}
+
+  Consideremos la
+  (aparentemente mansa)
+  función:
+  \begin{equation*}
+    f(x)
+      = \frac{1}{1 + 25 x^2}
+  \end{equation*}
+  \\ \medskip
+  \begin{center}
+    \begin{tikzpicture}[scale = 0.70]
+      \begin{axis}[xmin = -1, xmax = 1]
+        \addplot[samples = 201, smooth, red] {1 / (1 + 25 * x^2};
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{El fenómeno de Runge}
+
+  Interpolando con 9 puntos igualmente espaciados:
+  \\ \medskip
+  \begin{center}
+    \begin{tikzpicture}[scale = 0.85]
+      \begin{axis}[xmin = -1, xmax = 1]
+        \addplot[samples = 201, smooth, red] {1 / (1 + 25 * x^2};
+        \addplot[smooth, blue] file {runge.dat};
+           % See runge.py
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El fenómeno de Runge}
+
+  \uncover<+->{
+    Aumentar el número de puntos aumenta el error.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Hay que tener cuidado al usar polinomios de alto grado.
+    Discutiremos el fenómeno en mayor detalle
+    al discutir el error de interpolación.
+  }
+\end{frame}
+
+\section{Error de interpolación}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Error de interpolación}
+
+  \uncover<+->{
+    Llamaremos \(Q_n(x)\) al polinomio que interpola los \(n + 1\) puntos
+    \((x_i, f(x_i))\) para \(0 \le i \le n\).
+
+    El error de la interpolación en el punto \(x\) es:
+    \begin{equation*}
+      E
+        = f(x) - Q_n(x)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Error de interpolación}
+
+  \begin{theorem}
+    Sea \(f \in C^{n+1}[a, b]\),
+    y sea \(Q_n(x)\) el polinomio de grado \(n\)
+    que interpola \(f\)
+    en los puntos distintos \(x_0, \dotsc, x_n \in [a, b]\).
+    Entonces para todo \(x \in [a, b]\)
+    hay \(\zeta \in [a, b]\) tal que
+    \begin{equation*}
+      f(x) - Q_n(x)
+        = \frac{1}{(n + 1)!} f^{(n+1)}(\zeta)
+            \prod_{0 \le j \le n}(x - x_j)
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Error de interpolación}
+
+  \textbf{\large\textcolor{blue}{Demostración}}
+
+  Fijemos \(x \in [a, b]\),
+  diferente de todos los \(x_i\).
+  Sea:
+  \begin{equation*}
+    \omega(x)
+      = \prod_{0 \le j \le n}(x - x_j)
+  \end{equation*}
+  Note que \(\omega\) es mónico de grado \(n + 1\),
+  \(\omega^{(n + 1)}(x) = (n + 1)!\).
+  Definimos \(F(y) = f(y) - Q_n(y) - \lambda \omega(y)\),
+  con \(\lambda\) tal que \(F(x) = 0\).
+  La función \(F(y)\) tiene \(n + 2\) ceros diferentes en \([a, b]\).
+  Por el teorema de Rolle extendido,
+  \(F^{(n + 1)}(y)\) tiene un cero en \([a, b]\),
+  llamémosle \(\zeta\):
+  \begin{align*}
+    F^{(n + 1)}(\zeta)
+      &= f^{(n + 1)}(\zeta) - Q_n^{(n + 1)}(\zeta)
+           - \lambda \omega^{(n + 1)}(\zeta) \\
+    0
+      &= f^{(n + 1)}(\zeta) - \lambda (n + 1)! \\
+    F(y)
+      &= f(y) - Q_n(y) - \frac{f^{(n + 1)}(\zeta)}{(n + 1)!} \omega(y)
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Error de interpolación}
+
+  Despejamos el error de \(F(x) = 0\):
+  \begin{equation*}
+    E
+      = \frac{f^{(n + 1)}(\zeta)}{(n + 1)!} \omega(x)
+  \end{equation*}
+  \qed
+\end{frame}
+
+\begin{frame}
+  \frametitle{Comportamiento de \(\omega\)}
+
+  Para 9 puntos igualmente espaciados en \([-1, 1]\):
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[xmin = -1, xmax = 1]
+        \addplot[samples = 201, smooth, color = red] file {omega.dat};
+        \addlegendentry {\(100 \omega\)};
+        \addplot[] {0};
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{El fenómeno de Runge}
+
+  El fenómeno de Runge se explica porque la función
+  tiene derivadas muy grandes.
+\end{frame}
+
+\begin{frame}
+  \frametitle{Nodos de Chebyshev}
+
+  \uncover<+->{
+    Nos interesaría minimizar el máximo error en \emph{todo} el rango.
+    Para ello podemos elegir los puntos \(x_i\).
+    Pero la \(n + 1\)\nobreakdash-ésima derivada de \(f\)
+    evaluada en el punto \(\zeta\) que varía con \(x\)
+    y depende de los \(x_i\) complica esto enormemente.
+  }
+
+  \uncover<+->{
+    Podemos aproximar esto minimizando únicamente el factor \(\omega(x)\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Polinomios de Chebyshev}
+
+  \uncover<+->{
+    Los \emph{polinomios de Chebyshev} se definen por:
+    \begin{align*}
+      T_0(x)
+        &= 1 \\
+      T_1(x)
+        &= x \\
+      T_{n + 1}(x)
+        &= 2 x T_n(x) - T_{n - 1}(x)
+          \qquad n \ge 1
+    \end{align*}
+  }
+  \uncover<+->{
+    Resulta ser,
+    para \(-1 \le x \le 1\):
+    \begin{equation*}
+      T_n(x)
+        = \cos(n \, \arccos x)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Comportamiento de \(T_9(x)\)}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[xmin = -1, xmax = 1]
+        \addplot[samples = 201, smooth, color = red] file {chebyshev.dat};
+        \addplot[] {0};
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Nodos de Chebyshev}
+  \uncover<+->{
+    Conviene usar nodos en los ceros de \(T_n\):
+    \begin{equation*}
+      x_i
+        = \cos \frac{2 i + 1}{2 n + 2} \pi
+        \quad 0 \le i \le n
+    \end{equation*}
+  }
+  \uncover<+->{
+    Resulta que con estos puntos
+    en el rango \([-1, 1]\) es \(\omega(x) = 2^{-n} T_{n + 1}(x)\).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Comparación igualmente espaciados con Chebyshev}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[xmin = -1, xmax = 1]
+        \addplot[samples = 201, smooth, color = red] file {chebyshev-s.dat};
+        \addlegendentry {\(100 \cdot 2^{-8} T_9\)};
+        \addplot[samples = 201, smooth, color = blue] file {omega.dat};
+        \addlegendentry {\(100 \cdot \omega\)};
+        \addplot[] {0};
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Planteamos el problema de interpolar por polinomios.
+  \item
+    Demostramos cuándo tiene solución única.
+  \item
+    Mostramos una forma simple de expresar el polinomio interpolante.
+    \uncover<+->{
+      El apunte describe formas adicionales,
+      con ventajas en ciertas situaciones.
+    }
+  \item
+    Ilustramos el fenómeno de Runge.
+  \item
+    Derivamos una fórmula para el error de interpolación
+  \item
+    Hallamos una explicación para el fenómeno de Runge
+  \item
+    Aprovechando la libertad de elegir los nodos,
+    obtenemos una interpolación con error más uniforme
+    al usar los nodos de Chebyshev
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode graficar english cercha blue cont ésima
+% LocalWords:  interpolante

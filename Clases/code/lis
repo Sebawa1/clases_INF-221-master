@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+##
+# @file   lis
+# @brief  Longest Increasing Subsequence by dynamic programming
+
+def LIS(a):
+    n = len(a)
+    L = [0 for i in range(n)]
+    L[0] = 1
+    for i in range(n):
+        max = 0
+        for j in range(i):
+            if a[j] < a[i] and L[j] > max:
+                max = L[j]
+        L[i] = 1 + max
+
+    max = L[0]
+    for i in range(1, n):
+        if L[i] > max:
+            max = L[i]
+
+    return max
+
+if __name__ == "__main__":
+    a = [80, 10, 22, 9, 33, 21, 50, 41, 60, 23, 7]
+
+    print(a)
+    print(LIS(a))

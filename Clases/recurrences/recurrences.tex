@@ -1,0 +1,589 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Recurrencias}
+\label{apx:recurrencias}
+
+  Una \emph{recurrencia} es una descripción recursiva de una función,
+  la describe en términos de ella misma.
+  Como toda definición recursiva,
+  hay algunos \emph{casos base}
+  y \emph{casos recursivos}.
+  Cada caso es una igualdad o desigualdad,
+  donde los casos base dan valores explícitos
+  y los casos recursivos
+  relacionan el valor de la función con valores anteriores.
+
+  Decimos que una función \emph{satisface} la recurrencia,
+  o es \emph{solución} de la recurrencia,
+  si para ella cada uno de los casos se cumple.
+  En la mayoría de los casos que encontramos en la práctica
+  hay una solución
+  -- podemos escribir una función recursiva de la recurrencia,
+  y la función que esta compute es la solución.
+  Aún más,
+  en casos de interés,
+  si cada uno de los casos es una igualdad
+  la solución es única.
+
+  Por sí misma la recurrencia
+  no es una descripción satisfactoria de la función.
+  Buscamos una \emph{forma cerrada},
+  una descripción no recursiva de la función.
+  Pero una forma cerrada exacta puede no existir,
+  o ser demasiado complicada para uso práctico.
+  Muchas veces nos conformamos con una solución asintótica
+  del tipo \(f(n) = \Theta(g(n))\),
+  aunque Sedgewick y Flajolet~%
+    \cite{sedgewick13:_introd_anal_algor}
+  arguyen que debiéramos ir más allá
+  y dar asintóticas de la forma \(f(n) \sim g(n)\).
+
+  Para desigualdades recursivas preferimos una solución ajustada,
+  que se cumple incluso si las desigualdades
+  se reemplazan por las igualdades correspondientes.
+  Nuevamente,
+  soluciones ajustadas exactas pueden no existir o ser demasiado complicadas,
+  y nos conformamos con \(f(n) = \Omega(g(n))\) o \(f(n) = O(g(n))\),
+  según sea el caso.
+  Vea también el apéndice~\ref{apx:asymptotics}.
+
+\section{El método definitivo: adivinar y verificar}
+\label{sec:adivinar-verificar}
+
+  Siempre podemos aplicar la idea de adivinar la solución
+  y verificar que cumple la recurrencia.
+  Esto es esencialmente una demostración por inducción:
+  verificamos que cumple los casos base
+  y los casos recursivos
+  (inducción).
+  Claro que esto traslada el problema a adivinar la solución.
+  Algunas de las secciones siguientes
+  presentan guías que ayudan a adivinar correctamente.
+
+\subsection{Calcular valores}
+\label{sec:calcular-valores}
+
+  En el caso de las torres de Hanoi,
+  tenemos la recurrencia:
+  \begin{equation*}
+    H(n)
+      = 2 H(n - 1) + 1
+      \quad H(0) = 0
+  \end{equation*}
+  Viendo la recurrencia,
+  sospechamos que la solución es algo como \(H(n) = 2^n\),
+  probando algunos valores obtenemos \(0, 1, 3, 7, 15, \dotsc\),
+  parece que \(H(n) = 2^n - 1\).
+  Substituyendo,
+  vemos que cumple la recurrencia.
+
+  Acá es relevante la forma en que se dejan los elementos.
+  Si se simplifican demasiado,
+  puede ocultar su forma.
+  No simplificar lo suficiente también puede ser contraproducente.
+
+\subsection{Desenrollar la recurrencia}
+\label{sec:desenrollar-recurrencia}
+
+  Otra alternativa es desenrollar la recurrencia,
+  substituyéndola en sí misma:
+  \begin{align*}
+    H(n)
+      &= 2 H(n - 1) + 1 \\
+      &= 2 (2 H(n - 2) + 1) + 1
+       = 4 H(n - 2) + 3 \\
+      &= 4 (2 H(n - 3) + 1) + 3
+       = 8 H(n - 3) + 7 \\
+      &= \dotsb
+  \end{align*}
+  Da la impresión que al desenrollar
+  resulta \(H(n) = 2^k H(n - k) + 2^k - 1\).
+  Esto podemos demostrarlo por inducción,
+  y finalmente deducir \(H(n) = 2^n H(0) + 2^n - 1 = 2^n - 1\).
+  Incidentalmente,
+  nos da la dependencia de \(H(n)\) del valor inicial.
+
+  Los números de Fibonacci dan otro ejemplo:
+  \begin{equation*}
+    F_{n + 2}
+      = F_{n + 1} + F_n
+      \quad F_0 = 0, F_1 = 1
+  \end{equation*}
+  Los primeros valores
+  \(0, 1, 1, 2, 3, 5, \dotsc\) no muestran un patrón claro,
+  pero la forma hace sospechar algo de la forma \(c \alpha^n\).
+  Intentemos demostrar por inducción que \(F_n \le c \alpha^n\)
+  y ver dónde llegamos:
+  \begin{align*}
+    F_{n + 2}
+      &=   F_{n + 1} + F_n \\
+      &\le c \alpha^{n + 1} + c \alpha^n
+  \end{align*}
+  Por otro lado,
+  queremos que:
+  \begin{align*}
+    F_{n + 2}
+      &\le c \alpha^{n + 2}
+  \end{align*}
+  Una forma de lograr que ambas se cumplan es:
+  \begin{align*}
+    c \alpha^{n + 2}
+      &\ge c \alpha^{n + 1} + c \alpha^n \\
+    \alpha^2
+      &\ge \alpha + 1
+  \end{align*}
+  El mínimo \(\alpha\) que funciona es \(\alpha = \tau = (1 + \sqrt{5}) / 2\)
+  (el otro cero de la ecuación es menor,
+   y podemos ignorarlo).
+  Faltan los casos base,
+  que determinan la constante \(c\).
+  Resultan:
+  \begin{align*}
+    F_0
+      &= 0 \le c \tau^0 \\
+    F_1
+      &= 1 \le c \tau^1
+  \end{align*}
+  Ambas se cumplen si elegimos \(c = 1 / \tau\),
+  hemos demostrado
+  \begin{equation*}
+    F_n
+      \le \tau^{n - 1}
+  \end{equation*}
+  Vamos por una cota inferior ahora.
+  Podemos usar la misma estrategia con \(F_n \ge d \tau^n\),
+  pero el único valor que funciona en todos los casos es el trivial \(d = 0\).
+  Pero nos interesa \emph{que funcione para \(n\) grande},
+  podemos omitir el caso \(n = 0\),
+  que nos lleva a concluir que para \(n \ge 1\) funciona \(d = 1 / \tau^2\),
+  y:
+  \begin{equation*}
+    \tau^{n - 2}
+      \le F_n
+      \le \tau^{n - 1}
+  \end{equation*}
+  Uniendo ambas cotas y ajustando la constante es:
+  \begin{equation*}
+    F_n
+      = \Theta(\tau^n)
+  \end{equation*}
+
+  Veamos la recurrencia:
+  \begin{equation*}
+    T(n)
+      = \sqrt{n} T(\sqrt(n)) + n
+  \end{equation*}
+  Es claro que \(T(n) > n\),
+  pero no mucho.
+  Si intentamos \(T(n) \le a n \log_2 n\),
+  la demostración funciona bien:
+  \begin{align*}
+    T(n)
+      &=   \sqrt{n} T(\sqrt{n}) + n \\
+      &\le \sqrt{n} \cdot a \sqrt{n} \log_2 \sqrt{n} + n \\
+      &=   \frac{a}{2} n \log_2 n + n \\
+      &\le a n \log_2 n
+  \end{align*}
+  siempre que \(1 \le a/2 \log_2 n\),
+  o \(n \ge 2^{2/a}\).
+  Pero esto funciona para cualquier \(a\),
+  no importa qué tan chico.
+  Esto indica que nuestro intento es muy grande.
+  Buscar \(b\) tal que \(T(n) \ge b n \log_2 n\) falla,
+  lo que confirma que estamos mal.
+  Debemos buscar alguna función entre \(n\) y \(n \log_2 n\).
+  Intentemos \(n \log_2 \log_2 n\):
+  \begin{align*}
+    T(n)
+      &\le \sqrt{n} \cdot a \sqrt{n} \log_2 \log_2 \sqrt{n} + n \\
+      &=   a n \log_2 \log_2 n - a n + n \\
+      &\le a n \log_2 \log_2 n
+  \end{align*}
+  Lo último siempre y cuando \(a \ge 1\),
+  tener una cota inferior para \(a\)
+  es fuerte indicación que vamos por el camino correcto.
+  Intentando \(T(n) \ge b n \log_2 \log_2 n\)
+  tenemos éxito siempre que \(b \le 1\),
+  concluimos que \(T(n) = \Theta(n \log \log n)\).
+
+\subsection{Coeficientes indeterminados}
+\label{sec:coef-indet}
+
+  La idea es combinar soluciones parciales,
+  dependiendo de parámetros a determinar.
+  Volvemos a los números de Fibonacci,
+  que llevaron a sospechar soluciones de las formas
+  \(c_1 \tau^n\) y \(c_2 \phi^n\),
+  donde \(\tau\) y \(\phi\) son los ceros de \(x^2 = x + 1\):
+  \begin{align*}
+    \tau
+      &= \frac{1 + \sqrt{5}}{2} \\
+    \phi
+      &= \frac{1 - \sqrt{5}}{2}
+  \end{align*}
+  Substituyendo el intento \(F_n = c_1 \tau^n + c_2 \phi^n\)
+  en la recurrencia vemos que cumple el caso recursivo
+  para todo \(c_1\) y \(c_2\),
+  los casos base dan dos ecuaciones que permiten determinar las constantes:
+  \begin{align*}
+    F_n
+      &= \frac{\tau^n - \phi^n}{\tau - \phi} \\
+      &= \frac{(1 + \sqrt{5})^n - (1 - \sqrt{5})^n}{2^n \sqrt{5}}
+  \end{align*}
+  Es sorprendente que los números de Fibonacci,
+  claramente enteros,
+  se expresen en términos de números irracionales.
+
+  Una variante es lo que Knuth llama \emph{método del repertorio}.
+  La idea es armar un repertorio de secuencias \(f(n)\)
+  con sus correspondientes resultados de aplicar los casos recursivos,
+  para construir la solución que nos interesa
+  mediante una combinación lineal.
+  Un ejemplo tomado de Rossmanith~%
+    \cite{rossmanith12:_analysis_algorithms}
+  es hallar \(a_n\) tal que:
+  \begin{equation*}
+    a_n
+      = n a_{n - 1} + n^2 a_{n - 2}
+         - n^4 - 3 n^2 + 5
+      \quad a_0 = 5, a_1 = 9
+  \end{equation*}
+  Es claro que si \(a_n\) es un polinomio en \(n\),
+  lo es \(a_n - n a_{n - 1} - n^2 a_{n - 2}\).
+  No tiene sentido ir más allá de \(n^2\),
+  daría potencias mayores a \(n^4\).
+  Armamos el cuadro~\ref{tab:operador} con algunos polinomios simples.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{*{2}{>{\(}l<{\)}}}
+      \multicolumn{1}{c}{\boldmath\(a_n\)\unboldmath} &
+        \multicolumn{1}{c}
+            {\boldmath\(a_n - n a_{n - 1} - n^2 a_{n - 2}\)\unboldmath} \\
+      \hline
+      1	  & - n^2 - n + 1 \\
+      n	  & - n^3 + n^2 + 2 n \\
+      n^2 & - n^4 + 3 n^3 - n^2 - n
+      \end{tabular}
+    \caption{Valores del operador \(G = a_n - n a_{n - 1} - n^2 a_{n - 2}\)}
+    \label{tab:operador}
+  \end{table}
+  Buscamos entonces constantes \(\alpha, \beta, \gamma\)
+  tales que:
+  \begin{equation*}
+    \alpha G(1) + \beta G(n) + \gamma G(n^2)
+      = - n^4 - 3 n^2 + 5
+  \end{equation*}
+  Resultan \(\alpha = 5\), \(\beta = 3\), \(\gamma = 1\).
+  Tenemos la suerte que \(5 + 3 n + n^2\) cumple las condiciones iniciales,
+  y la respuesta es:
+  \begin{equation*}
+    a_n
+      = n^2 + 3 n + 5
+  \end{equation*}
+
+\section{Recurrencia lineal de primer orden}
+\label{sec:lineal-recurrence-1st}
+
+  Un caso especial importante es la recurrencia lineal de primer orden:
+  \begin{equation*}
+    a_{n + 1}
+      = u_n a_n + f_n
+  \end{equation*}
+  Vemos que si dividimos por el \emph{factor sumador}:
+  \begin{equation*}
+    s_n
+      = \prod_{0 \le k \le n} u_k
+  \end{equation*}
+  (lo que presupone que \(u_k \ne 0\) en el rango de interés)
+  queda:
+  \begin{equation*}
+    \frac{a_{n + 1}}{s_n} - \frac{a_n}{s_{n - 1}}
+      = \frac{f_n}{s_n}
+  \end{equation*}
+  Sumando ambos lados obtenemos la solución.
+
+\section{Transformaciones}
+\label{sec:transformaciones}
+
+  En algunos casos las otras técnicas no pueden aplicarse directamente,
+  pero una transformación de la recurrencia la lleva a una forma familiar.
+  Las más importantes son las siguientes:
+  \begin{description}
+  \item[Transformación de dominio:]
+    Defina una nueva función \(S(n) = T(f(n))\) para alguna función \(f\)
+    que dé una recurrencia simple para \(S\).
+
+    Por ejemplo,
+    para mergesort si \(M(n)\) cuenta el número de comparaciones
+    la recurrencia exacta es:
+    \begin{equation*}
+      M(n)
+        = M(\lfloor n / 2 \rfloor) + M(\lceil n / 2 \rceil) + n - 1
+        \quad M(0) = 0
+    \end{equation*}
+    El cambio de variables \(n = 2^k\), \(m(k) = M(2^k)\)
+    y la observación \(m(0) = M(1) = 0\)
+    lleva esto a la forma manejable
+    de una recurrencia lineal de primer orden::
+    \begin{equation*}
+      m(k)
+        = 2 m(k - 1) + 2^k - 1
+        \quad m(0) = 0
+    \end{equation*}
+  \item[Transformación de rango:]
+    Defina una nueva función \(S(n) = f(T(n))\) para alguna función \(f\)
+    que dé una recurrencia simple para \(S\).
+
+    Un ejemplo es la solución de Brand~%
+      \cite{brand55:_seq_def_difference_eq}
+    de la recurrencia de Ricatti:
+    \begin{equation*}
+      w_{n + 1}
+        = \frac{a w_n + b}{c w_n + d}
+        \quad w_0 \text{\ dado}
+    \end{equation*}
+    donde \(c \ne 0\)
+    y \(a d - b c \ne 0\)
+    (si \(c = 0\) es una recurrencia lineal de primer orden;
+    si \(a d = b c\) se reduce a \(w_{n + 1} = \text{constante}\)).
+    Si substituimos \(y_n \mapsto c w_n + d\),
+    queda:
+    \begin{equation*}
+      y_n
+        = \alpha - \frac{\beta}{y_{n - 1}}
+    \end{equation*}
+    donde:
+    \begin{align*}
+      \alpha
+        &= a + d \\
+      \beta
+        &= a d - b c
+    \end{align*}
+    Claramente eso solo vale si \(a d - b c \ne 0\).
+    Substituyendo ahora \(y_n \mapsto x_{n + 1} / x_n\)
+    resulta:
+    \begin{equation*}
+      x_{n + 2} - \alpha x_{n + 1} + \beta x_n
+        = 0
+    \end{equation*}
+    Necesitamos dos valores iniciales para resolverla,
+    podemos elegir bastante arbitrariamente \(x_0 = 1\),
+    dando \(x_1 = y_0\),
+    que a su vez podemos obtener de la condición inicial original.
+  \item[Diferencias:]
+    Si aparecen sumas en los casos recursivos
+    puede ser útil aplicar diferencias
+    y buscar una recurrencia para \(S(n) = \Delta T(n) = T(n + 1) - T(n)\).
+
+    Hay otras situaciones en las que diferencias ayudan a simplificar
+    la recurrencia.
+    Un ejemplo es la solución exacta a la recurrencia de mergesort
+    discutida en el capítulo~\ref{cha:dividir-conquistar-solucion}.
+  \end{description}
+
+\section{Funciones generatrices}
+\label{sec:recurrencias-funciones-generatrices}
+
+  Podemos usar las herramientas de funciones generatrices.
+  Dada la recurrencia,
+  definimos una función generatriz adecuada,
+  y aplicamos las propiedades respectivas para obtener una ecuación
+  de la recurrencia.
+  Resuelta la ecuación,
+  extraemos coeficientes para obtener la solución.
+
+  Por ejemplo,
+  los números de Catalan \(C_n\) cumplen la recurrencia:
+  \begin{equation*}
+    C_{n + 1}
+      = \sum_{0 \le k \le n} C_k C_{n - k}
+      \quad C_0 = 1
+  \end{equation*}
+  Definiendo la función generatriz ordinaria:
+  \begin{equation*}
+    c(z)
+      = \sum_{n \ge 0} C_n z^n
+  \end{equation*}
+  de las propiedades vemos que cumple:
+  \begin{equation*}
+    \frac{c(z) - C_0}{z}
+      = c^2(z)
+  \end{equation*}
+  Despejando queda:
+  \begin{equation*}
+    z c^2(z) - c(z) + 1
+      = 0
+  \end{equation*}
+  Obtenemos:
+  \begin{equation*}
+    c(z)
+      = \frac{1 \pm \sqrt{1 - 4 z}}{2 z}
+  \end{equation*}
+  Sabemos que debe ser \(c(0) = C_0 = 1\),
+  lo que descarta el signo positivo:
+  \begin{equation*}
+    c(z)
+      = \frac{1 - \sqrt{1 - 4 z}}{2 z}
+  \end{equation*}
+  Usando la expansión de\((1 - 4 z)^{1/2}\)
+  por el teorema del binomio y simplificando
+  se obtiene finalmente:
+  \begin{equation*}
+    C_n
+      = \frac{1}{n + 1} \binom{2 n}{n}
+  \end{equation*}
+  Alternativamente,
+  podemos definir:
+  \begin{equation*}
+    u(z)
+      = c(z) - 1
+  \end{equation*}
+  con lo que la ecuación toma la forma:
+  \begin{equation*}
+    u(z)
+      = z (u(z) + 1)^2
+  \end{equation*}
+  Usando la fórmula de inversión de Lagrange con \(\phi(u) = (u + 1)^2\)
+  y \(f(u) = u\) se obtiene directamente para \(n \ge 1\):
+  \begin{align*}
+    C_n
+      &= [z^n] u(z) \\
+      &= \frac{1}{n} [u^{n - 1}] (1 + u)^{2 n} \\
+      &= \frac{1}{n} \binom{2 n}{n - 1} \\
+      &= \frac{1}{n + 1} \binom{2 n}{n}
+  \end{align*}
+  Casualmente coincide \(C_0 = 1\) con esta fórmula.
+
+  El número \(D_n\) de desarreglos
+  (permutaciones sin puntos fijos)
+  de \(n\) elementos cumple la recurrencia:
+  \begin{equation*}
+    D_{n + 1}
+      = n D_n + n D_{n - 1}
+      \quad D_0 = 1, D_1 = 0
+  \end{equation*}
+  Definimos la función generatriz exponencial:
+  \begin{equation*}
+    \widehat{d}(z)
+      = \sum_{n \ge 0} D_n \frac{z^n}{n!}
+  \end{equation*}
+  Las propiedades dan:
+  \begin{align*}
+    \widehat{d}'(z)
+      &\egf \left\langle D_{n + 1} \right\rangle_{n \ge 0} \\
+    z \widehat{d}'(z)
+      &\egf \left\langle n D_n \right\rangle_{n \ge 0}
+  \end{align*}
+  Falta el segundo término del lado derecho:
+  \begin{equation*}
+    \sum_{n \ge 1} n D_{n - 1} \, \frac{z^n}{n!}
+      = z \sum_{n \ge 1} D_{n - 1} \, \frac{z^{n - 1}}{(n - 1)!}
+      = z \widehat{d}(z)
+  \end{equation*}
+    Combinando las anteriores:
+  \begin{align*}
+    \widehat{d}'(z)
+      &= z \widehat{d}'(z) + z \widehat{d}(z)
+           \qquad \widehat{d}(0) = D_0 = 1 \\
+    \frac{\widehat{d}'(z)}{\widehat{d}(z)}
+      &= \frac{z}{1 - z}
+  \end{align*}
+  La solución de esta ecuación diferencial es:
+  \begin{equation*}
+    \widehat{d}(z)
+      = \frac{\mathrm{e}^{-z}}{1 - z}
+  \end{equation*}
+  Por las propiedades,
+  reconocemos la función generatriz ordinaria
+  de las sumas parciales de la serie exponencial:
+  \begin{align*}
+    D_n
+      &= n! [z^n] \widehat{d}(z) \\
+      &= n! \sum_{0 \le k \le n} \frac{(-1)^k}{k!}
+  \end{align*}
+
+\section{Perturbación}
+\label{sec:perturbacion}
+
+  Una técnica aplicable para aproximar o acotar
+  la solución a algunas recurrencias es el método de perturbación,
+  que ilustramos mediante un ejemplo tomado de Sedgewick y Flajolet~%
+    \cite{sedgewick13:_introd_anal_algor}.
+  Sea la recurrencia:
+  \begin{equation*}
+    a_{n + 1}
+      = 2 a_n + \frac{a_{n - 1}}{n^2}
+      \quad a_0 = 1, a_1 = 2
+  \end{equation*}
+  Para valores grandes de \(n\)
+  el último término tendrá poco efecto.
+  Consideremos entonces la recurrencia aproximada:
+  \begin{equation*}
+    b_{n + 1}
+      = 2 b_n
+      \quad b_0 = 1
+  \end{equation*}
+  que tiene la solución obvia \(b_n = 2^n\),
+  y comparemos los valores aproximados y exactos:
+  \begin{equation*}
+    p_n
+      = \frac{a_n}{b_n}
+      = 2^{-n} a_n
+  \end{equation*}
+  Substituyendo en la recurrencia exacta:
+  \begin{equation*}
+    2^{n + 1} p_{n + 1}
+      = 2 \cdot 2^n p_n + \frac{2^{n - 1} p_{n - 1}}{n^2}
+  \end{equation*}
+  Esto se simplifica a:
+  \begin{equation*}
+    p_{n + 1}
+      = p_n + \frac{p_{n - 1}}{4 n^2}
+      \quad p_0 = p_1 = 1
+  \end{equation*}
+  Es claro que los \(p_n\) aumentan,
+  por lo que:
+  \begin{align*}
+    p_{n + 1}
+      &\le p_n \left( 1 + \frac{1}{4 n^2} \right) \\
+      &\le \prod_{1 \le k \le n} \left( 1 + \frac{1}{4 k^2} \right) \\
+      &<   \prod_{k \ge 1} \left( 1 + \frac{1}{4 k^2} \right)
+  \end{align*}
+  Este producto infinito
+  puede expresarse usando la fórmula de producto de Euler para el seno:
+  \begin{equation*}
+    \sin \pi z
+      = \pi z \prod_{k \ge 1} \left( 1 - \frac{z^2}{k^2} \right)
+  \end{equation*}
+  Con la fórmula para el seno en términos de exponenciales:
+  \begin{equation*}
+    \sin z
+      = \frac{\mathrm{e^{\mathrm{i} z}} - \mathrm{e^{- \mathit{i} z}}}
+             {2 \mathrm{i}}
+  \end{equation*}
+  vemos que nuestro producto es:
+  \begin{align*}
+    \prod_{k \ge 1} \left( 1 + \frac{1}{4 k^2} \right)
+      &= \frac{\sin\left( \frac{\pi \mathrm{i}}{2} \right)}
+              {\frac{\pi \mathrm{i}}{2}} \\
+      &= \frac{\mathrm{e}^{\pi / 2} - \mathrm{e}^{- \pi / 2}}{\pi} \\
+      &= 1,46505
+  \end{align*}
+  con lo que obtenemos:
+  \begin{align*}
+    a_n
+      \sim \alpha 2^n
+  \end{align*}
+  donde sabemos que \(1 < \alpha < 1,46505\).
+
+\input{recurrences/narayana.tex}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  mergesort

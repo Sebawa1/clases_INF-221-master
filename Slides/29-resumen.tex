@@ -1,0 +1,505 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage[basic]{complexity}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Resumen}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Preliminares matemáticos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Asintóticas}
+
+  \uncover<+->{
+    Definimos las notaciones asintóticas comunes:
+    \(O(\cdot)\),
+    \(\Omega(\cdot)\),
+    \(\Theta(\cdot)\),
+    \(o(\cdot)\),
+    \(\omega(\cdot)\),
+    \(\cdot \sim \cdot\).
+  }
+
+  \uncover<+->{
+    Las que más usamos son las primeras tres.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Explicamos algunas de las reglas para su manipulación.
+  }
+  \\ \bigskip
+  \uncover<+->{
+    Cuidado,
+    hay varias definiciones ligeramente diferentes en circulación.
+    Verifique la que usa el texto entre manos en caso de duda.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Probabilidades}
+
+  \uncover<+->{
+    Dimos una rápida revisión de probabilidades discretas,
+    deduciendo varios resultados importantes:
+  }
+  \begin{itemize}
+  \item
+    Linealidad del valor esperado
+  \item
+    Estadísticas de procesos de Bernoulli
+    (secuencias de intentos independientes con la misma probabilidad de éxito)
+  \item
+    Algunas cotas simples,
+    extremadamente útiles:
+    Markov,
+    Chebyshev,
+    Chernoff.
+  \end{itemize}
+\end{frame}
+
+\section{Algoritmos numéricos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propagación de errores}
+
+  \uncover<+->{
+    Comentamos brevemente sobre propagación de errores
+    en secuencias de cálculos.
+  }
+
+  \uncover<+->{
+    Discutimos los fenómenos de algoritmos inestables
+    y de problemas mal condicionados.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aproximar ceros}
+
+  \uncover<+->{
+    Definimos el \emph{orden} de un método de búsqueda de ceros.
+  }
+  \uncover<+->{
+    Discutimos y analizamos la convergencia local de varios métodos:
+  }
+  \begin{description}
+  \item[Lineales:]
+    Bisección,
+    \emph{\foreignlanguage{latin}{regula falsi}},
+    iteración de punto fijo.
+  \item[Cuadráticos:]
+    Método de Newton
+  \item[Superlineales:]
+    Método de la secante.
+  \end{description}
+  \uncover<+->{
+    El método \(\Delta^2\) de Aitken aumenta la rapidez de convergencia.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Interpolación}
+
+  \uncover<+->{
+    Planteamos el problema,
+    vimos que hay varias formas de enfrentarlo:
+    interpolar con un polinomio,
+    interpolar por tramos,
+    ajustar curvas.
+  }
+
+  \uncover<+->{
+    Analizamos en mayor detalle la opción de interpolar mediante un polinomio.
+  }
+  \uncover<+->{
+    Vimos las formas de Lagrange y Newton del polinomio interpolador.
+    Se recomienda la forma baricéntrica
+    por estabilidad numérica.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Interpolación}
+
+  \uncover<+->{
+    Derivamos el error de interpolación.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Discutimos el fenómeno de Runge,
+    y su mitigación usando puntos de Chebyshev.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cuadratura}
+
+  \uncover<+->{
+    Derivamos las fórmulas de cuadratura de rectángulos,
+    trapezoides y Simpson
+    (usando parábolas).
+  }
+  \uncover<+->{
+    Derivamos fórmulas para el error.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cuadratura de Gauß}
+
+  \uncover<+->{
+    Eligiendo juiciosamente los puntos en que se evalúa la función
+    obtenemos fórmulas exactas para polinomios de mayor grado.
+  }
+  \uncover<+->{
+    Desarrollamos algo de la teoría de polinomios ortogonales relevante.
+  }
+\end{frame}
+
+\section{Algoritmos combinatorios}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos combinatorios}
+
+  \uncover<+->{
+    Interesa diseñar y analizar algoritmos para resolver problemas discretos.
+  }
+  \uncover<+->{
+    Herramientas fundamentales son combinatoria,
+    solución de recurrencias
+    y sumatorias.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos voraces}
+
+  \uncover<+->{
+    \alert<.>{
+      Nunca funcionan.
+    }
+  }
+
+  \uncover<+->{
+    Tres condiciones:
+  }
+  \begin{description}
+  \item[Greedy Choice:]
+    Hay una solución óptima que incluye la elección voraz.
+  \item[Inductive Substructure:]
+    No hay \emph{restricciones externas}.
+    Esencialmente exige que al definir el problema restante
+    eliminemos lo que interfiere con la elección inicial.
+  \item[Optimal Substructure:]
+    La elección voraz,
+    junto a una solución óptima del problema restante,
+    es una solución óptima.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programación dinámica}
+
+  \uncover<+->{
+    Si no hay elección voraz posible,
+    hay que probar varias opciones en cada paso.
+  }
+  \uncover<+->{
+    Para evitar repetir la solución repetida de subproblemas,
+    se registran los resultados para uso posterior.
+  }
+  \uncover<+->{
+    Opciones son \emph{memoización} y \emph{programación dinámica}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programación dinámica}
+
+  \uncover<+->{
+    Tres condiciones:
+  }
+  \begin{description}
+  \item[Complete Selection:]
+    Revise todas las opciones para el paso considerado.
+  \item[Inductive Substructure:]
+    No hay \emph{restricciones externas}.
+    Esencialmente exige que al definir el problema restante
+    eliminemos lo que interfiriere con la elección inicial.
+  \item[Optimal Substructure:]
+    La elección inicial,
+    si se hace correctamente,
+    junto a una solución óptima del problema restante,
+    es una solución óptima.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Programación dinámica}
+
+  \begin{itemize}
+  \item
+    Plantee el problema recursivamente.
+  \item
+    Construya soluciones \emph{\foreignlanguage{english}{bottom up}}.
+  \item
+    Defina una estructura para almacenar soluciones de subproblemas.
+  \item
+    Defina el orden de cálculo.
+  \end{itemize}
+  \uncover<+->{
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Búsqueda exhaustiva}
+
+  \uncover<+->{
+    Varias estrategias,
+    basadas en búsqueda en grafos,
+    podando ramas que no llevan a la solución:
+    \emph{\foreignlanguage{english}{backtracking}}
+    (tentativamente tome una decisión,
+     avance hasta donde pueda,
+     retroceda e intente la siguiente alternativa)
+     es búsqueda en profundidad,
+     puede usarse búsqueda a lo ancho en forma similar.
+   }
+  \uncover<+->{
+    \emph{\foreignlanguage{english}{Branch and bound}}
+    es usar una cota superior al óptimo lograble desde una posición
+    para podar ramas que no pueden lograr lo mejor ya hallado.
+  }
+
+  \uncover<+->{
+    Búsqueda inteligente del camino más corto:
+    el algoritmo \(A^*\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Dividir y conquistar}
+
+  \uncover<+->{
+    Dividir en subproblemas,
+    resolver recursivamente y combinar resultados.
+  }
+
+  \uncover<+->{
+    Recurrencias resultantes al dividir en partes iguales
+    resueltas por el teorema maestro,
+    o más en general el teorema de Akra-Bazzi.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Quicksort}
+
+  \uncover<+->{
+    \emph{\foreignlanguage{english}{Quicksort}} es dividir y conquistar,
+    pero no hay control sobre la división.
+  }
+  \uncover<+->{
+    Lo analizamos directamente y mediante un argumento probabilístico.
+  }
+\end{frame}
+
+\section{Algoritmos aleatorizados}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos aleatorizados}
+
+  \uncover<+->{
+    Usan elecciones al azar en su funcionamiento.
+  }
+  \uncover<+->{
+    Tiempo de ejecución es una variable aleatoria,
+    al igual que el resultado.
+  }
+
+  \begin{description}
+  \item[Las Vegas:]
+    Dan siempre el resultado correcto en tiempo de ejecución esperado finito.
+  \item[Monte Carlo:]
+    No siempre dan el resultado correcto,
+    pueden dar una señal de falla o simplemente no terminar.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Razones para usarlos}
+
+  \begin{description}
+  \item[Frustrar ataques:]
+    Evitar que un atacante pueda explotar el peor caso.
+  \item[Muestreo:]
+    Una muestra de la población permite estimar sus propiedades.
+  \item[Abundantes testigos:]
+    Un \emph{testigo}
+    (\emph{certificado})
+    permite decidir un problema,
+    y son comunes,
+    elegir al azar.
+  \item[Huellas digitales:]
+    Un resumen pequeño de una gran estructura.
+  \item[Reordenar:]
+    Algoritmo ingenuo con buen rendimiento en promedio
+    con datos en orden aleatorio.
+  \item[Balance de carga:]
+    Asignar tareas al azar.
+    Incluso basta revisar la carga de dos.
+  \item[Romper simetría:]
+    En computación distribuida,
+    asignar tareas al azar no requiere sincronización.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Hashing}
+
+  \uncover<+->{
+    Basado esencialmente en elegir una posición al azar donde guardar el dato.
+  }
+  \uncover<+->{
+    Es la técnica de búsqueda más usada,
+    por lo eficiente.
+  }
+\end{frame}
+
+\section{Algoritmos aproximados}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos aproximados}
+
+  \uncover<+->{
+    Si el problema es demasiado complejo para resolver exactamente,
+    nos conformamos son una solución aproximada.
+  }
+  \begin{description}
+  \item[Heurística:]
+    Idea intuitivamente razonable,
+    debiera dar una solución \textquote{no demasiado mala}.
+  \item[Algoritmo aproximado:]
+    Obtener una cota para lo que entrega el algoritmo.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos aproximados}
+
+  \uncover<+->{
+    Los problemas difieren en su aproximabilidad:
+  }
+  \begin{itemize}
+  \item
+    Solo hay cota en tiempo polinomial si \(\cP = \NP\)
+    (caso \textsc{TSP}).
+  \item
+    Hay una cota constante,
+    independiente del tamaño
+    (caso \(\text{\textsc{TSP}}_\Delta\)).
+  \item
+    Cotas que crecen con la instancia
+    (caso \textsc{Set~Cover}).
+  \item
+    Problemas con PTAS o FPTAS
+    (algoritmos que dan cotas ajustables a mayor costo).
+  \end{itemize}
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \uncover<+->{
+    Rápida revisión de algunas técnicas importantes de diseño de algoritmos.
+  }
+  \uncover<+->{
+    El análisis detallado del rendimiento de algoritmos
+    llena varios tomos\ldots
+  }
+  \\ \smallskip
+  \uncover<+->{
+    No revisamos ningún área de aplicación en detalle:
+    grafos,
+    problemas con palabras,
+    algoritmos geométricos,
+    teoría de números o álgebra,
+    asignación de recursos.
+  }
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode latin falsi Superlineales baricéntrica
+% LocalWords:  Greedy Choice Inductive Substructure up
+% LocalWords:  Optimal memoización Selection english bottom Branch
+% LocalWords:  backtracking and bound aleatorizados Carlo TSP
+% LocalWords:  Hashing aproximabilidad Set Cover PTAS FPTAS lograble
+% LocalWords:  Quicksort

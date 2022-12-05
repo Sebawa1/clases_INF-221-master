@@ -1,0 +1,368 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{fourier}
+\usepackage{mathrsfs}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[noline, noend]{algorithm2e}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+\DeclareMathOperator{\var}{var}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Hashing \\
+         Direccionamiento abierto}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Direccionamiento abierto}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Direccionamiento abierto}
+
+  \uncover<+->{
+    Vimos que un análisis de hashing con direccionamiento cerrado
+    es bastante simple.
+    Direccionamiento abierto es un desafío bastante mayor,
+    en parte porque hay decisiones que inciden fuertemente en el rendimiento.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Describiremos algunas alternativas,
+    dando un análisis somero del tema.
+  }
+\end{frame}
+
+\section{Un modelo simple}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un modelo simple}
+
+  \uncover<+->{
+    Supone una secuencia de funciones \emph{\foreignlanguage{english}{hash}}
+    \(\langle h_0, h_1, \dotsc, h_{m - 1} \rangle\)
+    tales que para todo \(x \in \mathscr{U}\)
+    tenemos que
+    \(\langle h_0(x), h_1(x), \dotsc, h_{m - 1}(x) \rangle\)
+    es una permutación de \(\{ 0, 1, 2, \dotsc, m - 1 \}\).
+  }
+  \\ \smallskip
+  \uncover<+->{
+    \begin{algorithm}[H]
+      \DontPrintSemicolon
+
+      \Function{\(\mathrm{find}(x)\)}{
+        \For{\(i \leftarrow 0\) \KwTo \(m - 1\)}{
+          \uIf{\(T[h_i(x)] = x\)}{
+            \Return \(h_i(x)\) \;
+          }
+          \ElseIf{\(T[h_i(x)] = \bot\)}{
+            \Return \(\bot\) \;
+          }
+        }
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis del modelo}
+
+  \uncover<+->{
+    Simplifica el análisis
+    que la secuencia de intentos sea verdaderamente al azar,
+    usamos la \emph{suposición de \foreignlanguage{english}{hash}
+    fuerte uniforme}:
+    para cada objeto \(x \in \mathscr{U}\)
+    la secuencia \(\langle h_0(x), h_1(x), \dotsc, h_{m - 1}(x) \rangle\)
+    es una permutación elegida uniformemente al azar
+    entre las permutaciones del conjunto \(\{ 0, 1, 2, \dotsc, m - 1 \}\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis de un modelo simple}
+
+  \uncover<+->{
+    Si suponemos que todas las posibles configuraciones de \(m\)~casilleros
+    de los cuales \(n\)~están ocupados son igualmente probables,
+    la probabilidad de requerir \(r\)~intentos al insertar un elemento
+    es la probabilidad de elegir \(r\)~posiciones,
+    \(r - 1\)~ocupadas y \(1\)~libre:
+    \begin{align*}
+      p_r
+        &= \binom{m - r}{n - r + 1} \bigg/ \binom{m}{n} \\
+        &= \binom{m - r}{m - n - 1} \bigg/ \binom{m}{n}
+    \end{align*}
+    (fije \(r\)~posiciones,
+     \(r - 1\)~ocupadas y \(1\)~libre,
+     de las demás \(m - r\) tome \(n - r + 1\)~ocupadas).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis de un modelo simple}
+
+  \uncover<+->{
+    Anotaremos para el \emph{factor de carga}:
+    \begin{equation*}
+      \alpha
+      = \frac{n}{m}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis de un modelo simple}
+
+  \uncover<+->{
+    El valor esperado del número de casilleros revisados
+    al insertar un elemento nuevo en la tabla
+    (o en una búsqueda fallida)
+    es:
+    \begin{align*}
+      \Exp[\text{insertar}]
+        &= \sum_{1 \le r \le m} r p_r \\
+        &= m + 1 - \sum_{1 \le r \le m} (m + 1 - r) p_r \\
+        &= m + 1
+            - \sum_{1 \le r \le m}
+          (m + 1 - r) \binom{m - r}{m - n - 1} \bigg/ \binom{m}{n}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis de un modelo simple}
+
+  \uncover<+->{
+    \begin{align*}
+      \Exp[\text{insertar}]
+        &= m + 1
+            - \sum_{1 \le r \le m}
+                (m -n) \binom{m + 1 - r}{m - n} \bigg/ \binom{m}{n} \\
+        &= m + 1
+            - (m -n) \binom{m + 1}{m - n + 1} \bigg/ \binom{m}{n} \\
+        &= \frac{m + 1}{m - n + 1} \\
+        &\approx \frac{1}{1 - \alpha}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis de un modelo simple}
+
+  \uncover<+->{
+    Una búsqueda exitosa revisa las mismas posiciones
+    que al insertar el elemento:
+    \begin{align*}
+      \Exp[\text{búsqueda exitosa}]
+        &= \frac{1}{n}
+             \sum_{0 \le k \le n - 1} \frac{m + 1}{m - k + 1} \\
+        &= \frac{m + 1}{n}
+              \left(
+                \sum_{1 \le k \le m + 1} \frac{1}{k}
+                  - \sum_{1 \le k \le m - n + 1} \frac{1}{k}
+              \right) \\
+        &= \frac{m + 1}{n} (H_{m + 1} - H_{m - n + 1}) \\
+        &\approx \frac{1}{\alpha} \ln \frac{1}{1 - \alpha}
+    \end{align*}
+  }
+\end{frame}
+
+\section{Alternativas realistas}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Alternativas realistas}
+
+  \uncover<+->{
+    La idea tras el modelo simple que usamos para describir inserciones
+    no es viable.
+    En la práctica,
+    se usa alguna de las siguientes opciones:
+  }
+  \begin{description}
+  \item[Búsqueda lineal:]
+    Si la posición está ocupada,
+    busque secuencialmente una posición libre
+    (retorne error ---tabla llena--- si no hay ninguna).
+
+    Es simple de programar,
+    tiene buen comportamiento de caché.
+    Tiene la desventaja que bloques ocupados grandes
+    tienen mayor probabilidad de crecer,
+    e incluso coalescer al llenar posiciones libres entre ellos
+    (a este fenómeno
+     le llaman \emph{\foreignlanguage{english}{primary clustering}}).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Alternativas realistas}
+
+  \begin{description}
+  \item[Búsqueda cuadrática:]
+    Si la posición primaria está ocupada,
+    intente las posiciones
+    \((h(x) + k^2) \bmod m\).
+
+    Es simple de programar,
+    evita \emph{\foreignlanguage{english}{primary clustering}},
+    pero lleva a \emph{\foreignlanguage{english}{secondary clustering}}
+    (si \(h(x) = h(y)\),
+     las secuencias de búsqueda para \(x\) e \(y\) son iguales).
+    Desventaja es mala localidad.
+    Si \(m\) es primo la secuencia cubre solo la mitad de la tabla
+    (módulo \(m\) solo la mitad de los números son cuadrados).
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Alternativas realistas}
+
+  \begin{description}
+  \item[Doble hashing:]
+    Si la posición primaria está ocupada,
+    calcule una nueva función de hash \(h_2(x)\) e intente las posiciones
+    \((h(x) + k h_2(x)) \bmod m\).
+
+    Es simple de programar,
+    evita \emph{\foreignlanguage{english}{primary clustering}}
+    y \emph{\foreignlanguage{english}{secondary clustering}},
+    las secuencias de búsqueda no coinciden incluso si \(h(x) = h(y)\)
+    siempre que \(h_2(x) \ne h_2(y)\).
+    Desventaja es la necesidad de calcular \(h_2\),
+    su uso destruye la localidad.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Alternativas realistas}
+
+  \begin{description}
+  \item[Búsqueda binaria:]
+    Si la posición primaria está ocupada,
+    intente posiciones \(h(x) \oplus k\)
+    (acá \(\oplus\) es o exclusivo;
+     particularmente útil si \(m\) es potencia de \(2\)).
+
+    Es simple de programar,
+    evita \emph{\foreignlanguage{english}{primary clustering}},
+    pero lleva a \emph{\foreignlanguage{english}{secondary clustering}}
+    (si \(h(x) = h(y)\),
+     las secuencias de búsqueda para \(x\) e \(y\) son iguales).
+    Tiene mucho mejor localidad que búsqueda cuadrática.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Otras consideraciones}
+
+  \uncover<+->{
+    Las búsquedas exitosas suelen ser muchísimo más frecuentes
+    que las inserciones,
+    vale la pena invertir tiempo haciéndolas eficientes.
+    Por ejemplo,
+    mantener ordenadas las claves en la secuencia de búsqueda
+    desde cada posición
+    en promedio disminuye el costo de búsquedas fallidas
+    a la mitad.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Analizamos un modelo simple
+    (aunque bastante realista)
+    de hashing abierto.
+  \item
+    Discutimos varias alternativas de secuencias de búsqueda.
+  \item
+    Algunas de ellas se han analizado en detalle,
+    pero es complejo y lo dejaremos.
+  \item
+    Hay consideraciones prácticas a tener en cuenta:
+    comportamiento respecto de caché,
+    ordenar los elementos para hacer eficientes búsquedas exitosas frecuentes.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode hashing sansanos english hash to blue
+% LocalWords:  hashear mdseries Function function end Procedure Loop
+% LocalWords:  procedure Downto downto loop Continue continue Break
+% LocalWords:  break KwStep step Absent coalescer primary clustering
+% LocalWords:  secondary

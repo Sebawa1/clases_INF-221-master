@@ -1,0 +1,983 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Una pizca de probabilidades}
+\label{apx:pizca-probabilidades}
+
+  Requeriremos una pizca de probabilidades discretas,
+  ofrecemos un rápido repaso de los resultados principales
+  con sus derivaciones.
+  Incluimos un par de resultados simples que generalmente no se tratan
+  en ramos de probabilidades,
+  pero que son de utilidad para análisis de algoritmos.
+  La discusión general se adapta de Ash~%
+    \cite{ash08:_basic_probab_theo}.
+  Para mucho más detalle,
+  en particular de los temas relevantes a algoritmos aleatorizados
+  vea por ejemplo Aspnes~%
+    \cite{aspnes20:_notes_randomized_algorithms}.
+
+\section{Definiciones básicas}
+\label{sec:definiciones-probabilidades}
+
+  El origen de la teoría de probabilidades viene de juegos de azar.
+  Por ejemplo,
+  se vio que al lanzar una moneda muchas veces,
+  muy aproximadamente la mitad de las veces sale cara.
+  De la misma forma,
+  si se toma un mazo de cartas inglés
+  (sin comodines),
+  se baraja y se extrae una carta,
+  y se repite el ejercicio muchas veces,
+  un cuarto de las veces la carta es trébol,
+  y una en trece es un as.
+
+  En el experimento con cartas tenemos \num{52} posibles resultados,
+  y el \textquote{principio de razón insuficiente} o \textquote{mínima sorpresa}
+  nos dice que esperamos cualquiera de los resultados,
+  sin preferencias.
+  Los pioneros del área definieron probabilidad
+  como el número de casos favorables dividido por el número total de casos,
+  con la justificación de que eran todos igualmente probables.
+  En el caso de la pinta de la carta,
+   \(13 / 52\) o \(1 / 4\).
+  Esta definición es restrictiva
+  (supone un número finito de posibilidades),
+  pero,
+  mucho más grave,
+  es circular:
+  estamos definiendo \textquote{probabilidad}
+  en términos de \textquote{igualmente probable}.
+  Necesitamos una base más sólida.
+
+\subsection{Formalizando probabilidades}
+\label{sec:formalizar-probabilidad}
+
+  El primer ingrediente en una teoría matemática de las probabilidades
+  es el \emph{espacio muestral},
+  que anotaremos \(\Omega\),
+  el conjunto de posibles resultados de un experimento al azar.
+  El requisito esencial es que una ejecución del experimento
+  entrega exactamente un resultado de \(\Omega\).
+  El segundo ingrediente es el \emph{evento},
+  una pregunta sobre el resultado de un experimento
+  que tiene respuesta \textquote{si} o \textquote{no}
+  (por ejemplo,
+   si la carta elegida es una figura).
+  Un evento no es más que un subconjunto del espacio muestral.
+  Por convención,
+  los eventos se anotan con letras romanas mayúsculas
+  del comienzo del alfabeto \(A, B\), y así sucesivamente.
+  Los resultados en que se cumple el evento \(A\)
+  se llaman \emph{favorables} (para \(A\)).
+  El evento \(\Omega\) se dice \emph{seguro}
+  (siempre ocurre),
+  el evento \(\varnothing\) se dice \emph{imposible}
+  (jamás ocurre).
+  Siendo conjuntos los eventos,
+  se aplican las operaciones conocidas de conjuntos.
+
+  Buscamos asignar probabilidades a eventos.
+  Aparecen problemas técnicos,
+  no siempre es posible asignar probabilidades en forma consistente
+  a subconjuntos de \(\Omega\).
+  Requeriremos que la clase de eventos \(\mathscr{F}\)
+  forme lo que se conoce como un \emph{campo sigma},
+  o sea,
+  cumple los siguientes tres requisitos:
+  \begin{align}
+    &\Omega
+       \in \mathscr{F}
+           \label{eq:campo-sigma-Omega} \\
+    &A_1, A_2, \dotsc
+       \in \mathscr{F}
+      \text{\ implica\ } \bigcup_n A_n \in \mathscr{F}
+           \label{eq:campo-sigma-union} \\
+    &A \in \mathscr{F}
+      \text{\ implica\ } \overline{A} \in \mathscr{F}
+           \label{eq:campo-sigma-complemento}
+  \end{align}
+  O sea,
+  es cerrado respecto de unión finita
+  o infinita numerable~\eqref{eq:campo-sigma-union}
+  y complemento~\eqref{eq:campo-sigma-complemento}.
+  Por~\eqref{eq:campo-sigma-Omega} y~\eqref{eq:campo-sigma-complemento}
+  concluimos que \(\varnothing \in \mathscr{F}\).
+  Por de~Morgan,
+  de~\eqref{eq:campo-sigma-union} y~\eqref{eq:campo-sigma-complemento}
+  también es cerrado respecto de intersección finita o infinita numerable.
+  O sea,
+  si la pregunta \textquote{¿Ocurrió \(A_i\)?}
+  tiene respuesta definitiva para \(i = 1, 2, \dotsc\)
+  también tiene respuesta definitiva
+  \textquote{¿Ocurrió alguno de los \(A_i\)?}
+  al igual que \textquote{¿Ocurrieron todos los \(A_i\)?}
+
+  En muchos casos podremos tomar \(\mathscr{F}\)
+  como el conjunto de todos los subconjuntos de \(\Omega\),
+  situaciones en las cuales se requieren las sutilezas indicadas
+  se dan cuando \(\Omega\) son conjuntos no numerables,
+  como \(\mathbb{R}\).
+
+  Estamos en condiciones de definir probabilidades de eventos.
+  Ponemos los siguientes requisitos:
+  \begin{align}
+    &0 \le \Pr[A] \le 1
+         \label{eq:Pr-0-1} \\
+    &\Pr[\Omega] = 1
+         \label{eq:Pr-1} \\
+    &\Pr[A \cup B]
+       = \Pr[A] + \Pr[B]
+      && \text{si \(A \cap B = \varnothing\)}
+         \label{eq:Pr-union} \\
+    &\Pr\left[ \bigcup_i A_i \right]
+       = \sum_i \Pr[A_i]
+      && \text{para colecciones contables de \(A_i\) disjuntos}
+         \label{eq:Pr-union-contable} \\
+  \end{align}
+  \begin{definition}
+    Un \emph{espacio de probabilidades} es un trío
+    \((\Omega, \mathscr{F}, \Pr)\),
+    con \(\Omega\) es un conjunto,
+    \(\mathscr{F}\) es un campo sigma de subconjuntos de \(\Omega\),
+    y \(\Pr\) es una medida de probabilidad en \(\mathscr{F}\).
+  \end{definition}
+  Algunas consecuencias simples son:
+  \begin{enumerate}
+  \item
+    \(\Pr[\varnothing] = 0\)
+
+    Como \(A \cup \varnothing = A\) y \(A \cap \varnothing = \varnothing\),
+    tenemos \(\Pr[A] = \Pr[A \cup \varnothing] = \Pr[A] + \Pr[\varnothing]\),
+    y concluimos \(\Pr[\varnothing] = 0\).
+  \item
+    \(\Pr[A \cup B] = \Pr[A] + \Pr[B] - \Pr[A \cap B]\)
+
+    Este es simplemente un caso especial
+    del principio de inclusión y exclusión.
+    En particular,
+    como \(\Pr[A \cap B] \ge 0\),
+    tenemos la \emph{cota de unión} \(\Pr[A \cup B] \le \Pr[A] + \Pr[B]\)
+  \item
+    Si \(A \subseteq B\),
+    entonces \(\Pr[A] \le \Pr[B]\),
+    específicamente
+      \(\Pr[B \smallsetminus A] = \Pr[B] - \Pr[A]\).
+  \item
+    Para una colección numerable de eventos \(A_i\)
+    se cumple
+    \(\Pr\left[ \bigcup_i A_i \right] \le \sum_i \Pr[A_i]\)
+  \end{enumerate}
+  Las demostraciones de estas aseveraciones quedan de ejercicios.
+
+  Se dice que los eventos \(A\) y \(B\) son \emph{mutuamente exclusivos}
+  si \(A \cap B = \varnothing\)
+  (no pueden ocurrir ambos a la vez).
+  El evento \(\varnothing\) se dice \emph{imposible}
+  (jamás ocurre).
+
+\subsection{Probabilidades condicionales}
+\label{sec:probabilidades-condicionales}
+
+  Dados dos eventos \(A\) y \(B\)
+  con \(\Pr[B] > 0\),
+  la \emph{probabilidad condicional} de \(A\) dado \(B\) se define como:
+  \begin{equation}
+    \label{eq:probabilidad-condicional}
+    \Pr[A \mid B]
+      = \frac{\Pr[A \cap B]}{\Pr[B]}
+  \end{equation}
+  Estamos limitando nuestro universo al evento \(B\).
+
+\subsection{Variables aleatorias}
+\label{sec:variable-aleatoria}
+
+  Una \emph{variable aleatoria} es el resultado de un experimento.
+  Generalmente nos interesará el caso de variables aleatorias numéricas.
+  Usaremos letras mayúsculas hacia el final del alfabeto
+  (\(X, Y, \dotsc\))
+  para representar variables,
+  y las correspondientes letras minúsculas para sus valores.
+  Los eventos en tales casos pueden describirse como por ejemplo \(X = a\)
+  o \(a \le X \le b\),
+  para valores \(a, b\) dados.
+  Para ellas podemos definir el \emph{valor esperado} de la variable \(X\)
+  como:
+  \begin{equation}
+    \label{eq:E}
+    \Exp[X]
+      = \sum_x x \Pr[X = x]
+  \end{equation}
+  y una medida importante de la dispersión es la \emph{varianza}:
+  \begin{equation}
+    \label{eq:var}
+    \var[X]
+      = \Exp[(X - \Exp[X])^2]
+  \end{equation}
+  Comúnmente se usan las notaciones \(\mu = \Exp[X]\)
+  y \(\sigma^2 = \var[X]\).
+  En el caso que las variables no tomen valores discretos
+  (como acá),
+  en vez de sumas aparecen integrales.
+
+  Si se supone que los distintos resultados son igualmente probables
+  se habla de \emph{distribución uniforme}.
+  Así se habla comúnmente de \emph{elegir uniformemente al azar}
+  para indicar que hay un conjunto de posibles resultados,
+  de los que se elige uno al azar
+  siendo igualmente probable que el elemento elegido
+  sea cualquiera del conjunto.
+
+  Un resultado extremadamente importante
+  es:
+  \begin{theorem}[Linearidad del valor esperado]
+    \label{theo:E-lineal}
+    Sean \(X_1\), \(X_2\) variables aleatorias,
+    \(\alpha\) y \(\beta\) constantes arbitrarias.
+    Entonces:
+    \begin{align*}
+      \Exp[\alpha X_1 + \beta X_2]
+        = \alpha \Exp[X_1] + \beta \Exp[X_2]
+    \end{align*}
+  \end{theorem}
+  \begin{proof}
+    En el caso de variables discretas tenemos:
+    \begin{align*}
+      \Exp[ \alpha X_1 + \beta X_2 ]
+        &= \sum_x
+             (\alpha x \Pr[X_1 = x] + \beta x \Pr[X_2 = x]) \\
+        &= \alpha \sum_x x \Pr[X_1 = x]
+             + \beta \sum_x x \Pr[X_2 = x] \\
+        &= \alpha \Exp[X_1] + \beta \Exp[X_2]
+    \end{align*}
+    Las sumas se extienden sobre posibles valores de \(X_1\) y \(X_2\).
+    Esencialmente la misma demostración vale para variables continuas,
+    con integrales en vez de sumas.
+  \end{proof}
+  Note que no hemos supuesto nada sobre las variables involucradas.
+  Por inducción,
+  esto se extiende a un número finito de variables.
+
+\subsection{Independencia}
+\label{sec:independencia}
+
+  Decimos que dos variables \(X\) e \(Y\) son \emph{independientes}
+  si para todo par de valores \(x\) e \(y\):
+  \begin{equation}
+    \label{eq:XY-independientes}
+    \Pr[(X = x) \wedge (Y = y)]
+      = \Pr[X = x] \cdot \Pr[Y = y]
+  \end{equation}
+  Una colección de variables es \emph{independiente a pares}
+  si para todo \(i \ne j\) y todo par de valores \(x_i, x_j\):
+  \begin{equation}
+    \label{eq:eq:pares-independientes}
+    \Pr[(X_i = x_i)
+          \wedge (X_j = x_j)
+      = \Pr[X_i = x_i]
+          \cdot \Pr[X_j = x_j]
+  \end{equation}
+  Una colección de variables es \emph{mutuamente independiente}
+  si para todo subconjunto \(S \subseteq N\)
+  y toda colección de valores \(x_i\):
+  \begin{equation}
+    \label{eq:eq:mutuamente-independientes}
+    \Pr[(X_{i_1} = x_{i_1})
+          \wedge (X_{i_2} = x_{i_2})
+          \wedge \dotsb
+          \wedge (X_{i_s} = x_{i_s})]
+      = \Pr[X_{i_1} = x_{i_1}]
+          \cdot \Pr[X_{i_2} = x_{i_2}]
+          \dotsm
+          \Pr[X_{i_s} = x_{i_s}]
+  \end{equation}
+
+  Un teorema importante sobre variables independientes es:
+  \begin{theorem}
+    \label{theo:E-independientes}
+    Si \(X_1, X_2\) son independientes:
+    \begin{align*}
+      \Exp[X_1 X_2]
+        &= \Exp[X_1] \cdot \Exp[X_2] \\
+      \Exp[f(X_1) f(X_2)]
+        &= \Exp[f(X_1)] \cdot \Exp[f(X_2)]
+    \end{align*}
+  \end{theorem}
+  \begin{proof}
+    Si las variables \(X_1\) y \(X_2\) son independientes,
+    entonces:
+    \begin{align*}
+      \Exp[ X_1 X_2 ]
+        &= \sum_{x_1, x_2} x_1 x_2 \Pr[ X_1 = x_1 \wedge X_2 = x_2 ] \\
+        &= \sum_{x_1, x_2} x_1 x_2 \Pr[ X_1 = x_1 ] \Pr[X_2 = x_2 ] \\
+        &= \sum_{x_1} x_1 \Pr[ X_1 = x_1 ]
+             \cdot \sum_{x_2} x_2 \Pr[X_2 = x_2 ]
+    \end{align*}
+    La misma demostración,
+    con integrales en vez de sumas,
+    vale para variables continuas.
+  \end{proof}
+  De la misma forma obtenemos:
+  \begin{theorem}
+    \label{theo:varianza-suma}
+    Si \(X_1\) y \(X_2\) son variables aleatorias independientes,
+    entonces:
+    \begin{equation*}
+      \var[X_1 + X_2]
+        = \var[X_1] + \var[X_2].
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Abreviamos \(\mu_1 = \Exp[X_1]\) y \(\mu_2 = \Exp[X_2]\),
+    y sabemos \(\Exp[X_1 + X_2] = \mu_1 + \mu_2\):
+    \begin{align*}
+      \var[X_1 + X_2]
+        &= \Exp[(X_1 + X_2 - (\mu_1 + \mu_2))^2] \\
+        &= \Exp[(X_1 - \mu_1)^2
+                   + 2 (X_1 - \mu_1) (X_2 - \mu_2)
+                   + (X_2 - \mu_2)^2] \\
+       &= \Exp[(X_1 - \mu_1)^2]
+            + 2 \Exp[(X_1 - \mu_1)(X_2 - \mu_2)]
+            + \Exp[(X_2 - \mu_2)^2] \\
+       &= \Exp[(X_1 - \mu_1)^2]
+            + 2 \Exp[X_1 - \mu_1] \Exp[X_2 - \mu_2]
+            + \Exp[(X_2 - \mu_2)^2] \\
+       &= \var[X_1] + \var[X_2]
+    \end{align*}
+    El término mixto se anula ya que \(X_1\) y \(X_2\) son independientes.
+  \end{proof}
+
+  Un resultado interesante es el siguiente:
+  \begin{theorem}
+     \label{theo:repeat}
+     Considere un experimento con probabilidad de éxito \(p\).
+     El número de repeticiones independientes hasta tener éxito
+     tiene valor esperado y varianza:
+     \begin{align*}
+       \Exp[X]
+         &= \frac{1}{p} \\
+       \var[X]
+         &= \frac{1 - p}{p^2}
+     \end{align*}
+  \end{theorem}
+  \begin{proof}
+    La variable \(X\) toma valores naturales.
+    Si tiene éxito en la \(x\)\nobreakdash-ésima repetición
+    quiere decir que falló \(x - 1\) veces y tuvo éxito una vez.
+    O sea,
+    la probabilidad de este evento es:
+    \begin{equation*}
+      (1 - p)^{x - 1} p
+    \end{equation*}
+    La función generatriz de probabilidad relevante es:
+    \begin{align*}
+      G(z)
+        &= \sum_{x \ge 1} (1 - p)^{x - 1} p z^x \\
+        &= p z \sum_{x \ge 0} ((1 - p) z)^x \\
+        &= \frac{p z}{1 - (1 - p) z}
+    \end{align*}
+    Podemos calcular las estadísticas del caso:
+    \begin{align*}
+      \Exp[X]
+        &= G'(1) \\
+        &= \frac{1}{p} \\
+      \var[X]
+        &= G''(1) + G'(1) - \left( G'(1) \right)^2 \\
+        &= \frac{1 - p}{p^2}
+    \end{align*}
+  \end{proof}
+
+\section{Relaciones elementales}
+\label{sec:elementales-probabilidades}
+
+  Suele ser útil considerar si las funciones entre manos
+  son \emph{convexas}
+  (o \emph{cóncavas}).
+  \begin{definition}
+    La función \(f\) se dice \emph{convexa}
+    si para \(0 \le \alpha \le 1\):
+    \begin{equation*}
+      \alpha f(x) + (1 - \alpha) f(y)
+        \ge f(\alpha x + (1 - \alpha) y)
+    \end{equation*}
+  \end{definition}
+  Vale decir,
+  la gráfica de \(f\) está por debajo de una cuerda que une dos puntos,
+  ver la figura~\ref{fig:convexitud}.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[axis lines = left, xtick = \empty, ytick = \empty]
+        \addplot[domain = 1.5:5.5, samples = 100]{x^2};
+        \addplot[domain = 1.7:5.3, color = red]
+            {(5^2 - 2^2) * (x - 2) / (5 - 2) + 2^2};
+        \addplot[color = gray] coordinates {(2, 1.5)(2,	 4)};
+        \addplot[color = gray] coordinates {(5, 1.5)(5, 25)};
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Una función convexa}
+    \label{fig:convexitud}
+  \end{figure}
+  Similar es:
+  \begin{definition}
+    La función \(f\) se dice \emph{cóncava}
+    si para \(0 \le \alpha \le 1\):
+    \begin{equation*}
+      \alpha f(x) + (1 - \alpha) f(y)
+        \le f(\alpha x + (1 - \alpha) y)
+    \end{equation*}
+  \end{definition}
+  En este caso la función está debajo de la secante.
+
+  Por inducción,
+  si \(\alpha_i \ge 0\) con \(\sum_i \alpha_i = 1\),
+  para una función convexa es:
+  \begin{equation*}
+    \sum_i \alpha_i f(x_i)
+      \ge f\left( \sum_i \alpha_i x_i \right)
+  \end{equation*}
+  Aplicando esto a una variable aleatoria finita,
+  con los \(\alpha_i\) las probabilidades de los valores de \(X\),
+  obtenemos:
+  \begin{theorem}[Desigualdad de Jensen]
+    Si la función \(f\) es convexa:
+    \begin{equation}
+      \label{eq:Jensen}
+      f\left( \Exp[X] \right)
+        \le \Exp[f(X)]
+    \end{equation}
+  \end{theorem}
+
+\section{Desigualdad de Markov}
+\label{sec:desigualdad-Markov}
+
+  Sea \(X\) una variable aleatoria discreta,
+  no negativa,
+  y sea \(c > 0\) una constante.
+  Interesa derivar la probabilidad de que \(X\) sea mayor a \(c\).
+  O sea,
+  interesa \(\Pr[ X \ge c ]\).
+  Como \(X\) es discreta,
+  podemos escribir:
+  \begin{align*}
+    \mu
+      &=   \Exp[X] \\
+      &=   \sum_{x} x \Pr[X = x] \\
+      &=   \sum_{0 < x < c} x \Pr[X = x] + \sum_{x \ge c} x \Pr[X = x] \\
+      &\ge \sum_{x \ge c} x \Pr[X = x] \\
+      &\ge \sum_{x \ge c} c \Pr[X = x] \\
+      &\ge c \sum_{x \ge c} \Pr[X = x] \\
+      &=   c \Pr[X \ge c]
+  \end{align*}
+  de donde tenemos:
+  \begin{theorem}[Desigualdad de Markov]
+    \label{theo:Markov-inequality}
+    \begin{equation}
+      \label{eq:Markov-inequality}
+      \Pr[X \ge c]
+      \le \frac{\mu}{c}
+    \end{equation}
+  \end{theorem}
+  Es claro que exactamente lo mismo puede hacerse si \(X\)
+  es una variable continua.
+
+  Esta desigualdad es útil por sí misma,
+  pero aún más porque es instrumental
+  en la derivación de desigualdades más ajustadas.
+
+\section{Desigualdad de Chebyshev}
+\label{sec:desigualdad-Chebyshev}
+
+  Para una variable aleatoria general \(X\)
+  nos interesa acotar la probabilidad
+  \(\Pr[ \lvert X - \mu \rvert > a ]\),
+  donde \(\mu = \Exp[X]\).
+  Notamos que este es el mismo evento
+  \((X - \mu)^2 > a^2\),
+  como \((X - \mu)^2\) es una variable no negativa,
+  podemos aplicarle la desigualdad de Markov.
+  Recordando que \(\Exp[ (X - \mu)^2 ] = \var[X] = \sigma^2\):
+  \begin{align*}
+    \Pr[ \lvert X - \mu \rvert > a ]
+      &=   \Pr[ (X - \mu)^2 > a^2 ] \\
+      &\le \frac{\Exp[ (X - \mu)^2 ]}{a^2} \\
+      &=   \frac{\sigma^2}{a^2}
+  \end{align*}
+  En particular,
+  substituyendo \(a = c \sigma\):
+  \begin{theorem}[Desigualdad de Chebyshev]
+    \label{theo:Chebyshev}
+    \begin{equation}
+      \label{eq:Chebyshev}
+      \Pr[ \lvert X - \mu \rvert \ge c \sigma ]
+      \le \frac{1}{c^2}
+    \end{equation}
+  \end{theorem}
+
+\section{Momentos superiores}
+\label{sec:momentos-superiores}
+
+  Hemos definido la varianza de una variable aleatoria \(X\) con media \(\mu\)
+  como:
+  \begin{equation*}
+    \sigma^2
+      = \Exp[ (X - \mu)^2 ]
+  \end{equation*}
+  Podemos extender esto a otras potencias,
+  obteniendo los \emph{momentos centrales}:
+  \begin{equation*}
+    \mu_k
+      = \Exp[ (X - \mu)^k ]
+  \end{equation*}
+  Note que:
+  \begin{align*}
+    \mu_1
+      &= \Exp[ (X - \mu)^1 ]
+        = 0 \\
+    \mu_2
+      &= \Exp[ (X - \mu)^2 ]
+        = \sigma^2
+  \end{align*}
+  Los momentos centrales
+  dan una medida de cuánto se dispersa la distribución de la media.
+  Mayores \(k\) dan mayor importancia a valores más alejados.
+
+  Podemos usar el mismo truco
+  que usamos para deducir la desigualdad de Chebyshev
+  para obtener una desigualdad involucrando \(\mu_4\).
+
+  Sea \(X\) una variable aleatoria con media \(\mu\)
+  y cuarto momento central \(\mu_4\).
+  Entonces:
+  \begin{align*}
+    \Pr[ \lvert X - \mu \rvert \ge c \sqrt[4]{\mu_4} ]
+      &=   \Pr[ \lvert X - \mu \rvert^4 \ge c^4 \mu_4 ] \\
+    \intertext{Aplicando la desigualdad de Markov a \((X - \mu)^4\),
+              sabiendo que \(\Exp[ (X - \mu)^4 ] = \mu_4\):}
+      &=   \Pr[(X - \mu)^4 \ge c^4 E[(X - \mu)^4]] \\
+      &\le \frac{1}{c^4}
+  \end{align*}
+
+  Un desarrollo afín es posible siempre que \(k\) es par.
+
+\section{Cotas de Chernoff}
+\label{sec:Chernoff}
+
+  Para obtener la cota de Chebyshev elevamos al cuadrado,
+  ahora exponenciamos.
+  Esto da toda una familia de desigualdades,
+  dependiendo de la distribución supuesta
+  y el detalle de las cotas empleadas para simplificar el resultado.
+  La importancia radica en que da cotas ajustadas
+  usando información mínima sobre las variables.
+  La idea básica es de Chernoff~%
+   \cite{chernoff52:_bound}.
+  Desarrollaremos una versión general en detalle,
+  basándonos en Lehman, Leighton y Meyer~%
+    \cite[sección~20.6.2]{lehman18:_mathem_comput_scien}.
+  Si se revisan los detalles de la demostración,
+  es claro que el mismo desarrollo se aplica
+  si alguna de las variables es continua.
+
+  \begin{theorem}[Cota superior de Chernoff]
+    \label{theo:Chernoff-upper-tail}
+    Sean \(X_1, \dotsc, X_n\) variables aleatorias discretas
+    mutuamente independientes
+    con \(0 \le X_i \le 1\) para todo \(i\).
+    Sea \(X = X_1 + \dotsb + X_n\)
+    y sea \(\mu = \Exp[X]\).
+    Entonces para todo \(c \ge 1\):
+    \begin{equation}
+      \label{eq:Chernoff-upper-tail}
+      \Pr[X \ge c \mu]
+        \le \mathrm{e}^{- \beta(c) \mu}
+    \end{equation}
+    donde \(\beta(c) = c \ln c - c + 1\).
+  \end{theorem}
+  En aras de la claridad,
+  partiremos con la demostración central,
+  lo que mostrará la necesidad
+  de acotar feos productos,
+  cotas que demostraremos inmediatamente a continuación como lemas.
+
+  Dejamos anotado para uso futuro
+  que la función \(\beta(c)\) es convexa para \(c > 0\),
+  con un mínimo en \(c = 1\) donde \(\beta(1) = 0\).
+  \begin{proof}
+    El punto clave es exponenciar ambos lados de la desigualdad
+    \(X \ge c \mu\) y aplicar la desigualdad de Markov:
+    \begin{align*}
+      \Pr[X \ge c \mu]
+        &=   \Pr[c^X \ge c^{c \mu}] \\
+        &\le \frac{\Exp[c^X]}{c^{c \mu}}
+                && \text{(cota de Markov)} \\
+        &\le \frac{\mathrm{e^{(c - 1) \mu}}}{\mathrm{e}^{\mu c \ln c}}
+               && \text{(ver lema~\ref{lem:Chernoff-X})} \\
+        &=   \mathrm{e}^{- \beta(c) \mu}
+    \end{align*}
+  \end{proof}
+  Hemos usado el siguiente resultado,
+  expresado con las mismas variables anteriores:
+  \begin{lemma}
+    \label{lem:Chernoff-X}
+    \begin{equation*}
+      \Exp[c^X]
+        \le \mathrm{e}^{(c - 1) \mu}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    \begin{align*}
+      \Exp\left[ c^X \right]
+        &= \Exp\left[ c^{X_1 + \dotsb + X_n} \right]
+               && \text{(definición de \(X\))} \\
+        &=   \Exp\left[ c^{X_1} \dotsm c^{X_n} \right] \\
+        &=   \Exp\left[ c^{X_1} \right] \dotsm \Exp\left[ c^{X_n} \right]
+               && \text{(producto de valores independientes)} \\
+        &\le \mathrm{e}^{(c - 1) \Exp[X_1]}
+                \dotsm \mathrm{e}^{(c - 1) \Exp[X_n]}
+               && \text{(ver lema~\ref{lem:Chernoff-Xi} más adelante)} \\
+        &= \mathrm{e}^{(c - 1) (\Exp[X_1] + \dotsb + \Exp[X_n])} \\
+        &= \mathrm{e}^{(c - 1) (\Exp[X_1 + \dotsb + X_n])}
+               && \text{(linearidad del valor esperado)} \\
+        &= \mathrm{e}^{(c - 1) \Exp[X]}
+    \end{align*}
+  \end{proof}
+  Finalmente:
+  \begin{lemma}
+    \label{lem:Chernoff-Xi}
+    \begin{equation*}
+      \Exp\left[ c^{X_i} \right]
+        \le \mathrm{e}^{(c - 1) \Exp[X_i]}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    En lo que sigue,
+    las sumas son sobre valores \(x\) tomados por la variable \(X_i\).
+    Por la definición de \(X_i\),
+    \(x \in [0, 1]\).
+    \begin{align*}
+      \Exp\left[ c^{X_i} \right]
+        &=   \sum_x c^x \Pr[X_i = x]
+                && \text{(definición de valor esperado)} \\
+        &\le \sum_x (1 + (c - 1) x) \Pr[X_i = x]
+                && \text{(convexidad -- ver abajo)} \\
+        &=   \sum_x ( \Pr[X_i = x] + (1 - c) x \Pr[X_i = x] ) \\
+        &=   1 + (c - 1) \Exp[X_i] \\
+        &\le \mathrm{e}^{(c - 1) \Exp[X_i]}
+                && \text{(porque \(1 + z \le \mathrm{e}^z\))}
+    \end{align*}
+    El segundo paso usa la desigualdad:
+    \begin{equation*}
+      c^x
+        \le 1 + (c - 1) x
+    \end{equation*}
+    que vale para \(c \ge 1\) y \(0 \le x \le 1\)
+    ya que la función convexa \(c^x\)
+    está por debajo de la cuerda entre los puntos \(x = 0\) y \(x = 1\).
+    Esta es la razón de restringir las variables \(X_i\) a \([0, 1]\),
+    y el descomponer
+    la demostración del lema~\ref{lem:Chernoff-X}.
+  \end{proof}
+  Ocasionalmente interesa una cota superior,
+  provista por el siguiente teorema.
+  \begin{theorem}
+    \label{theo:Chernoff-lower-tail}
+    Con las mismas suposiciones del teorema~\ref{theo:Chernoff-upper-tail}:
+    \begin{equation}
+      \label{eq:Chernoff-lower-tail}
+      \Pr[X < \mu / c]
+        \le \mathrm{e}^{- \beta(1 / c) \mu}
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    La demostración es esencialmente igual
+    a la del teorema~\ref{theo:Chernoff-upper-tail}.
+    \begin{align*}
+      \Pr[X < \mu / c]
+        &=   \Pr\left[ c^{-X} > c^{- \mu / c} \right] \\
+        &\le \frac{\Exp[c^{- X}]}{c^{- \mu / c}}
+                && \text{(cota de Markov)} \\
+        &\le \frac{\mathrm{e}^{-(1 - 1/c) \mu}}{\mathrm{e}^{- \mu \ln c / c}}
+                && \text{(ver lema~\ref{lem:Chernoff-X-2})}
+    \end{align*}
+    Reorganizando esto obtenemos lo aseverado.
+  \end{proof}
+  Tenemos las variantes
+  de los lemas~\ref{lem:Chernoff-X} y~\ref{lem:Chernoff-Xi}:
+  \begin{lemma}
+    \label{lem:Chernoff-X-2}
+    \begin{equation*}
+      \Exp[c^{-X}]
+        \le \mathrm{e}^{- (1 - 1 / c) \mu}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    \begin{align*}
+      \Exp\left[ c^{-X} \right]
+        &= \Exp\left[ c^{-X_1 - \dotsb - X_n} \right]
+               && \text{(definición de \(X\))} \\
+        &=   \Exp\left[ c^{-X_1} \dotsm c^{-X_n} \right] \\
+        &=   \Exp\left[ c^{-X_1} \right] \dotsm \Exp\left[ c^{-X_n} \right]
+               && \text{(producto de valores independientes)} \\
+        &\le \mathrm{e}^{- (1 - 1 / c) \Exp[X_1]}
+               \dotsm \mathrm{e}^{- (1 - 1 / c) \Exp[X_n]}
+               && \text{(ver lema~\ref{lem:Chernoff-Xi-2} más adelante)} \\
+        &= \mathrm{e}^{- (1 - 1 / c) (\Exp[X_1] + \dotsb + \Exp[X_n])} \\
+        &= \mathrm{e}^{- (1 - 1 / c) (\Exp[X_1 + \dotsb + X_n])}
+               && \text{(linearidad del valor esperado)} \\
+        &= \mathrm{e}^{- (1 - 1 / c) \Exp[X]}
+    \end{align*}
+  \end{proof}
+  \begin{lemma}
+    \label{lem:Chernoff-Xi-2}
+    \begin{equation*}
+      \Exp\left[ c^{-X_i} \right]
+        \le \mathrm{e}^{- (1 - 1 / c) \Exp[X_i]}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    En lo que sigue,
+    las sumas son sobre valores \(x\) tomados por la variable \(X_i\).
+    Por la definición de \(X_i\),
+    \(x \in [0, 1]\).
+    \begin{align*}
+      \Exp\left[ c^{-X_i} \right]
+        &=   \sum c^{-x} \Pr[X_i = x]
+                && \text{(definición de valor esperado)} \\
+        &\le \sum (1 - (1 - 1 / c) x) \Pr[X_i = x]
+                && \text{(convexidad -- ver abajo)} \\
+        &=   \sum ( \Pr[X_i = x] - (1 - 1/ c) x \Pr[X_i = x] ) \\
+        &=   1 - (1 - 1 / c) \Exp[X_i] \\
+        &\le \mathrm{e}^{- (1 - 1 / c) \Exp[X_i]}
+                && \text{(porque \(1 + z \le \mathrm{e}^z\))}
+    \end{align*}
+    El segundo paso usa la desigualdad:
+    \begin{equation*}
+      c^{-x}
+        \le 1 - (1 - 1 / c) x
+    \end{equation*}
+    que vale para \(c \ge 1\) y \(1 \le x \le 1\)
+    ya que la función convexa \(c^{-x}\)
+    está por debajo de la cuerda entre los puntos \(x = 0\) y \(x = 1\).
+    Esta es la razón de restringir las variables \(X_i\) a \([0, 1]\),
+    y el descomponer
+    la demostración del lema~\ref{lem:Chernoff-X-2}.
+  \end{proof}
+
+\section{Cotas de Høffding}
+\label{sec:Hoeffding-inequality}
+
+  Una desigualdad muy útil es la de Høffding
+  (a veces transliterado Hoeffding).
+  Se ha dicho que todos los teoremas de teoría de aprendizaje
+  son aplicaciones de estas cotas\ldots
+
+  Es similar a las de Chernoff~\ref{theo:Chernoff-upper-tail},
+  pero no exige variables \([0, 1]\).
+  Primero un lema.
+  \begin{lemma}[Høffding]
+    \label{lem:Hoeffding}
+    Sea \(X\) una variable aleatoria real tal que \(Exp[X] = 0\)
+    y tal que \(a \le X \le b\).
+    Entonces,
+    para todo \(\lambda \in \mathbb{R}\):
+    \begin{equation}
+      \label{eq:Hoeffding-lemma}
+      \Exp\left[ \mathrm{e}^{\lambda X} \right]
+        \le \exp\left( \frac{\lambda^2 (b - a)^2}{8} \right)
+    \end{equation}
+  \end{lemma}
+  Note que por las suposiciones sobre \(X\) debe ser \(a < 0 < b\).
+  \begin{proof}
+    Como \(\mathrm{e}^{\lambda x}\) es una función convexa en \(\mathbb{R}\),
+    para \(a \le x \le b\) podemos escribir
+    (usando una forma un tanto curiosa de la línea que conecta los puntos
+     \((a, \mathrm{e}^{\lambda a})\)
+     y \((a, \mathrm{e}^{\lambda a})\)):
+     \begin{equation*}
+       \mathrm{e}^{\lambda x}
+         \le \frac{b - x}{b - a} \mathrm{e}^{\lambda a}
+               + \frac{x - a}{b - a} \mathrm{e}^{\lambda b}
+     \end{equation*}
+     Por linealidad del valor esperado:
+     \begin{equation*}
+       \Exp\left[ \mathrm{e}^{\lambda X} \right]
+         \le \frac{b - \Exp[X]}{b - a} \mathrm{e}^{\lambda a}
+               + \frac{\Exp[X] - a}{b - a} \mathrm{e}^{\lambda b}
+     \end{equation*}
+     Para simplificar,
+     definamos:
+     \begin{align*}
+       h
+         &= \lambda (b - a) \\
+       p
+         &= \frac{-a}{b - a} \\
+       L(h)
+         &= - h p + \ln(1 - p + p \mathrm{e}^h)
+     \end{align*}
+     Note que \(p \ge 0\) y \(1 - p \ge 0\),
+     por lo que \(L\) está definido para todo \(\mathbb{R}\).
+     De lo anterior,
+     como \(\Exp[X] = 0\) vemos que:
+     \begin{align*}
+       \frac{b - \Exp[X]}{b - a} \mathrm{e}^{\lambda a}
+         + \frac{\Exp[X] - a}{b - a} \mathrm{e}^{\lambda b}
+         = \mathrm{e}^{L(h)}
+     \end{align*}
+     Derivando \(L(h)\) obtenemos:
+     \begin{align*}
+       L(0)
+         &= L'(0)
+          = 0 \\
+       L''(h)
+         &= \frac{p \mathrm{e}^h}{p \mathrm{e}^h + 1 - p}
+              - \frac{p \mathrm{e}^{2 h}}{(p \mathrm{e}^h + 1 - p)^2}
+     \end{align*}
+     Nos interesa acotar \(L(h)\).
+     Veamos el máximo de \(L(h)\),
+     que podemos escribir en términos de \(u = \mathrm{e}^h\):
+     \begin{align*}
+       \frac{\mathrm{d}}{\mathrm{d} u}
+          \left( \frac{p u}{p u + 1 - p}
+                    - \frac{p^2 u^2}{(p u + 1 - p)^2} \right)
+         &= \frac{p}{(p u + 1 - p}
+              - \frac{3 p^2 u}{(p u + 1 - p)^2}
+              + \frac{2 p^3 u^2}{(p u + 1 - p)^3} \\
+         &= 0
+     \end{align*}
+     Esto entrega:
+     \begin{align*}
+       u
+         &= \frac{1 - p}{p} \\
+       L''\left( \ln \frac{1 - p}{p} \right)
+         &= \frac{1}{4} \\
+       L'''\left( \ln \frac{1 - p}{p} \right)
+         &= - \frac{p^2}{8 (p - 1)^2}
+          < 0
+     \end{align*}
+     Por el teorema de Taylor con el resto en la forma de Lagrange,
+     sabemos que para todo \(h \in \mathbb{R}\)
+     hay \(\zeta\) entre \num{0} y \(h\) tal que::
+     \begin{align*}
+       L(h)
+         &=   L(0)
+                + L'(0) h
+                + \frac{1}{2!} L''(\zeta) h^2 \\
+         &\le \frac{h^2}{8} \\
+         &=   \frac{\lambda^2 (b - a)^2}{8}
+     \end{align*}
+     Reemplazado obtenemos la desigualdad~\eqref{eq:Hoeffding-lemma}.
+     \qedhere
+  \end{proof}
+  Ahora la desigualdad principal:
+  \begin{theorem}[Desigualdad de Høffding]
+    \label{theo:Hoeffding}
+    Sean \(X_i\) variables aleatorias tales que \(a_i \le X_i \le b_i\)
+    para \(1 \le i \le n\).
+    Defina:
+    \begin{equation*}
+      \overline{X}
+        = \frac{1}{n} \sum_{1 \le i \le n} X_i
+    \end{equation*}
+    Entonces,
+    para \(t > 0\):
+    \begin{align}
+      \Pr\left[ \overline{X} - \Exp[ \overline{X} ] \ge t \right]
+        &\le \exp\left(
+                    - \frac{2 n^2 t^2}{\sum_{1 \le i \le n} (b_i - a_i)^2}
+                 \right)
+           \label{eq:Hoeffding-1} \\
+      \Pr\left[\left\lvert
+                 \overline{X} - \Exp[ \overline{X} ] \ge t \right\rvert\right]
+        &\le 2 \exp\left(
+                      - \frac{2 n^2 t^2}{\sum_{1 \le i \le n} (b_i - a_i)^2}
+                   \right)
+           \label{eq:Hoeffding-2}
+    \end{align}
+  \end{theorem}
+  Note que las ecuaciones~\eqref{eq:Hoeffding-1} y~\eqref{eq:Hoeffding-2}
+  pueden también expresarse en términos de la suma:
+  \begin{equation*}
+    S
+      = \sum_{1 \le i n} X_i
+  \end{equation*}
+  como:
+  \begin{align}
+    \Pr\left[ S - \Exp[ \overline{S} ] \ge t \right]
+      &\le \exp\left(
+                  - \frac{2 t^2}{\sum_{1 \le i \le n} (b_i - a_i)^2}
+               \right)
+         \label{eq:Hoeffding-sum-1} \\
+    \Pr\left[\left\lvert
+               S - \Exp[ \overline{S} ] \ge t \right\rvert\right]
+      &\le 2 \exp\left(
+                    - \frac{2 t^2}{\sum_{1 \le i \le n} (b_i - a_i)^2}
+                 \right)
+         \label{eq:Hoeffding-sum-2}
+  \end{align}
+  \begin{proof}
+    Sea:
+    \begin{equation*}
+      S
+        = \sum_{1 \le i \le n} X_i
+    \end{equation*}
+    Por la desigualdad de Markov,
+    ecuación~\eqref{eq:Markov-inequality},
+    y la independencia de los \(X_i\)
+    para \(s, t \ge 0\) es:
+    \begin{align*}
+      \Pr[ S - \Exp[S] \ge t]
+        &=   Pr\left[
+                  \mathrm{e}^{s (S - \Exp[S])} \ge \mathrm{e}^{s t}
+                \right] \\
+        &\le \mathrm{e}^{-s t}
+               \Exp\left[
+                      \mathrm{e}^{s(S - \Exp[S])}
+                   \right] \\
+        &=   \mathrm{e}^{-s t}
+               \prod_{1 \le i \le n}
+                 \Exp\left[
+                        \mathrm{e}^{s(X_i - \Exp[X_i])}
+                     \right] \\
+        &\le \mathrm{e}^{-s t}
+               \prod_{1 \le i \le n}
+                  \mathrm{e}^{s^2 (b_i - a_i)^2}{8} \\
+        &=   \exp\left(
+                    -st + \frac{1}{8} s^2 \sum_{1 \le i \le n} (b_i - a_i)^2
+                 \right)
+    \end{align*}
+    Para obtener la mejor cota posible,
+    hallamos el mínimo del lado derecho en términos de \(s\).
+    Vemos que el exponente alcanza su mínimo para:
+    \begin{equation*}
+      s
+        = \frac{4 t}{\sum_{1 \le i \le n} (b_i - a_i)^2}
+    \end{equation*}
+    Esto da~\eqref{eq:Hoeffding-1}.
+    La desigualdad~\eqref{eq:Hoeffding-2}
+    resulta de aplicar~~\eqref{eq:Hoeffding-1}
+    a ambos lados.
+  \end{proof}
+
+\section*{Ejercicios}
+\label{sec:ejercicios-27previa}
+
+  \begin{enumerate}
+  \item
+    Complete las demostraciones de las propiedades de probabilidades de eventos
+    de la sección~\ref{sec:formalizar-probabilidad}.
+  \item
+    Se da a entender en la sección~\ref{sec:momentos-superiores}
+    que la técnica empleada no es aplicable si \(k\) es impar.
+    Explique.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  aleatorizados muestral eq union ésima exponenciamos
+% LocalWords:  exponenciar lemma inequality

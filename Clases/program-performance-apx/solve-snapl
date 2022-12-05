@@ -1,0 +1,10 @@
+#!/usr/bin/python3
+#solve a_{n + 3} = 3 a_{n + 1} + 2 a_n, a_0 = 0, a_1 = 1, a_2 = 0
+
+from sympy import *
+
+A, z = symbols("A z")
+
+s = solve(Eq((A - z) / z**3,
+             3 * A / z + 2 * A), A)
+apart(s[0])

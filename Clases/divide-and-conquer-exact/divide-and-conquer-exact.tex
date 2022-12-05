@@ -1,0 +1,204 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Dividir y Conquistar -- Soluciones Exactas}
+\label{cha:dividir-conquistar-solucion}
+
+  Lo discutido en el capítulo~\ref{cha:dividir-conquistar}
+  da soluciones aproximadas a las recurrencias resultantes
+  de algoritmos de dividir y conquistar.
+  Las soluciones de las recurrencias exactas
+  (con pisos y cielos)
+  tienen soluciones muy extrañas.
+  Como ejemplo,
+  resolveremos exactamente la recurrencia
+  para el número de comparaciones de mergesort:
+  \begin{equation}
+    \label{eq:mergesort-exact}
+    M(n)
+      = M(\lfloor n / 2 \rfloor)
+          + M(\lceil n / 2 \rceil)
+          + n
+    \quad
+    M(0)
+      = M(1)
+      = 0
+  \end{equation}
+  Seguimos a Sedgewick y Flajolet~%
+    \cite{sedgewick13:_introd_anal_algor}
+  para resolver la recurrencia.
+  Si definimos diferencias:
+  \begin{equation*}
+    d(n)
+      = M(n + 1) - M(n)
+  \end{equation*}
+  considerando por separado los casos \(n\) par e impar y simplificando
+  concluimos que vale la recurrencia auxiliar:
+  \begin{equation*}
+    d(n)
+      = d(\lfloor n / 2 \rfloor) + 1
+    \quad
+    d(1)
+      = 1
+  \end{equation*}
+  Iterando esta recurrencia vemos que \(d(n) = \lfloor \log_2 n \rfloor + 1\)
+  con lo que la solución es:
+  \begin{equation}
+    \label{eq:mergesort-interim}
+    M(n)
+      = n - 1 + \sum_{1 \le k < n} \lfloor \log_2 k \rfloor
+  \end{equation}
+  Hay varias formas de expresar la suma en forma cerrada.
+  Consideremos primero la suma:
+  \begin{equation*}
+    \sum_{1 \le k < 2^r} \lfloor \log_2 k \rfloor
+  \end{equation*}
+  Vemos que en el rango \(2^s \le k < 2^{s + 1}\)
+  es \(\lfloor \log_2 k \rfloor = s\),
+  en ese rango hay \(2^s\) valores.
+  O sea:
+  \begin{align*}
+    \sum_{1 \le k < 2^r} \lfloor \log_2 k \rfloor
+      &= \sum_{0 \le s < r} s \cdot 2^s \\
+      &= (r - 2) \cdot 2^r + 2
+  \end{align*}
+  La suma original es esto más algunos términos
+  después de la última potencia de dos:
+  \begin{align*}
+    \sum_{1 \le k < n} \lfloor \log_2 k \rfloor
+      &= \sum_{1 \le k < 2^{\lfloor \log_2 n \rfloor}} \lfloor \log_2 k \rfloor
+           + \sum_{2^{\lfloor \log_2 n \rfloor} \le k < n}
+               \lfloor \log_2 k \rfloor \\
+      &= (\lfloor \log_2 n \rfloor - 2) \cdot 2^{\lfloor \log_2 n \rfloor} + 2
+           + \sum_{2^{\lfloor \log_2 n \rfloor} \le k < n}
+               \lfloor \log_2 n \rfloor \\
+      &= (\lfloor \log_2 n \rfloor - 2) \cdot 2^{\lfloor \log_2 n \rfloor} + 2
+           + (n - 2^{\lfloor \log_2 n \rfloor})
+               \lfloor \log_2 n \rfloor \\
+      &= n \cdot \lfloor \log_2 n \rfloor
+           - 2^{\lfloor \log_2 n \rfloor + 1}
+           + 2
+  \end{align*}
+  Con esto,
+  de~\ref{eq:mergesort-interim}
+  obtenemos:
+  \begin{equation*}
+    \label{eq:mergesort-solution}
+    M(n)
+      = n \cdot \lfloor \log_2 n \rfloor
+          + 2 n
+          - 2 {\lfloor \log_2 n \rfloor + 1}
+  \end{equation*}
+  Usando la parte fraccionaria:
+  \begin{equation*}
+    \{ x \}
+      = x - \lfloor x \rfloor
+  \end{equation*}
+  podemos expresar esto como:
+  \begin{align*}
+    M(n)
+      &= n \log_2 n - n \{ \log_2 n \}
+          + 2 n
+          - n \cdot 2^{1 - \{ \log_2 n \}} \\
+      &= n \log_2 n
+          + n \left(
+                1 + 1 - \{ \log_2 n \} - 2^{1 - \{ \log_2 n \}}
+              \right) \\
+      &= n \log_2 n + n \phi(1 - \{ \log_2 n \})
+  \end{align*}
+  Acá es:
+  \begin{equation}
+    \label{eq:phi}
+    \phi(x)
+      = 1 + x - 2^x
+  \end{equation}
+  Interesa el máximo de esto en el rango \(0 < x \le 1\)
+  (es \(\phi(0) = \phi(1) = 0\);
+   esta función es convexa,
+   su segunda derivada es negativa),
+  que se da para \(x^* = - \ln \ln 2 / \ln 2 \approx 0,5288\),
+  donde vale:
+  \begin{equation*}
+    \phi(x^*)
+      = 1 - \frac{\ln \ln 2}{\ln 2} - \frac{1}{\ln 2}
+      \approx 0,0861
+  \end{equation*}
+  O sea,
+  tenemos \(0 \le \phi(x) \le 0,0861\).
+  Nuestra solución aproximada es muy cercana a la solución exacta.
+
+  Los primeros resultados generales sobre este tipo de recurrencias
+  son los de Erdős, Hildebrand, Odlyzko, Pudaite y Reznik~%
+    \cite{erdos87:_asymptotic_behavior_family_sequences},
+  quienes demuestran
+  (usando técnicas muy diferentes)
+  que la recurrencia:
+  \begin{equation*}
+    a(n)
+      = \sum_{1 \le k \le s} r_k a(\lfloor n / m_k \rfloor)
+      \qquad a(0) = 1
+  \end{equation*}
+  tiene soluciones diferentes dependiendo si hay enteros \(d, u_k\)
+  tales que \(m_k = d^{u_k}\) o no
+  (elegimos el valor máximo de \(d\) en este caso,
+   o sea,
+   los \(u_k\) relativamente primos).
+  Sea \(\tau\) la única solución real a:
+  \begin{equation*}
+    \sum_{1 \le k \le s} \frac{r_k}{m_k^\tau}
+      = 1
+  \end{equation*}
+  Si hay tales enteros,
+  llaman el caso \emph{entramado}
+  (en inglés, \emph{\foreignlanguage{english}{lattice}}),
+  en caso contrario \emph{ordinario}.
+  En el caso ordinario,
+  la solución cumple:
+  \begin{equation*}
+    \lim_{n \to \infty} \frac{a(n)}{n^\tau}
+      = c_o
+  \end{equation*}
+  para una constante explícita \(c_o\) fácil de calcular;
+  en el caso entramado ese límite no existe,
+  pero existe:
+  \begin{equation*}
+    \lim_{k \to \infty} \frac{a(d^k)}{f^{k \tau}}
+      = c_l
+  \end{equation*}
+  para otra constante fácil de calcular.
+
+  Hwang, Janson y Tsai~%
+    \cite{hwang17:_exact_asymp_solut_divid_conquer}
+  dan soluciones exactas a recurrencias de la forma
+  \begin{equation*}
+    f(n)
+      = f(\lfloor n / 2 \rfloor) + f(\lceil n / 2 \rceil) + g(n)
+  \end{equation*}
+  que resultan ser de la forma:
+  \begin{equation*}
+    f(n)
+      = F(n) + n P( \log_2 n) - Q(n)
+  \end{equation*}
+  donde \(F(n) = 0\) o más que lineal,
+  \(P\) es una función con período~\num{1}
+  y \(Q(n) = o(n)\).
+  Muestran cómo expresar estas funciones explícitamente.
+
+  Drmota y Szpankowski~%
+    \cite{drmota13:_master_theorem_discrete}
+  discuten recurrencias discretas de la forma
+  \begin{equation*}
+    T(n)
+      = a_n + \sum_{1 \le j \le m} b_j T(\rfloor p_j n + \delta_j \lfloor)
+  \end{equation*}
+  donde la secuencia \(a_n\) es conocida,
+  \(b_j\) y \(\delta_j\) son constantes dadas.
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  mergesort english lattice

@@ -1,0 +1,63 @@
+#! /usr/bin/env python3
+
+x = [0.1, 0.3, 0.45, 0.5, 0.55, 0.7, 0.9]
+y = [1 / (25 * x[i]**2 + 1) for i in range(len(x))]
+
+n = len(x)
+
+d = [[0 for i in range(n)] for j in range(n)]
+
+for i in range(n):	
+    d[i][0] = y[i]
+
+for j in range(1, n):
+    for i in range(n - j):
+        d[i][j] = (d[i + 1][j - 1] - d[i][j - 1]) / (x[i + j] - x[i]) 
+
+print("  \\begin{table}[ht]")
+print("    \\centering")
+print("    \\begin{tabular}{*{", n + 1, "}{>{\\(}l<{\\)}}}")
+print("      \\multicolumn{1}{c}{\\boldmath\\(x\\)\\unboldmath} &")
+print("         \\multicolumn{1}{c}{\\boldmath\\(y\\)\\unboldmath} &")
+print("         \\multicolumn{", n - 1,
+      "}{c}{\\textbf{Diferencias divididas}} \\\\")
+print("      \\hline")
+
+for k in range(n):
+    i = 0; j = k
+    print("      {:<4.2f} ".format(x[k]).replace(".", ","), end ="");
+    while i + j < n and j >= 0:
+        print("& {:<7.4f}".format(d[j][i]).replace(".", ","),
+              end = "" if i + j == n - 1 or j == 0 else "&         ")
+        i +=2; j -= 1
+    if k < n - 1:
+        print("\\\\")
+    else:
+        print()
+    if k < n - 1:
+        print("           &        ", end = "")
+    i = 1; j = k 
+    while  i + j < n and j >= 0:
+        print("& {:<7.4f}".format(d[j][i]).replace(".", ","),
+              end = "" if i + j == n - 1  or j == 0 else " &        ")
+        i +=2; j -= 1
+    if k < n - 1:
+        print(" \\\\")
+
+print("    \\end{tabular}")
+print("    \\caption{Tabla para interpolación}")
+print("    \\label{tab:interpolacion}")
+print("  \\end{table}")
+
+# Compute Q_k(0.47)
+
+xx = 0.47
+px = 1
+q = [0 for k in range(n)]
+q[0] = d[0][0]
+for k in range(1, n):
+    px *= xx - x[k - 1]
+    q[k] = q[k - 1] + d[0][k] * px
+
+for k in range(n):
+    print("Q_{:1d}({:4.2f}) = {:7.5f}".format(k, xx, q[k]).replace(".", ","));

@@ -1,0 +1,338 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{dcolumn}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+\DeclareMathOperator{\var}{var}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Balance de carga}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Justificación}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Asignar al azar}
+
+  \uncover<+->{
+    Cuando hay que elegir entre diversos recursos,
+    asignar al azar reparte la carga.
+    Particularmente interesante en sistemas distribuidos,
+    es decisión local sin conocimiento global.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ejemplo a discutir}
+
+  \uncover<+->{
+    Supongamos un nuevo sitio social,
+    \emph{MalaLeche},
+    donde se reclama por todo
+    (incluso el funcionamiento del sitio).
+  }
+  \uncover<+->{
+    El tráfico es alto,
+    se requieren varios procesadores.
+    Si alguna de las máquinas se ve sobrepasada,
+    el rendimiento sufre
+    (con los consiguientes reclamos).
+  }
+  \uncover<+->{
+    Queremos determinar cuántos equipos se requieren para manejar la carga
+    si se distribuye al azar.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Especificaciones ejemplo}
+
+  \uncover<+->{
+    Específicamente,
+    MalaLeche recibe \num[group-digits]{24 000} peticiones
+    en cada período de \num{10} minutos.
+  }
+  \uncover<+->{
+    Las peticiones
+    toman a lo más \SI{1}{\second} de procesamiento;
+    aunque la mayoría son triviales
+    (quejarse de la ortografía del mensaje precedente
+     y similares),
+     el tiempo promedio de ejecución es \SI{0,25}{\second}.
+  }
+  \uncover<+->{
+    Midiendo el trabajo en unidades de \SI{1}{\second} de procesamiento,
+    si a alguno de los servidores
+    se le asignan más de \num{600} unidades de trabajo en \SI{10}{\minute},
+    se cae y produce problemas.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Especificaciones ejemplo}
+
+  \uncover<+->{
+    La carga total de MalaLeche
+    de \(\num{24 000} \cdot \num{0,25} = \num{6 000}\) unidades de trabajo
+    cada \SI{10}{\minute}
+    indica que se requieren \num{010} máquinas
+    trabajando al \SI{100}{\percent} con balance de carga perfecto.
+  }
+  \uncover<+->{
+    Necesitaremos más de \num{10} para acomodar fluctuaciones en la carga
+    y balance imperfecto de carga,
+    la pregunta es cuántos se requieren.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Desarrollo}
+
+  \uncover<+->{
+    Específicamente,
+    nos interesa el número \(m\) de servidores que hace muy poco probable
+    que alguno se vea sobrecargado al asignarle
+    más de \(600\) unidades de trabajo en un período de \(10\) minutos.
+  }
+  \\ \medskip
+
+  \uncover<+->{
+    Acotemos la probabilidad de que el primer servidor se sobrecargue
+    en un período dado.
+  }
+  \uncover<+->{
+    Sea \(T\) las unidades de trabajo asignadas a ese servidor,
+    buscamos una cota superior a \(\Pr[T \ge \num{600}]\).
+  }
+  \uncover<+->{
+    Sea \(t_i\) el tiempo que la primera máquina dedica a la tarea \(i\),
+    con lo que \(t_i = 0\) si se asigna a otra máquina.
+    Así,
+    con \(n = 24\,000\):
+    \begin{equation*}
+      T
+        = \sum_{1 \le i \le n} t_i
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Desarrollo}
+
+  \uncover<+->{
+    Podemos usar las cotas de Chernoff
+    si las variables son independientes
+    y en el rango \([0, 1]\).
+  }
+  \uncover<+->{
+    La primera condición se cumple
+    si la asignación de tareas a los servidores
+    no depende de su tiempo de ejecución,
+    la segunda se da porque ninguna tarea toma más de una unidad.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Desarrollo}
+
+  \uncover<+->{
+    Hay \num{24 000} tareas,
+    cada una de tiempo de procesamiento esperado de \SI{0,25}{\second}.
+    Asignado tareas al azar a los servidores,
+    la carga esperada para el primer servidor es:
+    \begin{align*}
+      \Exp[T]
+        &= \frac{\num{24 000} \cdot \num{0,25}}{m} \\
+        &= \frac{\num{6 000}}{m}
+    \end{align*}
+    Como vimos,
+    con \(m < 10\),
+    esperamos que se sobrecargue,
+    con \(m = 10\) está al \SI{100}{\percent} de capacidad.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Desarrollo}
+
+  \uncover<+->{
+    Nos interesa el límite:
+    \begin{equation*}
+      600 = c \Exp[T]
+    \end{equation*}
+    con lo que \(c = m / 10\).
+  }
+  \uncover<+->{
+    La cota de Chernoff es:
+    \begin{align*}
+      \Pr[T \ge 600]
+        &= \Pr\left[ T \ge \frac{m}{10} \cdot \Exp[T] \right] \\
+        &\le \mathrm{e}^{-\beta(m / 10) \cdot \num{6 000} / m}
+    \end{align*}
+    donde:
+    \begin{equation*}
+      \beta(c)
+        = c \, \ln c - c + 1
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Desarrollo}
+
+  \uncover<+->{
+    Por la cota de la unión,
+    la probabilidad de que \emph{alguna} de las máquinas
+    se sobrecargue en una hora cualquiera es:
+    \begin{align*}
+      \Pr[\text{alguna se sobrecarga}]
+        &\le \sum_{1 \le i \le m} \Pr[\text{el servidor \(i\) se sobrecarga}] \\
+        &=   m \Pr[\text{el servidor \(1\) se sobrecarga}] \\
+        &\le m \mathrm{e}^{-\beta(m / 10) \cdot \num{6 000} / m}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Desarrollo}
+
+  \uncover<+->{
+    Algunos valores se tabulan a continuación:
+    \begin{center}
+      \begin{tabular}[ht]{>{\(}c<{\):}>{\(}l<{\)}}
+        m = 11 & \num{0,784} \\
+        m = 12 & \num{0,000999} \\
+        m = 13 & \num{0,0000000760}
+      \end{tabular}
+    \end{center}
+  }
+  \uncover<+->{
+    O sea,
+    con \num{11} máquinas alguna puede caerse casi inmediatamente,
+    \num{12} debieran durar unos días,
+    mientras \num{13} dan para un siglo o dos.
+  }
+\end{frame}
+
+\section{Elegir entre dos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Elegir entre dos}
+
+  \uncover<+->{
+    Si se revisan al azar dos de las máquinas
+    y se asigna la tarea a  aquella con menos carga,
+    la carga máxima esperada disminuye muy substancialmente.
+  }
+  \uncover<+->{
+    No es necesario revisar todas las máquinas,
+    es fácil de hacer las consultas en paralelo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Distribución al azar}
+
+  \uncover<+->{
+    El resultado clásico
+    es que si se distribuyen \(m\) bolas
+    en \(m\) casilleros,
+    con alta probabilidad el casillero más lleno contiene:
+    \begin{equation*}
+      \frac{\ln m}{\ln \ln m} \, (1 + o(1))
+    \end{equation*}
+  }
+
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Elegir el menos ocupado}
+
+  \uncover<+->{
+    Si hay \(m\) casilleros
+    y se distribuyen \(n\)
+    (\(n > m\))
+    bolas entre ellos,
+    si se eligen \(d\) casilleros al azar cada vez
+    y se pone la bola en el más vacío
+    donde \(d \ge 2\),
+    el largo de la cola más larga con alta probabilidad es:
+    \begin{equation*}
+      \frac{\ln \ln m}{\ln d} \, (1 + o(1)) + \Theta(n/m)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Vale decir,
+    de \(d = 1\) a \(d = 2\) hay una mejora exponencial;
+    para \(d \ge 2\) el cambio es solo en un factor constante moderado.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Distribuir carga equitativamente es un problema espinudo.
+  \item
+    Simplemente asignar al azar da buenos resultados.
+  \item
+    Mejora substancialmente si revisamos dos máquinas al azar
+    y asignamos la tarea a la menos ocupada.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode MalaLeche

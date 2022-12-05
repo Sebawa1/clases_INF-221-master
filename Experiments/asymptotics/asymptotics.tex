@@ -1,0 +1,325 @@
+\documentclass[english, spanish, fleqn%
+, hyperref = {colorlinks, urlcolor = blue}%
+% , handout%
+]{beamer}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{babel}
+\usepackage{pgfplots}
+\pgfplotsset{compat = newest}
+
+\title{Asintóticas}
+\subtitle{INF-221}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\beamerdefaultoverlayspecification{<+->}
+\frame{\maketitle}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Funciones ejemplo}
+
+  \uncover<+->{
+    Consideremos las funciones:
+    \begin{align*}
+      f(x)
+        &= 3 x \cos 20 x \\
+      g(x)
+        &= \sin 5 x
+    \end{align*}
+  }
+  \uncover<+->{
+    Es simple demostrar que alrededor de \(0\)
+    (en realidad,
+     valen en todo \(\mathbb{R}\)):
+    \begin{align*}
+      f(x)
+        &= O(x)	 \\
+      g(x)
+        &= O(x) \\
+      f(x) + g(x)
+        &= O(x) \\
+      f(x) - g(x)
+        &= O(x)
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Gráficos}
+  \framesubtitle{La función \(f(x)\) y cotas \(\pm x\)}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[axis lines = middle,
+        xtick = \empty,
+        ytick = \empty]
+        \addplot [domain = -3.5:3.5, samples = 200, smooth, blue]
+           {x * cos(deg(10 * x))};
+        \addplot [domain = -3.5:3.5, red]
+           {x};
+        \addplot [domain = -3.5:3.5, red]
+           {-x};
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Gráficos}
+  \framesubtitle{La función \(g(x)\) y cotas \(\pm 4 x\)}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[axis lines = middle,
+        xtick = \empty,
+        ytick = \empty]
+        \addplot [domain = -3.5:3.5, samples = 200, smooth, blue]
+           {sin(deg(4 * x))};
+        \addplot [domain = -0.875:0.875, red]
+           {4 * x};
+        \addplot [domain = -0.875:0.875, red]
+           {-4 * x};
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Gráficos}
+  \framesubtitle{Las funciones \(f(x) \pm \: g(x)\) y cotas \(\pm 5 x\)}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[axis lines = middle,
+        xtick = \empty,
+        ytick = \empty]
+        \addplot [domain = -3.5:3.5, samples = 200, smooth, blue]
+           {x * cos(deg(20 * x)) + sin(deg(4 * x))};
+        \addplot [domain = -3.5:3.5, samples = 200, smooth, green]
+           {x * cos(deg(20 * x)) - sin(deg(4 * x))};
+        \addplot [domain = -0.8:0.8, red]
+           {5 * x};
+        \addplot [domain = -0.8:0.8, red]
+           {-5 * x};
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Sumas y restas}
+
+  \uncover<+->{
+    Este último ejemplo muestra que una suma o resta de funciones
+    debe considerar la suma de las cotas
+    (en valor absoluto).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Varios \(O(\cdot)\)}
+
+  \uncover<+->{
+    Note que al decir:
+    \begin{align*}
+      f(x) - g(x)
+      &= O(x) + O(x) \\
+      &= O(x)
+    \end{align*}
+    cada una de las veces que aparece \(O(\cdot)\)
+    es una función \emph{diferente} la representada.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simplificando}
+
+  \uncover<+->{
+    Consideremos la expresión:
+    \begin{equation*}
+      \frac{1}{1 + O(x)}
+    \end{equation*}
+    Esto representa alguna expresión de la forma:
+    \begin{equation*}
+      \frac{1}{1 + h(x)} \qquad h(x) = O(x)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simplificando}
+
+  \uncover<+->{
+    Sabemos que la  fracción puede expandirse,
+    siempre que \(\lvert h(x) \rvert < 1\):
+  }
+  \begin{align*}
+    \uncover<+->{
+      \frac{1}{1 + h(x)}
+        &=   \sum_{n \ge 0} (-1)^k h^k(x) \\
+    }
+    \uncover<+->{
+        &=   1 - h(x) + \sum_{k \ge 2} (-1)^{k - 2} h^k(x) \\
+    }
+    \uncover<+->{
+        &=   1 - h(x) + h^2(x) \sum_{k \ge 2} (-1)^{k - 2} h^{k - 2}(x) \\
+    }
+    \uncover<+->{
+        &=   1 - h(x) + h^2(x) \sum_{k \ge 0}(-1)^k h^k(x) \\
+    }
+    \uncover<+->{
+        &\le 1 - h(x) + h^2(x) \sum_{k \ge 0} \lvert h(x) \rvert^k
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simplificando}
+
+  \uncover<+->{
+    Fijemos algún rango \(\lvert x \rvert \le \delta\)
+    tal que en él \(\lvert h(x) \rvert \le 1 / 2\).
+  }
+  \uncover<+->{
+    Con esto tenemos:
+  }
+  \begin{align*}
+    \uncover<+->{
+      \frac{1}{1 + h(x)}
+        &\le 1 - h(x) + h^2(x) \sum_{k \ge 0} \lvert h(x) \rvert^k \\
+    }
+    \uncover<+->{
+        &\le 1 - h(x) + h^2(x) \sum_{k \ge 0} 2^{-k} \\
+    }
+    \uncover<+->{
+        &=   1 - h(x) + h^2(x) \frac{1}{1 - 1/2} \\
+    }
+    \uncover<+->{
+        &=   1 - h(x) + 2 h^2(x) \\
+    }
+    \uncover<+->{
+        &=   1 - h(x) + O(h^2(x))
+    }
+  \end{align*}
+  \uncover<+->{
+    Como tenemos \(h(x) = O(x)\),
+    por la advertencia anterior concluimos:
+    \begin{align*}
+      \uncover<.->{
+        \frac{1}{1 + O(x)}
+          = 1 + O(x) + O(x^2)
+      }
+      \uncover<+->{
+          = 1 + O(x)
+      }
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simplificando}
+
+  \uncover<+->{
+    Si buscamos simplificar una expresión más compleja,
+    como ser:
+    \begin{equation*}
+      \frac{1 + O(x)}{1 + O(x)}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Nuevamente,
+    debe tenerse presente que ambos \(O(\cdot)\)
+    representan funciones posiblemente diferentes.
+  }
+  \begin{align*}
+    \uncover<+->{
+      \frac{1 + O(x)}{1 + O(x)}
+         &= (1 + O(x)) \cdot (1 + O(x))
+             && \text{Por lo anterior} \\
+    }
+    \uncover<+->{
+         &= 1 + (O(x) + O(x)) + O(x) \cdot O(x)
+             && \text{Multiplicar expresiones} \\
+    }
+    \uncover<+->{
+         &= 1 + O(x) + O(x^2)
+             && \text{Agrupar, simplificar} \\
+    }
+    \uncover<+->{
+         &= 1 + O(x)
+             && \text{Absorber}
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simplificando}
+
+  \uncover<+->{
+    Un ejemplo algo más complicado es:
+  }
+  \begin{align*}
+    \uncover<.->{
+      \frac{1 + 3 x + O(x^2)}{1 + 5 x + O(x^3)}
+         &= (1 + 3 x + O(x^2)) \cdot {} \\
+         &\qquad (1 - (5 x + O(x^3)) + (5 x + O(x^3)^2 - \dotsm) \\
+    }
+    \uncover<+->{
+         &= (1 + 3 x + O(x^2)) \cdot {} \\
+         &\qquad (1 - 5 x + O(x^3) + 25 x^2 + 10 x O(x^3) + O(x^6) - \dotsm) \\
+    }
+    \uncover<+->{
+         &= (1 + 3 x + O(x^2)) \cdot {} \\
+         &\qquad (1 - 5 x + 25 x^2 + O(x^3) + O(x^4) + O(x^6) - \dotsm) \\
+    }
+    \uncover<+->{
+         &= (1 + 3 x + O(x^2))
+               (1 - 5 x + 25 x^2 + O(x^3)) \\
+    }
+    \uncover<+->{
+         &= 1 - 2 x + 10 x^2 + O(x^2) + \dotsm \\
+    }
+    \uncover<+->{
+         &= 1 - 2 x + O(x^2)
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Simplificando}
+
+  \uncover<+->{
+    Esto último ilustra que en general no tiene sentido
+    darse el trabajo de combinar aproximaciones de orden distinto,
+    términos extra de la expresión más precisa terminan absorbidos.
+  }
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:

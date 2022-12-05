@@ -1,0 +1,778 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Análisis de Convergencia}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Introducción}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Qué buscamos}
+
+  \uncover<+->{
+    Describimos varios algoritmos para aproximar ceros.
+    Interesa evaluar su aplicabilidad y rendimiento.
+  }
+  \uncover<+->{
+    Aplicabilidad se refiere a bajo qué condiciones converge,
+    rendimiento es cuánto trabajo demanda obtener una precisión dada.
+  }
+  \medskip \\
+  \uncover<+->{
+    El análisis de rendimiento de los algoritmos
+    es nuestra primera aplicación en serio
+    de la maquinaria asintótica.
+  }
+  \uncover<+->{
+    Omitiremos toda discusión sobre el efecto de redondeo
+    y errores en el cálculo de las funciones.
+  }
+\end{frame}
+
+\section{Orden de convergencia}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Orden de convergencia}
+
+  \uncover<+->{
+    Si tenemos una secuencia \(\langle x_n \rangle\)
+    que converge a \(x^*\),
+    el error en el elemento \(x_n\) es:
+    \begin{equation*}
+      e_n
+        = x_n - x^*
+    \end{equation*}
+  }
+  \uncover<+->{
+    \begin{definition}
+      Si se cumple que:
+      \begin{equation*}
+        e_{n + 1}
+          = c e_n^p + o(e_n^p)
+      \end{equation*}
+      donde \(o(\cdot\)) se refiere a un entorno de cero,
+      con \(c \ne 0\) y \(p \ge 1\)
+      decimos que es \emph{convergencia de orden \(p\)}.
+    \end{definition}
+  }
+  \medskip
+  \uncover<+->{
+    Lo más común es demostrar que \(e_{n + 1} = O(e_n^{p + 1})\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Orden de convergencia}
+
+  \uncover<+->{
+    Se le llama \emph{convergencia lineal} si \(p = 1\),
+    \emph{supralineal} si \(p > 1\),
+    \emph{cuadrática} si \(p = 2\),
+    \emph{cúbica} para \(p = 3\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Índice asintótico de eficiencia}
+
+  \uncover<+->{
+    Si un método de orden de convergencia \(p\)
+    evalúa la función
+    (o alguna derivada)
+    \(n\)~veces por iteración,
+    el índice asintótica de eficiencia es \(p^{1/n}\).
+  }
+\end{frame}
+
+\section{Análisis de los métodos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Análisis de los métodos}
+
+  \uncover<+->{
+    La idea general es aproximar la función
+    de la que queremos aproximar el cero
+    por serie de Taylor centrada en el cero,
+    llegando al término preciso,
+    y derivar una cota asintótica para el error de la iteración siguiente.
+  }
+  \uncover<+->{
+    Hallar el número correcto de términos es más un arte que una ciencia.
+    Se hace por prueba y error:
+    si todo se cancela,
+    eran pocos;
+    si hay varios términos en potencias diferentes en el resultado,
+    sobran.
+  }
+\end{frame}
+
+\subsection{Bisección}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Bisección}
+
+  \uncover<+->{
+    Este método es el más fácil de analizar:
+    es claro que el rango que contiene el cero se reduce a la mitad
+    en cada iteración.
+    \begin{equation*}
+      e_{n + 1}
+         = \frac{1}{2} e_n + o(e_n)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Solución obviamente es \(e_n \le \lvert x_1 - x_0 \rvert \cdot 2^{-n}\).
+  }
+  \uncover<+->{
+    La convergencia es lineal,
+    y es suficientemente simple para poder predecir el número de iteraciones.
+  }
+  \uncover<+->{
+    Hay una evaluación por iteración,
+    el índice de eficiencia es \num{1}.
+  }
+\end{frame}
+
+\subsection{Iteración de punto fijo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Iteración de punto fijo}
+
+  \uncover<+->{
+    Antes de entrar al análisis,
+    consideremos un modelo simple
+    que explica las particularidades salientes del método.
+  }
+  \\ \medskip
+  \uncover<+->{
+    La situación más simple es que \(g(x)\) sea una función lineal.
+    Para simplificar aún más,
+    arreglamos de forma que el punto fijo es \(x^* = 0\).
+    Esto es:
+    \begin{equation*}
+      g(x)
+        = m x
+    \end{equation*}
+  }
+  \uncover<+->{
+    La iteración resultante es:
+    \begin{equation*}
+      x_{n + 1} = m x_n
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Iteración de punto fijo}
+
+  \uncover<+->{
+    Esto se traduce en:
+    \begin{equation*}
+      e_{n + 1}
+      = m e_n
+    \end{equation*}
+  }
+  \uncover<+->{
+    La solución es simple:
+    \(e_n = m^n e_0\).
+  }
+  \\ \smallskip
+  \uncover<+->{
+    La convergencia es lineal,
+    y vemos que solo converge si \(\lvert m \rvert < 1\).
+  }
+  \uncover<+->{
+    Gráficamente,
+    esto da una telaraña si \(m < 0\) y una escalera si \(m > 0\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Iteración de punto fijo}
+
+  \uncover<+->{
+    Expandimos \(g\) usando la serie de Taylor:
+    \begin{align*}
+      g(x^* + e)
+        &= g(x^*) + g'(x^*) e + O(e^2) \\
+        &= x^* + g'(x^*) e + O(e^2)
+    \end{align*}
+  }
+  \uncover<+->{
+    O sea:
+    \begin{equation*}
+      e_{n + 1}
+        = g'(x^*) e_n + O(e_n^2)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Se confirma la convergencia lineal.
+  }
+
+  \uncover<+->{
+    Hay una evaluación por iteración,
+    el índice de eficiencia es \num{1}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convergencia de iteración de punto fijo}
+
+  \begin{theorem}
+    Si en el intervalo \([a, b]\)
+    se cumple \(g(x) \in [a, b]\) para todo \(x \in [a, b]\),
+    y existe \(c < 1\) tal que \(\lvert g'(x) \rvert \le c\),
+    la iteración de punto fijo converge al único punto fijo \(x^*\)
+    en el intervalo.
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convergencia de iteración de punto fijo}
+
+  \uncover<+->{
+    \textcolor{blue}{Demostración.} \\
+  }
+  \uncover<+->{
+    Por el teorema del valor medio de la derivada,
+    hay \(\xi_n\) entre \(x_n\) y \(x^*\) tal que:
+  }
+  \begin{align*}
+    \uncover<.->{
+      x_{n + 1} - x^*
+        &=   g(x_n) - g(x^*) && \text{si \(x_n \in [a, b]\)} \\
+        &=   g'(\xi_n) (x_n - x^*) \\
+    }
+    \uncover<+->{
+      \lvert x_{n + 1} - x^* \rvert
+        &=   \lvert g(x_n) - g(x^*) \rvert \\
+    }
+    \uncover<+->{
+        &=   \lvert g'(\xi_n) \rvert \cdot \lvert x_n - x^* \rvert \\
+    }
+    \uncover<+->{
+        &\le c \lvert x_n - x^* \rvert \\
+    }
+    \uncover<+->{
+        &<   \lvert x_n - x^* \rvert && \text{o sea, \(x_{n + 1} \in [a, b]\)}
+    }
+  \end{align*}
+  \uncover<+->{
+    Converge
+    (los errores van disminuyendo).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convergencia de iteración de punto fijo}
+
+  \uncover<+->{
+    Queda demostrar que el punto fijo es único,
+    lo que hacemos por contradicción.
+  }
+  \uncover<+->{
+    Sean puntos fijos \(x' \ne x''\) en el intervalo.
+  }
+  \uncover<+->{
+    Por el teorema del valor medio
+    hay \(\xi\) entre \(x'\) y \(x''\) tal que:
+  }
+  \begin{align*}
+    \uncover<.->{
+      \lvert x'' - x' \rvert
+        &=    \lvert g(x'') - g(x') \rvert \\
+        &=   \lvert g'(\xi) \rvert \cdot \lvert x'' - x' \rvert \\
+    }
+    \uncover<+->{
+        &\le c \lvert x'' - x' \rvert \\
+    }
+    \uncover<+->{
+        &<   \lvert x'' - x' \rvert
+    }
+  \end{align*}
+  \uncover<+->{
+    Esto es imposible.
+  }
+  \alt<.>{\\ \hspace{\fill}\qed}{\\ \phantom\qed}
+\end{frame}
+
+\subsection{Método de Newton}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de Newton}
+
+  \uncover<+->{
+    Usamos la misma estrategia general.
+    De las series de Taylor
+    para \(f(x)\) y \(f'(x\):
+    \begin{align*}
+      f(x^* + e)
+        &= f(x^*) + f'(x^*) e + \frac{1}{2} f''(x^*) e^2 + O(e^3) \\
+        &= f'(x^*) e + \frac{1}{2} f''(x^*) e^2 + O(e^3) \\
+      f'(x^* + e)
+        &= f'(x^*) + f''(x^*) e + O(e^2)
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de Newton}
+
+  \uncover<+->{
+    Conviene escribir esto como:
+    \begin{align*}
+      f(x^* + e)
+        &= e f'(x^*) (1 + M e + O(e^2)) \\
+      f'(x^* + e)
+        &= f'(x^*) (1 + 2 M e + O(e^2))
+    \end{align*}
+    donde:
+    \begin{equation*}
+      M
+        = \frac{f''(x^*)}{2 f'(x^*)}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de Newton}
+
+  \uncover<+->{
+    La iteración es:
+  }
+  \begin{align*}
+    \uncover<+->{
+      x_{n + 1}
+        &= x_n - \frac{f(x_n)}{f'(x_n)} \\
+    }
+    \uncover<+->{
+      e_{n + 1}
+        &= e_n - \frac{e_n f'(x^*) (1 + M e_n + O(e_n^2))}
+                      {f'(x^*) (1 + 2 M e_n + O(e_n^2))} \\
+    }
+    \uncover<+->{
+        &= e_n - e_n \frac{1 + M e_n + O(e_n^2)}{1 + 2 M e_n + O(e_n^2)} \\
+    }
+    \uncover<+->{
+        &= e_n - e_n (1 + M e_n + O(e_n^2)) (1 - 2 M e_n + O(e_n^2)) \\
+    }
+    \uncover<+->{
+        &= M e_n^2 + O(e_n^3)
+    }
+  \end{align*}
+  \uncover<+->{
+    La convergencia es cuadrática.
+  }
+  \uncover<+->{
+    Se evalúa la función y su derivada en cada iteración,
+    el índice de eficiencia es \(2^{1/2} = \num{1,4142}\).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Convergencia del método de Newton}
+
+  \begin{theorem}[Convergencia del método de Newton]
+    Sea \(f''\) continua y sea \(x^*\) un cero simple de \(f\).
+    Entonces hay un entorno alrededor de \(x^*\) y una constante \(C\)
+    tal que si se inicia en ese entorno,
+    el método de Newton converge a \(x^*\)
+    y los errores sucesivos cumplen:
+    \begin{equation*}
+      \lvert x_{n + 1} - x^* \rvert
+        \le C \lvert x_n - x^* \rvert^2
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}[t]
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convergencia del método de Newton}
+
+  \uncover<+->{
+    \textcolor{blue}{Demostración.} \\
+  }
+  \uncover<+->{
+    Por el teorema de Taylor hay \(\xi_n\) entre \(x^*\) y \(x_n\) tal que:
+  }
+  \begin{align*}
+    \uncover<+->{
+      f(x^*)
+        &= f(x_n - e_n) \\
+    }
+    \uncover<+->{
+      0
+        &= f(x_n) - f'(x_n) e_n + \frac{1}{2} f''(\xi_n) e_n^2 \\
+    }
+    \uncover<+->{
+      \frac{f(x_n)}{f'(x_n)}
+        &= e_n - \frac{1}{2} f''(\xi_n) e_n^2 \\
+    }
+    \uncover<+->{
+      e_{n + 1}
+        &= e_n - \frac{f(x_n)}{f'(x_n)} \\
+    }
+    \uncover<+->{
+        &= \frac{1}{2} f''(\xi_n) e_n^2
+    }
+  \end{align*}
+  \uncover<+->{
+    Basta elegir \(C\)
+    como el máximo de \(\lvert f''(x) / 2 \rvert\) en el intervalo.
+  }
+\end{frame}
+
+\begin{frame}[t]
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convergencia del método de Newton}
+
+  \uncover<+->{
+    Demostraremos que existe un intervalo \(\lvert x - x^* \rvert \le \delta\)
+    para un \(\delta\) por definir,
+    tal que si \(x_0\) está en el intervalo,
+    el método converge a \(x^*\).
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Hay \(\delta\) tal que en el intervalo \(x^* \pm \: \delta\)
+    no se anula \(f'\),
+    por continuidad de \(f'\).
+  }
+\end{frame}
+
+\begin{frame}[t]
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convergencia del método de Newton}
+
+  \uncover<+->{
+    Definimos \(c(\delta)\) mediante:
+    \begin{equation*}
+      c(\delta)
+        = \frac{1}{2}
+            \max_{\lvert x - x^* \rvert \le \delta}\{\lvert f''(x) \rvert\}
+              / \min_{\lvert x - x^* \rvert \le \delta}\{\lvert f'(x) \rvert\}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Podemos elegir \(\delta\) tal que \(\delta c(\delta) < 1\):
+    \begin{align*}
+      \lvert e_{n + 1} \rvert
+        &\le \left\lvert \frac{f''(\xi_n) e_n^2}{2 f'(x_n)} \right\rvert \\
+        &\le c(\delta) e_n^2 \\
+        &\le \delta c(\delta) \lvert e_n \rvert \\
+        &<   \lvert e_n \rvert
+    \end{align*}
+  }
+  \uncover<+->{
+    Si \(x_0\) está en el intervalo \(\lvert x_0 - x^* \rvert \le \delta\),
+    la iteración converge a \(x^*\).
+    Resulta \(C = c(\delta)\).
+    \\ \hspace*{\fill}\qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de Newton}
+
+  \uncover<+->{
+    Se suele decir que el método de Newton
+    duplica el número de cifras significativas
+    en cada iteración.
+  }
+
+  \uncover<+->{
+    Si \(M\) es cercano a \(1\)
+    y despreciamos el término cúbico,
+    si el error en la iteración \(n\) es \(e_n = 10^{-k - 1}\)
+    (\(k\) cifras significativas)
+    en la iteración \(n + 1\) es \(e_{n + 1} \approx 10^{-2 k - 2}\),
+    lo que confirma la observación.
+  }
+  \medskip \\
+  \uncover<+->{
+    Como contraste,
+    con convergencia lineal disminuye el error en un factor fijo por iteración,
+    lo que se traduce en que el número de cifras significativas correctas
+    aumenta en una cantidad fija por iteración.
+  }
+\end{frame}
+
+\subsection{Método de la secante}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de la secante}
+
+  \uncover<+->{
+    Acá usamos la misma aproximación que para el método de Newton.
+  }
+  \uncover<+->{
+    La iteración,
+    en la forma simétrica numéricamente inestable,
+    es:
+  }
+  \begin{align*}
+    \uncover<+->{
+      x_{n + 2}
+        &= \frac{x_n f(x_{n + 1}) - x_{n + 1} f(x_n)}
+                {f(x_{n + 1}) - f(x_n)} \\
+    }
+    \uncover<+->{
+        &= \frac{x^*(f(x_{n + 1}) - f(x_n))
+                   + e_n f(x_{n + 1}) - e_{n + 1} f(x_n)}
+                {f(x_{n + 1}) - f(x_n)} \\
+    }
+    \uncover<+->{
+      e_{n + 2}
+        &= \frac{e_n f(x_{n + 1}) - e_{n + 1} f(x_n)}
+                {f(x_{n + 1}) - f(x_n)}
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de la secante}
+
+  \uncover<+->{
+    Esperamos que converja,
+    o sea \(e_{n + 1} = O(e_n)\)
+    y \(e_n = o(1)\).
+  }
+  \uncover<+->{
+    Primero el numerador:
+  }
+  \begin{align*}
+    \uncover<+->{
+      e_n f(x_{n + 1}) &- e_{n + 1} f(x_n) \\
+        &= e_n e_{n + 1} f'(x^*) (1 + M e_{n + 1} + O(e_{n + 1}^2)) \\
+        &\qquad - e_{n + 1} e_n f'(x^*) (1 + M e_n + O(e_n^2)) \\
+    }
+    \uncover<+->{
+        &= e_n e_{n + 1} f'(x^*)
+             (M (e_{n + 1} - e_n) + O(e_n^2) + O(e_{n + 1}^2)) \\
+    }
+    \uncover<+->{
+        &= e_n e_{n + 1} f'(x^*)
+             (M (e_{n + 1} - e_n) + O(e_n^2)) \\
+    }
+    \uncover<+->{
+        &= e_n e_{n + 1} f'(x^*) M (e_{n + 1} - e_n) (1 + O(e_n))
+    }
+  \end{align*}
+\end{frame}
+
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de la secante}
+
+  \uncover<+->{
+    Ahora el denominador:
+  }
+  \begin{align*}
+    \uncover<+->{
+      f(x_{n + 1}) &- f(x_n) \\
+        &= e_{n + 1} f'(x^*) (1 + M e_{n + 1} + O(e_{n + 1}^2)) \\
+        &\qquad - e_n f'(x^*) (1 + M e_n + O(e_n^2)) \\
+    }
+    \uncover<+->{
+        &= f'(x^*) ((e_{n + 1} - e_n) + M (e_{n + 1}^2 - e_n^2)
+                      + O(e_{n + 1}^3) + O(e_n^3)) \\
+    }
+    \uncover<+->{
+        &= f'(x^*) (e_{n + 1} - e_n)
+             (1 + M (e_n + e_{n + 1}) + O(e_{n + 1}^2) + O(e_n^2)) \\
+    }
+    \uncover<+->{
+        &= f'(x^*) (e_{n + 1} - e_n)
+             (1 + M (e_n + e_{n + 1}) + O(e_n^2)) \\
+    }
+    \uncover<+->{
+        &= f'(x^*) (e_{n + 1} - e_n)
+             (1 + O(e_n))
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de la secante}
+
+  \uncover<+->{
+    Resta dividir y simplificar:
+  }
+  \begin{align*}
+    \uncover<+->{
+      \frac{e_n f(x_{n + 1}) - e_{n + 1} f(x_n)}{f(x_{n + 1}) - f(x_n)}
+        &= M e_n e_{n + 1} \frac{1 + O(e_n)}{1 + O(e_n)} \\
+    }
+    \uncover<+->{
+        &= M e_n e_{n + 1} (1 + O(e_n))
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de la secante}
+
+  \uncover<+->{
+    Tomando \(e_{n + 1} = C e_n^p + o(e_n^p) = C e_n^p (1 + o(1))\):
+  }
+  \begin{align*}
+    \uncover<+->{
+      e_{n + 2}
+        &= C e_{n + 1}^P (1 + o(1)) \\
+    }
+    \uncover<+->{
+        &= C \left( C e_n^p (1 + o(1)) \right)^p (1 + o(1)) \\
+    }
+    \uncover<+->{
+        &= C^{1 + p} e_n^{p^2} (1 + o(1))
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de la secante}
+
+  \uncover<+->{
+    Por otro lado:
+  }
+  \begin{align*}
+    \uncover<.->{
+       e_{n + 2}
+         &= M e_{n + 1} e_n (1 + O(e_n)) \\
+    }
+    \uncover<+->{
+       C^{1 + p} e_n^{p^2} (1 + o(1)) \\
+         &= M C e_n^p (1 + o(1)) \cdot e_n \cdot (1 + O(e_n)) \\
+    }
+    \uncover<+->{
+         &= M C e_n^{p + 1} (1 + o(1))
+    }
+  \end{align*}
+  \uncover<+->{
+    Para que esto se cumpla,
+    deben coincidir los exponentes de \(e_n\).
+    Debe ser \(p^2 = p + 1\),
+    con lo que \(p = \tau = (1 + \sqrt{5}) / 2 = \num{1,6180}\).
+  }
+
+  \uncover<+->{
+    Se evalúa la función una vez por iteración,
+    el índice de eficiencia es \(\tau = \num{1,6180}\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convergencia del método de la secante}
+
+  \uncover<+->{
+    En términos simples,
+    converge siempre que converge el método de Newton,
+    y bastantes casos más.
+  }
+  \uncover<+->{
+    Los escabrosos detalles
+    en la \href{https://cpb-us-e1.wpmucdn.com/blogs.rice.edu/dist/8/4754/files/2016/09/SecantConverge-1u5coso.pdf}
+               {nota de Maarten de Hoop}.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Definimos \emph{orden de convergencia}
+  \item
+    Aplicamos análisis asintótico para derivar el orden de convergencia
+    de los métodos discutidos
+  \item
+    Vimos que bisección e iteración de punto fijo
+    muestran convergencia lineal
+  \item
+    Bisección converge siempre,
+    iteración de punto fijo converge si \(\lvert g'(x) \rvert \le c < 1\)
+    en un intervalo \(a < x^* < b\)
+  \item
+    El método de Newton converge cuadráticamente
+  \item
+    El método de la secante converge supralinealmente
+    (\(p = \tau = \num{1,618}\))
+  \item
+    El apunte analiza métodos adicionales.
+    Las técnicas son similares a lo visto acá.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode supralineal blue Maarten handout

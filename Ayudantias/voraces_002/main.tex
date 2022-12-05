@@ -1,0 +1,52 @@
+\documentclass[spanish, fleqn]{article}
+\usepackage{babel}
+\usepackage{fourier}
+\usepackage{amsmath, amsfonts, amsthm, fourier}
+\usepackage{float}
+
+\usepackage{graphicx}
+
+\usepackage[colorlinks, urlcolor=blue]{hyperref}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+\setlength{\parindent}{0pt}
+
+\title{Ayudantía 4 - Algoritmos y Complejidad\\
+Algoritmos Voraces II}
+\author{Exponential Complexers}
+\date{}
+
+\begin{document}
+\maketitle
+
+\thispagestyle{empty}
+\section{Ejercicios}
+\begin{enumerate}
+\item Una flota de barcos se reparten en la costa del mar, cada barco, en el eje $x$ ocupa un intervalo de la forma $[a,b]$, se tiene un arma que dispara un rayo en un punto $x$ que destruye todos los barcos cuyo intervalo contenga dicho $x$.
+\begin{itemize}
+\item Describa un algoritmo voraz que destruya toda la flota con la cantidad mínima de disparos.
+\item Demuestre su optimalidad.
+\end{itemize}
+\item Ahora se tiene una serie de globos representados como círculos de diferente radio en todo el plano, y un arma fija que puede disparar rayos hacia cualquier ángulo.
+\begin{itemize}
+\item Describa como podría modificar el algoritmo del ejercicio anterior para resolver 
+\item Demuestre que este nuevo algoritmo no gasta más de un rayo más que la solución óptima.
+\end{itemize}
+\item Una string de paréntesis balanceada puede encontrarse en alguna de las siguientes formas:
+\begin{itemize}
+\item Una string vacía.
+\item Una string \textbf{(}$x$\textbf{)} donde $x$ es una string balanceada.
+\item Una string $xy$ donde $x$ e $y$ son strings balanceadas.
+\end{itemize}
+\begin{enumerate}
+\item Describir un algoritmo voraz para encontrar la substring balanceada de mayor largo en una string de paréntesis como:
+\begin{center}
+\textbf{((())()()()))()))(())()()}
+\end{center}
+\item Demostrar su optimalidad.
+\end{enumerate}
+\end{enumerate}
+\end{document}

@@ -1,0 +1,392 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Argumentos de adversario}
+\label{cha:adversary}
+
+  Una herramienta poderosa para demostrar cotas inferiores
+  al rendimiento de algoritmos
+  es imaginar un adversario malévolo que genera los datos pedidos
+  de forma de forzar que trabaje el máximo posible
+  (consistente con sus respuestas anteriores,
+   claro está).
+  El material presente se adapta de las notas de Jeff Erickson~%
+    \cite{erickson18:_adversary_arguments}
+  y Goldman y Goldman~%
+    \cite{goldman07:_adversary_lower_bound}
+
+\section{Subpalabras en secuencias binarias}
+\label{sec:subwords}
+
+  Consideremos primeramente el problema de determinar
+  si una palabra binaria de largo~\(n\)
+  contiene algún \(1\).
+  Intuitivamente,
+  es necesario revisar \(n\)~bits,
+  nuestro objetivo es demostrar esta cota inferior.
+  Imaginamos un adversario que retorna los bits solicitados por el algoritmo,
+  retornando siempre \(0\) y registrando las respuestas dadas.
+  Después de una secuencia de consultas,
+  podrán haber varias palabras consistentes con ellas.
+  Si hay posiciones que no se han consultado,
+  el algoritmo no tiene cómo distinguir palabras
+  con \(0\) y \(1\) en esas posiciones,
+  no puede responder correctamente en todos los casos
+  si no consulta todas las posiciones.
+
+  Diremos que una propiedad de una estructura es \emph{elusiva}
+  si para determinar si la estructura cumple es necesario revisarla completa.
+  Hemos demostrado que la propiedad \textquote{la palabra contiene un \(1\)}
+  es elusiva.
+
+  La siguiente pregunta es si la palabra contiene \(01\).
+  Nuevamente,
+  podemos responder si contiene \(01\) revisando todos los bits.
+  La pregunta es si es posible hacerlo revisando menos.
+
+  Si el largo \(n\) de la palabra es impar,
+  podemos revisar sus posiciones pares,
+  \(B[2], B[4], \dotsc, B[n - 1]\).
+  Si para algún \(i < j\) vemos \(B[i] = 0\) y \(B[j] = 1\),
+  podemos parar:
+  sabemos que hay \(01\) entremedio.
+  Si hay solo \(1\) seguidos por \(0\),
+  no tiene sentido revisar el bit entre el último \(1\) y el primer \(0\),
+  los demás son posibles candidatos a completar \(01\).
+  Si hay solo \(0\),
+  debemos revisar si hay \(1\) en las posiciones \(3, 5, \dotsc, n\)
+  (un \(1\) en la primera posición iría seguido por \(0\));
+  si hay solo \(1\),
+  debemos revisar si hay \(0\) las posiciones \(1, 3, \dotsc, n - 2\)
+  (un \(0\) en la última posición seguiría un \(1\)).
+  O sea,
+  basta revisar \(n - 1\) bits.
+
+  Si la palabra es de largo par,
+  palabras sin \(01\) están formadas por \(1\) seguidos de \(0\).
+  una estrategia de adversario demuestra que debemos revisar todos los bits.
+  Crearemos un adversario que mantiene la incógnita de \(01\)
+  consistente con las consultas,
+  en una palabra iniciada con \(1\) y terminada en \(0\),
+  con el rango entre \(r + 1\) y \(s - 1\) indeciso.
+  El adversario mantiene índices \(r\) y \(s\)
+  para el último \(1\) y el primer \(0\) revelado,
+  respectivamente.
+  Inicialmente \(r = 0\) y \(s = n + 1\)
+  (no se ha revelado nada).
+  El adversario mantiene el invariante que \(s - r\) es par,
+  forzando al algoritmo
+  a solicitar todos los bit para verificar que no hay un par \(01\):
+  Si no revisa algún bit a la izquierda de \(r\) o
+  a la derecha de \(s\),
+  el adversario tiene libertad de darle el valor \(0\) o \(1\).
+  Antes de revisar todos los bits
+  hay al menos dos bits sin revisar entre \(r\) y \(s\)
+  (porque \(s - r\) se mantiene par),
+  que el adversario puede reemplazar por \(01\).
+  El algoritmo~\ref{alg:hide01} describe la lógica del adversario.
+  \begin{algorithm}
+    \DontPrintSemicolon
+
+    \(r \gets 0; s \leftarrow n + 1\) \;
+    \Function{\(\mathrm{Hide01}(i)\)}{
+      \uIf{\(i \le r\)}{
+        \(B[i] \gets 1\) \;
+      }
+      \uElseIf{\(i \ge s\)}{
+        \(B[i] \gets 0\) \;
+      }
+      \uElseIf{\(i - r\) is even}{
+        \(B[i] \gets 0\) \;
+        \(s \gets i\) \;
+      }
+      \Else{
+        \(B[i] \gets 1\) \;
+        \(r \gets i\) \;
+      }
+      \Return \(B[i]\) \;
+    }
+    \caption{El algoritmo \(\mathrm{Hide01}\) del adversario}
+    \label{alg:hide01}
+  \end{algorithm}
+
+  O sea,
+  el patrón \(01\)
+  (y simétricamente \(10\))
+  es elusivo solo si el largo de la palabra es par.
+  Resulta que los únicos patrones elusivos para todos los largos
+  son los patrones de un símbolo \(0\) y \(1\).
+
+\section{Ordenar por comparaciones}
+\label{sec:comparison-sort-bound}
+
+  Suponga que nos dan \(n\)~elementos distintos
+  (por ejemplo en forma de un arreglo \(\mathbf{a}\)),
+  y piden ordenarlos de menor a mayor
+  usando únicamente comparaciones entre elementos.
+  Primero notamos que hay \(n!\)~permutaciones de \(n\)~elementos
+  (y por tanto posibles soluciones).
+  El adversario mantiene el conjunto \(L\)
+  de las permutaciones de los elementos
+  compatibles con las respuestas dadas hasta el momento,
+  inicialmente \(L\) son las \(n!\) permutaciones posibles.
+  La estrategia del adversario
+  al responder a la pregunta \textquote{es \(a[i] < a[j]\)?} es como sigue:
+  sea \(L_{\text{Si}}\)
+  el subconjunto de permutaciones consistentes con la respuesta \textquote{Sí},
+  sea \(L_{\text{No}}\)
+  el subconjunto de permutaciones consistentes con la respuesta \textquote{No}
+  (es claro que siempre \(L = L_{\text{Si}} \cup L_{\text{No}}\)).
+  Para maximizar el número de comparaciones,
+  el adversario responde \textquote{Sí})
+  si \(\lvert L_{\text{Si}} \rvert > \lvert L_{\text{No}} \rvert\).
+  Vale decir,
+  cada comparación reduce el número de candidatos a lo más a la mitad,
+  con lo que el número de comparaciones necesario cumple:
+  \begin{equation*}
+    C(n)
+      \ge \lceil \log_2 n! \rceil
+  \end{equation*}
+  Para estimar el logaritmo:
+  \begin{align*}
+    \ln n!
+      &=   \sum_{1 \le k \le n} \ln k \\
+      &\ge \sum_{n / 2 \le k \le n} \ln k \\
+      &\ge \sum_{n / 2 \le k \le n} \ln \frac{n}{2} \\
+      &= \frac{n}{2} \ln \frac{n}{2} \\
+      &= \frac{n}{2} \ln n - \frac{n}{2} \ln 2 \\
+    \ln n!
+      &= \Omega(n \log n)
+  \end{align*}
+  Incidentalmente,
+  una cota superior es igual de simple de obtener:
+  \begin{align*}
+    \ln n!
+      &= \sum_{1 \le k \le n} \ln k \\
+      &\le \sum_{1 \le k \le n} \ln n \\
+      &= n \ln n \\
+    \ln n!
+      &= O(n \log n)
+  \end{align*}
+  con lo que resulta:
+  \begin{equation*}
+    \ln n!
+      = \Theta(n \log n)
+  \end{equation*}
+  Concluimos que al ordenar \(n\) elementos
+  se requieren \(\Omega(n \log n)\) comparaciones.
+
+  Note que en este razonamiento no restringe en absoluto
+  las comparaciones hechas por el algoritmo de ordenamiento.
+  Tampoco especificamos
+  cómo el adversario construye los conjuntos de permutaciones candidatos.
+  En la forma descrita,
+  es claro que el adversario
+  debe efectuar mucho trabajo para cada comparación,
+  pero esto tampoco es relevante.
+  Para familias de métodos de ordenamiento específicos
+  es posible construir adversarios eficientes,
+  ver por ejemplo el de McIllroy para Quicksort~%
+    \cite{mcillroy99:_killer_adver_quicksort}.
+
+\section{Propiedades de grafos}
+\label{sec:graph-properties}
+
+  Estrategias de adversario proveen cotas ajustadas
+  para algunas propiedades de grafos,
+  cuando el grafo se representa por una matriz de adyacencia.
+  Acá llamaremos elusiva una propiedad
+  si un algoritmo
+  debe revisar todas las \(\binom{n}{2}\) entradas de la matriz de adyacencia
+  para decidirla.
+
+  Un ejemplo obvio es preguntar si el grafo es vacío
+  (no tiene arcos).
+  Dado el conjunto de vértices \(V\),
+  el adversario mantiene el grafo \(G\)
+  (esencialmente lo no revisado).
+  Inicialmente \(G\) es el grafo completo sobre \(V\).
+  Cada vez que el algoritmo consulta si \(u v\) es un arco del grafo,
+  el adversario responde \textquote{No} y elimina \(u v\) de \(G\).
+  Si el algoritmo no consulta por algún posible arco,
+  el grafo vacío \(E = (V, \varnothing)\)
+  y el grafo no vacío \(G\) que mantiene el adversario
+  son ambos consistentes con las respuestas dadas,
+  el algoritmo no puede responder correctamente.
+
+  Un ejemplo más complejo es conectividad.
+  Acá el adversario mantiene dos grafos,
+  \(S\) y \(T\)
+  (por \textquote{Sí} y \textquote{Tal vez}).
+  El grafo \(S\) contiene los arcos que el algoritmo sabe pertenecen al grafo,
+  \(T\) además contiene los arcos aún no considerados.
+  Inicialmente \(S = (V, \varnothing)\) es el grafo vacío
+  y \(T\) es el grafo completo sobre \(V\).
+  Supondremos que el algoritmo no hace consultas redundantes,
+  si consulta sobre el arco \(e\) es que no ha consultado sobre él antes
+  (o sea,
+   \(e\) pertenece a \(T \smallsetminus S\)).
+  El algoritmo del adversario es~\ref{alg:HideConnected}.
+  \begin{algorithm}
+    \DontPrintSemicolon
+
+    \(S \gets (V, \varnothing); T \leftarrow (V, V \times V)\) \;
+    \Function{\(\mathrm{HideConnected}(e)\)}{
+      \If{\(T \smallsetminus \{e\}\) is connected}{
+        \(T \gets T \smallsetminus \{ e \}\) \;
+        \Return \(\mathrm{False}\) \;
+      }
+      {
+        \(S \gets S \cup \{ e \}\) \;
+        \Return \(\mathrm{True}\) \;
+      }
+    }
+    \caption{El algoritmo \(\mathrm{HideConnected}\)}
+    \label{alg:HideConnected}
+  \end{algorithm}
+  Mantiene algunos invariantes:
+  \begin{description}
+  \item[\boldmath\(S\) es subgrafo de \(T\)\unboldmath:]
+    Esto es obvio.
+  \item[\boldmath\(T\) es conexo\unboldmath:]
+    También es obvio.
+  \item[\boldmath Si \(T\) tiene un ciclo,
+        ninguno de sus arcos está en \(S\)\unboldmath:]
+    Si el algoritmo hubiese consultado por uno de los arcos del ciclo,
+    el adversario lo habría eliminado de \(T\) y no lo agregaría a \(S\).
+  \item[\boldmath\(S\) es acíclico\unboldmath:]
+    Esto es inmediato del invariante anterior.
+  \item[\boldmath Si \(S \ne T\), \(S\) no es conexo\unboldmath:]
+    Sabemos que los grafos conexos acíclicos son árboles.
+    Supongamos \(S\) es un árbol y \(e\) es un arco en \(T\) pero no en \(S\).
+    Entonces \(S \cup \{ e \}\) tiene un ciclo,
+    que está también en \(T\).
+    Esto viola el tercer invariante.
+  \end{description}
+  Si el algoritmo no revisa todos los arcos,
+  \(S \ne T\),
+  ambos consistentes con las respuestas dadas,
+  pero uno es conexo y el otro no.
+  La conectividad es elusiva.
+
+\section{Máximo y mínimo}
+\label{sec:max-min}
+
+  Nuestro problema ahora es,
+  dada una colección \(X\) de \(n\) elementos,
+  halle el mayor y el menor de todos ellos
+  usando comparaciones entre elementos.
+
+  Una cota superior es fácil:
+  con \(n - 1\) comparaciones hallamos el máximo,
+  con \(n - 2\) comparaciones entre los demás identificamos el mínimo,
+  para un total de \(2 n - 3\) comparaciones.
+
+  Podemos mejorar la cota superior mediante el siguiente algoritmo.
+  Divida el conjunto en pares \(x_{2 k - 1}, x_{2 k}\)
+  (si \(n\) es impar,
+   aparte el ultimo elemento),
+  compare los elementos de cada par
+  dejando los menores en el conjunto \(L\) y los mayores en el conjunto \(H\).
+  Si \(n\) es impar,
+  deposite \(x_n\) en ambos conjuntos.
+  Resulta \(\lvert L \rvert = \lvert H \rvert = \lceil n / 2 \rceil\).
+  Esto consume \(\lfloor n / 2 \rfloor\) comparaciones.
+  Podemos obtener el mínimo de \(L\)
+  (el mínimo de \(X\))
+  con \(\lceil n / 2 \rceil - 1\) comparaciones,
+  asimismo e máximo de \(H\)
+  (el máximo de \(X\))
+  con \(\lceil n / 2 \rceil - 1\) comparaciones.
+  El total de comparaciones es:
+  \begin{equation*}
+    \left\lfloor \frac{n}{2} \right\rfloor
+      + \left\lceil \frac{n}{2} \right\rceil - 1
+      + \left\lceil \frac{n}{2} \right\rceil - 1
+      = \left\lceil \frac{3 n}{2} \right\rceil - 2
+  \end{equation*}
+
+  Para una cota inferior,
+  usamos un argumento de adversario.
+  El adversario mantiene marcas en los elementos,
+  \(+\) si puede ser el máximo y \(-\) si puede ser el mínimo.
+  Inicialmente todos los elementos llevan marcas \(+\) y \(-\),
+  un total de \(2 n\) marcas.
+  Al final debe quedar exactamente un elemento marcado \(+\)
+  y uno marcado \(-\)
+  (el adversario puede declarar cualquier elemento marcado \(+\) como máximo
+   y cualquier elemento marcado \(-\) como mínimo).
+  Al comparar dos elementos con ambas marcas
+  (marca \(\pm\)),
+  el adversario declara uno mayor y el otro menor,
+  eliminando las marcas \(-\) y \(+\) de los dos elementos,
+  respectivamente.
+  En todos los otros casos
+  el adversario puede responder
+  de manera de eliminar a lo más una de las marcas.
+  Por ejemplo,
+  al comparar un elemento marcado \(\pm\) con uno marcado \(-\),
+  declara que el segundo es menor y deja las marcas \(+\)
+  (el marcado \(\pm\) ya no es el mínimo)
+  y \(-\)
+  (sigue pudiendo ser el menor).
+  El caso de marcas \(\pm\) y \(+\) es similar.
+  Comparar dos elementos ambos marcados \(+\) o \(-\)
+  simplemente elimina la marca de uno de ellos y declara al otro mayor
+  (respectivamente menor),
+  comparar uno marcado \(+\) con uno marcado \(-\) no requiere cambios
+  (el primero es mayor).
+  Ahora bien,
+  un algoritmo correcto debe remover \(2 n - 2\) marcas.
+  A lo más \(\lfloor n / 2 \rfloor\) comparaciones eliminan dos marcas,
+  otras comparaciones eliminan a lo más una.
+  El número de comparaciones requeridas es a lo menos:
+  \begin{equation*}
+    2 n - 2 - 2 \left\lfloor \frac{n}{2} \right\rfloor
+      = \left\lceil \frac{3 n}{2} \right\rceil - 2
+  \end{equation*}
+
+  Como tenemos una cota superior igual a la inferior,
+  este es el número exacto de comparaciones requerido
+  (y el algoritmo esbozado es óptimo).
+
+\section*{Ejercicios}
+\label{sec:ex-adversary}
+
+  \begin{enumerate}
+  \item
+    Demuestre que el patrón \(1 1\) es elusivo
+    solo si el largo de la palabra es un múltiplo de \num{3}.
+  \item
+    Demuestre que hallar el máximo de una colección de \(n\) elementos
+    requiere \(n - 1\) comparaciones
+    usando un argumento de adversario.
+  \item
+    Un \emph{escorpión} es un grafo con un vértice de grado \num{1}
+    (el aguijón),
+    conectado únicamente a un vértice de grado \num{2}
+    (la cola),
+    la cola está conectada solo al aguijón y a un vértice adicional
+    (el cuerpo).
+    Los demás vértices del grafo
+    (las patas,
+     antenas,
+     alas,
+     ojos,
+     ruedas,
+     \ldots)
+    están conectadas al cuerpo
+    y arbitrariamente entre sí.
+    ¿Es elusiva la propiedad de ser escorpión?
+  \item
+    Demuestre que la propiedad de ser acíclico es elusiva
+    si el grafo se representa por una matriz de adyacencia.
+  \end{enumerate}
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Jeff Goldman Subpalabras is even connected subgrafo

@@ -1,0 +1,242 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Recorrido de Grafos}
+\label{cha:recorrido-grafos}
+
+  Un grafo describe las conexiones entre objetos
+  (vértices).
+  Como tal,
+  es una estructura cómoda para describir una gran variedad de situaciones,
+  manipular estas estructuras es una tarea común.
+  Hay una variedad de situaciones en las que se debe revisar completo
+  algún grafo.
+  Ejemplos típicos son los recorridos estándar
+  (preorden, postorden, inorden)
+  de árboles binarios
+  (que en realidad no son grafos).
+
+  Tradicionalmente se representan grafos
+  mediante \emph{matrices de adyacencia}
+  (una matriz de booleanos indexada por vértices,
+   verdadero indica que los vértices son vecinos)
+  o \emph{listas de adyacencia}
+  (se asocia una lista de vecinos a cada vértice).
+  Otra opción
+  (particularmente para digrafos,
+   en los cuales los arcos tienen una dirección)
+  es representar vértices por nodos en una estructura enlazada
+  y los arcos como punteros.
+  En muchos casos de interés,
+  el grafo a recorrer no se conoce explícitamente,
+  dado un vértice en él se generan descendientes (vecinos) bajo demanda.
+
+  Como es un área de múltiples aplicaciones,
+  hay \emph{\foreignlanguage{english}{software}} genérico disponible
+  para muchas tareas comunes,
+  como el descrito por Knuth~%
+    \cite{knuth09:_sgb}.
+
+  Para uniformidad,
+  supondremos un grafo \(G = (V, E)\)
+  de vértices \(V\) y arcos \(E\).
+  Para referirnos a los vértices de \(G\) anotamos \(V_G\),
+  para sus arcos usaremos \(E_G\).
+  El vecindario
+  (\emph{\foreignlanguage{english}{neighborhood}})
+  de \(v \in V_G\) lo anotaremos:
+  \begin{equation*}
+    N_G(v)
+      = \{ u \in V_G \colon u v \in E_G \}
+  \end{equation*}
+
+  En nuestros algoritmos
+  usaremos conjuntos (\emph{\foreignlanguage{english}{set}}),
+  pilas (\emph{\foreignlanguage{english}{stack}}) y
+  colas (\emph{\foreignlanguage{english}{queue}})
+  como estructuras de datos.
+  Bibliotecas proveen estas estructuras básicas para muchos lenguajes,
+  es fácil armar al menos versiones rudimentarias
+  (ineficientes o limitadas)
+  si no están disponibles.
+  Los algoritmos que discutiremos
+  son aplicables con modificaciones menores a grafos dirigidos
+  (digrafos)
+  y a estructuras que no son grafos
+  (como árboles binarios o árboles ordenados).
+
+  Muchos algoritmos usarán un conjunto \(C\),
+  comúnmente llamado \emph{cerrado}
+  (\emph{\foreignlanguage{english}{closed}} en inglés)
+  para registrar los vértices ya considerados
+  de forma de evitar caer en ciclos.
+  Si sabemos que la estructura es acíclica,
+  podemos obviar el conjunto de vértices ya visitados.
+
+  Generalmente no basta con dar con un vértice particular,
+  se requiere el camino que lleva a él.
+  La técnica general para acomodar esto
+  es almacenar los vértices visitados,
+  y a cada uno de ellos asociar el vértice padre
+  (desde el cual llegamos a él).
+  Recorriendo estas listas obtenemos el camino a la meta
+  en reversa.
+
+\section{Búsqueda en profundidad}
+\label{seq:DFS}
+
+  En inglés,
+  se le conoce como \emph{\foreignlanguage{english}{depth first search}},
+  abreviado DFS.
+  Es recorrer un camino del grafo hasta el final
+  (llegar a un vértice que no tenga vecinos no visitados aún),
+  para devolverse al vértice anterior e continuar desde allí.
+
+\subsection{Búsqueda en profundidad -- versión recursiva}
+\label{sec:DFS-recursive}
+
+  La forma más directa de describir esto es mediante un programa recursivo,
+  vea el algoritmo~\ref{alg:DFS-recursive}.
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \(C \gets \varnothing\) \;
+
+    \Procedure{\(\mathrm{DFS}(G, s)\)}{
+        \(C \gets C \cup \{ s \}\) \;
+        \(\mathrm{process}(s)\) \;
+        \ForEach{\(v \in N_G(s)\)}{
+          \If{\(v \notin C\)}{
+            \(\mathrm{DFS}(G, v)\) \;
+        }
+      }
+    }
+    \caption{Búsqueda en profundidad -- versión recursiva}
+    \label{alg:DFS-recursive}
+  \end{algorithm}
+
+\subsection{Clasificar arcos}
+\label{sec:clasify-arcs}
+
+  Es claro que los arcos que sigue búsqueda en profundidad
+  forman un árbol recubridor de \(G\) si este es conexo.
+  A sus arcos los llamamos \emph{arcos de árbol}
+  (en inglés \emph{\foreignlanguage{english}{tree edges}})
+  o \emph{arcos hacia adelante}
+  (en inglés \emph{\foreignlanguage{english}{forward edges}}).
+  A los demás arcos de \(G\)
+  (que llevan a vértices ya visitados)
+  los llamamos \emph{arcos reversos}
+  (en inglés \emph{\foreignlanguage{english}{back edges}}).
+
+  Note que esta clasificación depende de las elecciones del algoritmo,
+  no son realmente propiedades del grafo.
+
+\subsection{Búsqueda en profundidad -- versión iterativa}
+\label{sec:DFS-iterative}
+
+  Notando que lo que hacemos es dejar pendientes los vértices no visitados
+  para profundizar la búsqueda desde el actual,
+  podemos evitar la recursión explícita
+  manejando la pila de vértices pendientes manualmente.
+  Vea el algoritmo~\ref{alg:DFS-iterative}.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon
+
+    \Procedure{\(\mathrm{DFS}(G, s)\)}{
+      \(S \gets \mathrm{Stack}\);
+      \(\mathrm{push}(S, s)\);
+      \(C \gets \varnothing\) \;
+      \While{\(\neg \mathrm{empty}(S)\)}{
+        \(s \gets \mathrm{pop}(S)\) \;
+        \If{\(s \notin C\)}{
+          \(C \gets C \cup \{ s \}\) \;
+          \(\mathrm{process}(s)\) \;
+          \ForEach{\(v \in N_G(s)\)}{
+            \If{\(v \notin C\)}{
+              \(\mathrm{push}(S, v)\) \;
+            }
+          }
+        }
+      }
+    }
+    \caption{Búsqueda en profundidad -- versión iterativa}
+    \label{alg:DFS-iterative}
+  \end{algorithm}
+
+\section{Búsqueda a lo ancho}
+\label{sec:BFS}
+
+  En inglés,
+  se le conoce como \emph{\foreignlanguage{english}{breadth first search}},
+  abreviado BFS.
+
+  La idea acá es visitar los vecinos de \(s\),
+  luego de haberlos visitado todos
+  comenzamos a revisar los vecinos de los vecinos de \(s\),
+  y así sucesivamente.
+
+  Sorprendentemente es un cambio menor
+  respecto de la búsqueda en profundidad iterativa,
+  cambiar la pila por una cola de vértices pendientes,
+  vea el algoritmo~\ref{alg:BFS}.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon
+
+    \Procedure{\(\mathrm{BFS}(G, s)\)}{
+      \(Q \gets \mathrm{Queue}\);
+      \(\mathrm{enqueue}(Q, s)\);
+      \(C \gets \varnothing\) \;
+      \While{\(\neg \mathrm{empty}(Q)\)}{
+        \(s \gets \mathrm{dequeue}(Q)\) \;
+        \If{\(s \notin C\)}{
+          \(C \gets C \cup \{ s \}\) \;
+          \(\mathrm{process}(s)\) \;
+          \ForEach{\(v \in N_G(s)\)}{
+            \If{\(v \notin C\)}{
+              \(\mathrm{enqueue}(Q, v)\) \;
+            }
+          }
+        }
+      }
+    }
+    \caption{Búsqueda a lo ancho}
+    \label{alg:BFS}
+  \end{algorithm}
+
+\section{Comentarios}
+\label{sec:comments-graph-traversal}
+
+  El programa más simple es búsqueda en profundidad recursiva.
+  Búsqueda en profundidad tiene la virtud de solo usar espacio
+  (en la pila explícita en la versión iterativa,
+   o en la pila implícita usada para recursión)
+  proporcional a la profundidad máxima.
+
+  Búsqueda a lo ancho garantiza hallar el vértice más cercano,
+  al ir desarrollando el grafo en oleadas.
+  Requiere almacenar gran parte del árbol sobre los nodos considerados.
+  Al no revisar los vértices en orden de hacer/deshacer,
+  para aplicaciones de revisión sistemática
+  no basta con una estructura global.
+
+\section{Aplicaciones}
+\label{sec:graph-traversal-uses}
+
+  Un uso simple es determinar si un grafo es conexo,
+  o identificar sus componentes conexos.
+
+  Determinar si un grafo es bipartito es tomar un vértice,
+  asignarle un color y darle el color contrario a sus vecinos;
+  esto se repite hasta colorear todos los vértices o hallar una contradicción.
+
+  Muchos de los algoritmos sobre grafos que veremos
+  son variantes de búsqueda en su corazón.
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+

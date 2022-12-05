@@ -1,0 +1,806 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{listings}
+\usepackage{pgfplots}
+
+\pgfplotsset{compat=1.16}
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{[ANSI]C}
+
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Aproximar ceros}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = lines, numbers = none,
+        showstringspaces = false,
+        float, floatplacement = ht, captionpos = b,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{El problema}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema}
+
+  \uncover<+->{
+    Es común querer resolver ecuaciones,
+    o sea,
+    hallar \(x^*\) tal que:
+    \begin{equation*}
+      f(x^*)
+        = 0
+    \end{equation*}
+  }
+  \uncover<+->{
+    \noindent
+    Esto es hallar un cero de la función \(f\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema}
+
+  \uncover<+->{
+    Aprendimos fórmulas generales para funciones lineales y cuadráticas,
+    una serie de técnicas
+    que permiten reducir algunos polinomios de grado mayor,
+    métodos para hallar ceros racionales de polinomios,
+    y una variedad de trucos para resolver situaciones diferentes.
+  }
+  \uncover<+->{
+    Una búsqueda en Internet indica que hay fórmulas generales
+    para polinomios de tercer y cuarto grado,
+    pero son muy complicadas.
+  }
+  \medskip \\
+  \uncover<+->{
+    La triste realidad es que para la mayor parte de las funciones de interés
+    no hay fórmulas que nos dan los ceros.
+    Incluso puede demostrarse que no hay fórmulas algebraicas
+    (usando sumas, multiplicaciones y raíces)
+    para polinomios generales de grado quinto o superior.
+  }
+\end{frame}
+
+\section{Métodos numéricos para aproximar ceros}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Métodos numéricos}
+
+  \uncover<+->{
+    El problema a resolver entonces
+    dada una función continua \(f(x)\),
+    aproximar un cero \(x^*\) de la función \(f\).
+  }
+  \uncover<+->{
+    Generalmente partiremos al menos
+    con alguna idea general de la ubicación del \(x^*\) de interés.
+  }
+  \uncover<+->{
+    Buscamos algún método sistemático
+    que construya aproximaciones mejores de \(x^*\),
+    ojalá con el mínimo trabajo.
+  }
+  \uncover<+->{
+    (La función \(f\) puede ser muy costosa de computar.)
+  }
+  \bigskip
+
+  \uncover<+->{
+    Hay un sinnúmero de algoritmos para resolver este importante problema.
+    Estudiaremos en detalle solo los más importantes.
+    En el apunte se discuten algunos adicionales.
+  }
+\end{frame}
+
+\subsection{Método de bisección}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El método de bisección}
+
+  \uncover<+->{
+    Ya lo deben haber visto en un ramo de cálculo,
+    al demostrar que una función continua sobre \([a, b]\)
+    toma todos los valores entre \(f(a)\) y \(f(b)\).
+  }
+  \bigskip
+
+  \uncover<+->{
+    Partimos la iteración con valores \(x_0\) y \(x_1\) tales que
+    \(f\) cambia de signo entre ellos
+    (o sea,
+     \(f(x_0) \cdot f(x_1) < 0\)).
+  }
+  \uncover<+->{
+    Dividimos el intervalo en dos,
+    reteniendo una mitad en que cambie de signo la función
+    (si no le apuntamos de una al cero,
+     claro)
+    hasta tener un intervalo suficientemente corto.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El método de bisección}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[axis x line = middle, axis y line = left,
+                   ytick = \empty,
+                   xlabel = \(x\), ylabel = {\(y = f(x)\)},
+                   xmin = 0, xmax = 1,
+                   xtick = {0.1, 0.45, 0.8},
+                   xticklabels = {\(x_0\), \(x_2\), \(x_1\)},
+                   ymin = -0.65, ymax = 1.1],
+         \addplot[color = red, thick, domain = 0.02:0.95]{exp(-x) - x};
+         \draw[color = blue] (axis cs: 0.1, 0) -- (axis cs: 0.1, 0.80483);
+         \draw[color = blue] (axis cs: 0.8, -0.35067) -- (axis cs: 0.8, 0);
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Bisección (programa)}
+  \framesubtitle{Encabezado}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {30-31}]
+                  {bisection.c}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Bisección (programa)}
+  \framesubtitle{Cuerpo}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {33-45}]
+                  {bisection.c}
+\end{frame}
+
+\subsection{Método de Newton}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de Newton}
+
+  \uncover<+->{
+    Otra idea es aproximar la función por una tangente en el punto actual
+    y determinar dónde corta el eje \(X\).
+  }
+  \uncover<+->{
+    La ecuación de la tangente en \(x_n\) es:
+    \begin{equation*}
+      \frac{y - y_n}{x - x_n}
+        = f'(x_n)
+    \end{equation*}
+    donde interesa \(x\) para \(y = 0\).
+  }
+  \medskip  \\
+  \uncover<+->{
+    Resulta la iteración:
+    \begin{equation*}
+      x_{n + 1}
+        = x_n - \frac{f(x_n)}{f'(x_n)}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Iniciamos la iteración eligiendo \(x_0\),
+    que intentamos sea cercano al cero buscado.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Método de Newton}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                    xmin =  0,	 xmax = 0.5,
+                    ymin = -0.3, ymax = 1.2,
+                    xtick	= {3/20,    17139/56020},
+                    xticklabels = {\small \(x_0\),
+                                   \small \(x_1\)},
+                    ytick = {0},
+                    yticklabels = {}
+                  ]
+        \addplot [color = blue, domain = 0.02:0.37]
+          {(17139 - 56020 * x) / 21480};
+        \addplot [domain = 0.01:0.55, color = red, thick]
+           {(4740000 * x^4 - 7646000 * x^3 + 4231950 * x^2
+              - 1167595 * x + 157926) / 136500};
+        \draw [dashed, color = blue] (axis cs:3/20, 0) -- (axis cs:3/20, 2/5);
+      \end{axis}
+    \end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Método de Newton (programa)}
+  \framesubtitle{Encabezado}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {32-33}]
+                  {newton.c}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Método de Newton (programa)}
+  \framesubtitle{Cuerpo}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {35-42}]
+                  {newton.c}
+\end{frame}
+
+\subsection{Método de la secante}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Método de secante}
+
+  \uncover<+->{
+    Si es incómodo o costoso calcular la derivada,
+    podemos aproximar la tangente por la secante entre los últimos dos puntos.
+  }
+  \uncover<+->{
+    La ecuación de la secante que pasa por \((x_n, y_n)\)
+    y \((x_{n + 1}, y_{n + 1})\) es:
+    \begin{equation*}
+      \frac{y - y_{n + 1}}{x - x_{n + 1}}
+        = \frac{y_{n + 1} - y_n}{x_{n + 1} - x_n}
+    \end{equation*}
+    donde interesa \(x\) para \(y = 0\).
+  }
+  \medskip  \\
+  \uncover<+->{
+    Resulta la iteración:
+    \begin{equation*}
+      x_{n + 2}
+        = x_{n + 1} - y_{n + 1} \frac{x_{n + 1} - x_n}{y_{n + 1} - y_n}
+    \end{equation*}
+  }
+
+  \uncover<+->{
+    Resista la tentación de la fórmula simétrica:
+    \begin{equation*}
+      x_{n + 2}
+        = \frac{x_n y_{n + 1} - x_{n + 1} y_n}{y_{n + 1} - y_n}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Método de secante}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                    xmin = 0,	 xmax = 0.5,
+                    ymin = -0.6, ymax = 1.2,
+                    xtick = {1/20, 3/10, 93/260},
+                    xticklabels = {\small \(x_0\),
+                                   \small \(x_1\),
+                                   \small \(x_2\)},
+                    ytick = {0},
+                    yticklabels = {},
+                    height = 6cm, width = 9cm
+                  ]
+        \addplot [blue]
+           {(93 - 260 * x) / 100};
+        \addplot [domain = 0.01:0.5, red]
+           {(4740000 * x^4 - 7646000 * x^3 + 4231950 * x^2
+              - 1167595 * x + 157926) / 136500};
+
+        \draw [dashed, blue] (axis cs:1/20, 0) -- (axis cs:1/20, 4/5);
+        \draw [dashed, blue] (axis cs:3/10, 0) -- (axis cs:3/10, 3/20);
+      \end{axis}
+    \end{tikzpicture}
+\end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Método de secante (programa)}
+  \framesubtitle{Encabezado}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {31-32}]
+                  {secant.c}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Método de secante (programa)}
+  \framesubtitle{Cuerpo}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {34-43}]
+                  {secant.c}
+\end{frame}
+
+\subsection{Iteración de punto fijo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Iteración de punto fijo}
+
+  \uncover<+->{
+    Un \emph{punto fijo} de la función \(g\) es \(x^*\)
+    tal que \(x^* = g(x^*)\).
+  }
+  \uncover<+->{
+    Es natural intentar aproximar un punto fijo por:
+    \begin{equation*}
+      x_{n + 1}
+        = g(x_n)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Iniciamos la iteración eligiendo \(x_0\),
+    cercano al cero buscado.
+  }
+  \bigskip \\
+  \uncover<+->{
+    Siempre podemos reescribir la ecuación \(f(x) = 0\) como un punto fijo,
+    por ejemplo \(x = x - \alpha f(x)\) para \(\alpha\) adecuado
+    (incluso variable).
+    Mejor opción puede ser despejar del término más significativo.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Punto fijo (gráficamente)}
+
+  \begin{center}
+    \begin{tikzpicture}[scale = 1.2]
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(X\)},
+                    ylabel = {\(Y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = north},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = east},
+                    xmin = 0, xmax = 1.75,
+                    ymin = 0, ymax = 1.75,
+                    xtick = {0.81},
+                    xticklabels = {\(x^*\)},
+                    ytick = {0},
+                    yticklabels = {},
+                    height = 6cm, width = 6cm
+                  ]
+        \addplot [domain = 0:1.45, color = blue]
+           {x} node [yshift = 6pt, xshift = 5pt] (yx) {\(y = x\)};
+        \addplot [domain = 0.45:1.6, red] {(1.5 - 0.7 * x)^3}
+           node [yshift = 10pt] (g) {\(g(x)\)};
+        \draw [dashed, blue] (axis cs:0.81, 0) -- (axis cs:0.81, 1.11);
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Iteración de punto fijo -- convergencia}
+
+  \begin{center}
+    \begin{tikzpicture}[scale = 0.92]
+      \begin{axis}[domain = 0:0.9,
+                   axis x line = bottom, axis y line = left,
+                   xmin = 0, xmax = 0.9,
+                   ymin = 0, ymax = 0.9,
+                   xtick = {0.1, 0.812, 0.25930573, 0.7084739004713133,
+                     0.3257801870289462, 0.6545450715920982,
+                     0.36698903565963403, 0.5},
+                   xticklabels = {\(x_0^{\phantom{\ast}}\),
+                                  \(x_1^{\phantom{\ast}}\),
+                                  \(x_2^{\phantom{\ast}}\),
+                                  \(x_3^{\phantom{\ast}}\),
+                                  \(x_4^{\phantom{\ast}}\),
+                                  \(\),
+                                  \(\),
+                                  \(x^{\ast}_{\phantom{0}}\)},
+                   ytick style = {draw = none},
+                   yticklabels = {}]
+
+        \addplot[mark = none, blue] {x};
+        \addplot[mark = none, red]
+          {1 * x^3 / 1 - 7 * x^2 / 5 - 1 * x / 4 + 17 / 20};
+
+      \draw [blue, very thin, dashed]
+         (axis cs:0.1, 0) -- (axis cs:0.1, 0.812);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.1, 0.812) -- (axis cs:0.812, 0.812);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.812, 0.812) -- (axis cs:0.812, 0.25930573);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.812, 0.25930573) -- (axis cs:0.25930573, 0.25930573);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.25930573, 0.25930573)
+              -- (axis cs:0.25930573, 0.7084739004713133);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.25930573, 0.25930573)
+              -- (axis cs:0.25930573, 0.7084739004713133);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.25930573, 0.7084739004713133)
+              -- (axis cs:0.7084739004713133, 0.7084739004713133);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7084739004713133, 0.7084739004713133)
+              -- (axis cs:0.7084739004713133, 0.3257801870289462);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7084739004713133, 0.7084739004713133)
+              -- (axis cs:0.7084739004713133, 0.3257801870289462);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7084739004713133, 0.3257801870289462)
+              -- (axis cs:0.3257801870289462, 0.3257801870289462);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.3257801870289462, 0.3257801870289462)
+              -- (axis cs:0.3257801870289462, 0.6545450715920982);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.3257801870289462, 0.3257801870289462)
+              -- (axis cs:0.3257801870289462, 0.6545450715920982);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.3257801870289462, 0.6545450715920982)
+              -- (axis cs:0.6545450715920982, 0.6545450715920982);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.6545450715920982, 0.6545450715920982)
+              -- (axis cs:0.6545450715920982, 0.36698903565963403);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.6545450715920982, 0.36698903565963403)
+              -- (axis cs:0.36698903565963403, 0.36698903565963403);
+      \end{axis}
+    \end{tikzpicture}
+
+    Le llaman diagrama de telaraña
+    (\emph{\foreignlanguage{english}{cobweb diagram}} en inglés).
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Iteración de punto fijo -- divergencia}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[domain = 0:1,
+                   axis x line = bottom, axis y line = left,
+                   xmin = 0, xmax = 1,
+                   ymin = 0, ymax = 1,
+                   xtick = {0.3, 0.7425, 0.245202598, 0.8053675633204307,
+                     0.19829350349601982, 0.8561644490113705,
+                     0.1687199716882174, 0.5},
+                   xticklabels = {\(x_0^{\phantom{\ast}}\),
+                                  \(x_1^{\phantom{\ast}}\),
+                                  \(x_2^{\phantom{\ast}}\),
+                                  \(x_3^{\phantom{\ast}}\),
+                                  \(\),
+                                  \(x_5^{\phantom{\ast}}\),
+                                  \(x_6^{\phantom{\ast}}\),
+                                  \(x^{\ast}_{\phantom{0}}\)},
+                   ytick style = {draw = none},
+                   yticklabels = {}]
+
+        \addplot[mark = none, blue] {x};
+        \addplot[mark = none, red]
+          {5 * x^3 / 4 - 25 * x^2 / 16 - 23 * x / 40 + 327 / 320};
+
+      \draw [blue, very thin, dashed]
+         (axis cs:0.3, 0) -- (axis cs:0.3, 0.7425);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.3, 0.7425) -- (axis cs:0.7425, 0.7425);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7425, 0.7425) -- (axis cs:0.7425, 0.245202598);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7425, 0.245202598) -- (axis cs:0.245202598, 0.245202598);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.245202598, 0.245202598)
+             -- (axis cs:0.245202598, 0.8053675633204307);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.245202598, 0.245202598)
+             -- (axis cs:0.245202598, 0.8053675633204307);
+      \draw [blue, very thin, dashed]
+      (axis cs:0.245202598, 0.8053675633204307)
+             -- (axis cs:0.8053675633204307, 0.8053675633204307);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.8053675633204307, 0.8053675633204307)
+             -- (axis cs:0.8053675633204307, 0.19829350349601982);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.8053675633204307, 0.8053675633204307)
+             -- (axis cs:0.8053675633204307, 0.19829350349601982);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.8053675633204307, 0.19829350349601982)
+             -- (axis cs:0.19829350349601982, 0.19829350349601982);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.19829350349601982, 0.19829350349601982)
+             -- (axis cs:0.19829350349601982, 0.8561644490113705);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.19829350349601982, 0.19829350349601982)
+              -- (axis cs:0.19829350349601982, 0.8561644490113705);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.19829350349601982, 0.8561644490113705)
+              -- (axis cs:0.8561644490113705, 0.8561644490113705);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.8561644490113705, 0.8561644490113705)
+              -- (axis cs:0.8561644490113705, 0.1687199716882174);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.8561644490113705, 0.1687199716882174)
+              -- (axis cs:0.1687199716882174, 0.1687199716882174);
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Iteración de punto fijo -- convergencia}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[domain = 0:1,
+                   axis x line = bottom, axis y line = left,
+                   xmin = 0, xmax = 1,
+                   ymin = 0, ymax = 1,
+                   xtick = {0.1, 0.5000066, 0.678700259368431587,
+                     0.7312996515938205, 0.74701294446039,
+                     0.7518459248664618, 0.7533485113148211, 0.75},
+                   xticklabels = {\(x_0^{\phantom{\ast}}\),
+                                  \(x_1^{\phantom{\ast}}\),
+                                  \(x_2^{\phantom{\ast}}\),
+                                  \(\),
+                                  \(\),
+                                  \(\),
+                                  \(\),
+                                  \(x^{\ast}_{\phantom{0}}\)},
+                   ytick style = {draw = none},
+                   yticklabels = {}]
+
+        \addplot[mark = none, blue] {x};
+        \addplot[mark = none, red]
+                {680 * x^3 / 1521 - 1270 * x^2 / 1521
+                  + 16409 * x / 20280 + 5773 / 13520};
+
+      \draw [blue, very thin, dashed]
+         (axis cs:0.1, 0) -- (axis cs:0.1, 0.5000066);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.1, 0.5000066) -- (axis cs:0.5000066, 0.5000066);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.5000066, 0.5000066)
+              -- (axis cs:0.5000066, 0.678700259368431587);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.5000066, 0.678700259368431587)
+              -- (axis cs:0.678700259368431587, 0.678700259368431587);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.678700259368431587, 0.678700259368431587)
+              -- (axis cs:0.678700259368431587, 0.7312996515938205);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.678700259368431587, 0.678700259368431587)
+              -- (axis cs:0.678700259368431587, 0.7312996515938205);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.678700259368431587, 0.7312996515938205)
+              -- (axis cs:0.7312996515938205, 0.7312996515938205);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7312996515938205, 0.7312996515938205)
+              -- (axis cs:0.7312996515938205, 0.74701294446039);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7312996515938205, 0.7312996515938205)
+              -- (axis cs:0.7312996515938205, 0.74701294446039);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7312996515938205, 0.74701294446039)
+              -- (axis cs:0.74701294446039, 0.74701294446039);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.74701294446039, 0.74701294446039)
+              -- (axis cs:0.74701294446039, 0.7518459248664618);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.74701294446039, 0.74701294446039)
+              -- (axis cs:0.74701294446039, 0.7518459248664618);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.74701294446039, 0.7518459248664618)
+              -- (axis cs:0.7518459248664618, 0.7518459248664618);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7518459248664618, 0.7518459248664618)
+              -- (axis cs:0.7518459248664618, 0.7533485113148211);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.7518459248664618, 0.7533485113148211)
+              -- (axis cs:0.7533485113148211, 0.7533485113148211);
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Iteración de punto fijo -- divergencia}
+
+  \begin{center}
+    \begin{tikzpicture}
+      \begin{axis}[domain = 0:1,
+                   axis x line = bottom, axis y line = left,
+                   xmin = 0, xmax = 1,
+                   ymin = 0, ymax = 1,
+                   xtick = {0.3, 0.323028, 0.355531714912121,
+                     0.40050722374171244, 0.4615564206393762,
+                     0.5436710682749981, 0.6563153774050898, 0.25},
+                   xticklabels = {\(x_0^{\phantom{\ast}}\),
+                                  \(\),
+                                  \(\),
+                                  \(x_3^{\phantom{\ast}}\),
+                                  \(x_4^{\phantom{\ast}}\),
+                                  \(x_5^{\phantom{\ast}}\),
+                                  \(x_6^{\phantom{\ast}}\),
+                                  \(x^{\ast}_{\phantom{0}}\)},
+                   ytick style = {draw = none},
+                   yticklabels = {}]
+
+        \addplot[mark = none, blue] {x};
+        \addplot[mark = none, red]
+                {2450 * x^3 / 1521 - 3160 * x^2 / 1521 + 27217 * x / 12168
+                  - 553 / 2704};
+
+      \draw [blue, very thin, dashed]
+         (axis cs:0.3, 0) -- (axis cs:0.3, 0.323028);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.3, 0.323028) -- (axis cs:0.323028, 0.323028);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.323028, 0.323028) -- (axis cs:0.323028, 0.355531714912121);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.323028, 0.355531714912121)
+              -- (axis cs:0.355531714912121, 0.355531714912121);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.355531714912121, 0.355531714912121)
+              -- (axis cs:0.355531714912121, 0.40050722374171244);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.355531714912121, 0.355531714912121)
+              -- (axis cs:0.355531714912121, 0.40050722374171244);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.355531714912121, 0.40050722374171244)
+              -- (axis cs:0.40050722374171244, 0.40050722374171244);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.40050722374171244, 0.40050722374171244)
+              -- (axis cs:0.40050722374171244, 0.4615564206393762);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.40050722374171244, 0.40050722374171244)
+              -- (axis cs:0.40050722374171244, 0.4615564206393762);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.40050722374171244, 0.4615564206393762)
+              -- (axis cs:0.4615564206393762, 0.4615564206393762);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.4615564206393762, 0.4615564206393762)
+              -- (axis cs:0.4615564206393762, 0.5436710682749981);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.4615564206393762, 0.4615564206393762)
+              -- (axis cs:0.4615564206393762, 0.5436710682749981);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.4615564206393762, 0.5436710682749981)
+              -- (axis cs:0.5436710682749981, 0.5436710682749981);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.5436710682749981, 0.5436710682749981)
+              -- (axis cs:0.5436710682749981, 0.6563153774050898);
+      \draw [blue, very thin, dashed]
+         (axis cs:0.5436710682749981, 0.6563153774050898)
+              -- (axis cs:0.6563153774050898, 0.6563153774050898);
+      \end{axis}
+    \end{tikzpicture}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Iteración de punto fijo (programa)}
+  \framesubtitle{Encabezado}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {30-31}]
+                  {fpi.c}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Iteración de punto fijo (programa)}
+  \framesubtitle{Cuerpo}
+
+  \lstinputlisting[basicstyle = \small\sffamily,
+                   frame = none,
+                   linerange = {33-41}]
+                  {fpi.c}
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Un problema importante es aproximar ceros
+  \item
+    Vimos varias ideas aplicables a este problema.
+    Los programas básicos son simples.
+    \uncover<+->{
+      Armar rutinas de uso general es otra historia\ldots
+    }
+  \item
+    En el apunte se discuten algunos métodos adicionales.
+  \item
+    Resta ver cuándo convergen,
+    y qué tan rápido
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode english cobweb diagram

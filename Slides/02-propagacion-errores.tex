@@ -1,0 +1,421 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+%\usepackage{beamerarticle}
+
+\usepackage{ifpdf}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[group-digits = false, copy-decimal-marker = true,
+            exponent-product = \cdot]{siunitx}
+\usepackage{enumitem}
+\usepackage{babel}
+\usepackage{csquotes}
+\usepackage{listings}
+\mode<article>{\usepackage[colorlinks, urlcolor = blue]{hyperref}}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\lstloadlanguages{[ANSI]C, sh}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Propagación de errores}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\lstset{basicstyle = \small\sffamily, commentstyle = \small\slshape,
+        tabsize = 4,
+        frame = lines, numbers = none,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+
+\renewcommand{\lstlistingname}{Listado}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Introducción}
+
+\begin{frame}
+  \frametitle{Fuentes de error}
+
+  \uncover<+->{
+    Para obtener valores numéricos se construye un modelo,
+    se extraen relaciones relevantes,
+    y se resuelven las ecuaciones resultantes.
+    Hay varias fuentes de error en esto:
+  }
+  \begin{enumerate}[label={(\roman*)}]
+  \item
+    \label{enum:error:fisico}
+    El modelo físico es una simplificación de la realidad
+  \item
+    \label{enum:error:parametros}
+    Los parámetros que entran al modelo se conocen con precisión finita
+  \item
+    \label{enum:error:aproximacion}
+    Aproximaciones usadas para resolver el modelo matemático
+  \item
+    \label{enum:error:redondeo}
+    Errores de redondeo en los cálculos
+  \end{enumerate}
+  \uncover<+->{
+    El punto~\ref{enum:error:fisico} es de modelamiento matemático,
+    \ref{enum:error:parametros} depende de mediciones del experimento,
+    \ref{enum:error:aproximacion} es del cálculo
+    mientras el punto~\ref{enum:error:redondeo} viene de representar
+    infinitos números reales en espacio finito.
+    Acá interesan los puntos~\ref{enum:error:aproximacion}
+    y~\ref{enum:error:redondeo}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Error absoluto y relativo}
+
+  \uncover<+->{
+    Sea \(x^*\) el valor exacto de alguna cantidad,
+    \(x\) una aproximación.
+  }
+
+  \uncover<+->{
+    El \emph{error absoluto} de \(x\) es \(\lvert x - x^* \rvert\),
+    el \emph{error relativo} es \(\lvert (x - x^*) / x^* \rvert\)
+    (siempre que \(x^* \ne 0\),
+     claro).
+  }
+
+  \uncover<+->{
+    Si el error es \textquote{suficientemente pequeño}
+    el error en la cantidad \(f(x^*)\) al calcular \(f(x)\)
+    es aproximadamente (nuevamente serie de Taylor):
+    \begin{equation*}
+      \lvert f(x) - f(x^*) \rvert
+        \approx \lvert f'(x^*) \rvert \cdot \lvert x - x^* \rvert
+    \end{equation*}
+  }
+
+  \uncover<+->{
+    La maquinaria de asintóticas permite expresar esto más precisamente,
+    de ser necesario.
+  }
+\end{frame}
+
+\section{Punto flotante}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Punto flotante}
+
+  \uncover<+->{
+    Formato y operaciones definidas por IEEE~745,
+   también estándar internacional,
+   de forma que las operaciones cumplen una regla simple:
+   \begin{equation*}
+     \mathrm{fl}(x)
+       = x (1 + \delta)
+       \quad  \lvert \delta \rvert \le \varepsilon
+   \end{equation*}
+   Acá \(\varepsilon\) describe la precisión de los valores,
+   se le conoce como \emph{epsilon de la máquina}.
+   En el caso de C,
+   en \lstinline[language = sh]!float.h!
+   define \lstinline[language = C]!FLT_EPSILON!
+   para \lstinline[language = C]{float}
+   y \lstinline[language = C]!DBL_EPSILON!
+   para \lstinline[language = C]{double};
+   para C++ están en el encabezado \lstinline[language = sh]!limits!.
+ }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Punto flotante --- multiplicación y división}
+
+  \uncover<+->{
+    Tenemos por ejemplo:
+   \begin{align*}
+     \mathrm{fl}(\operatorname{fl}(x) \cdot \operatorname{fl}(y))
+       &= \mathrm{fl}(x (1 + \delta_x) \cdot y (1 + \delta_y)) \\
+       &= (x (1 + \delta_x) \cdot y (1 + \delta_y)) (1 + \delta_{x y}) \\
+   \end{align*}
+   El error relativo cumple:
+   \begin{align*}
+     \delta_x + \delta_y + \delta_{x y}
+        + \delta_x \delta_y
+            + \delta_x \delta_{x y}
+            + \delta_y \delta_{x y}
+        + \delta_x \delta_y \delta_{x y}
+        \le 3 \varepsilon + 3 \varepsilon^2 + \varepsilon^3
+   \end{align*}
+ }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Punto flotante --- suma y resta}
+
+  \uncover<+->{
+    El caso de sumas y restas es diferente:
+    \begin{align*}
+      \mathrm{fl}(\operatorname{fl}(x) + \operatorname{fl}(y))
+        &= \mathrm{fl}(x (1 + \delta_x) + y (1 + \delta_y)) \\
+        &= (x (1 + \delta_x) + y (1 + \delta_y)) (1 + \delta_{x + y}) \\
+        &= x + y
+             + x (\delta_x + \delta_{x + y} + \delta_x \delta_{x + y})
+             + y (\delta_y + \delta_{x + y} + \delta_y \delta_{x + y})
+    \end{align*}
+    El error absoluto cumple:
+    \begin{equation*}
+      x (\delta_x + \delta_{x + y} + \delta_x \delta_{x + y})
+        + y (\delta_y + \delta_{x + y} + \delta_y \delta_{x + y})
+        \le (\lvert x \rvert + \lvert y \rvert) (2 \varepsilon + \varepsilon^2)
+    \end{equation*}
+    Si ambos operandos son del mismo signo,
+    el error relativo es aproximadamente \(2 \varepsilon\);
+    si tienen signo opuesto puede producirse \emph{cancelación catastrófica}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{ Ejemplo}
+
+  \uncover<+->{
+    Consideremos el polinomio:
+    \begin{equation*}
+      p(x)
+        = x^4 - 4 x^3 + 6 x^2 - 4 x + 1
+    \end{equation*}
+  }
+  \uncover<+->{
+    Todos los coeficientes se representan exactamente en punto flotante.
+  }
+
+  \uncover<+->{
+    Es claro que \(p(x) = (x - 1)^4\).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ejemplo --- cálculo del polinomio}
+
+  Una manera eficiente de calcular polinomios es el método de Horner,
+  que corresponde a escribir:
+  \begin{equation*}
+    a_n x^n + a_{n - 1} x^{n - 1} + \dotsb + a_0
+      = (\dotsc (a_n x + a_{n - 1}) x + \dotsb a_1) x + a_0
+  \end{equation*}
+  \uncover<+->{
+    Esto corresponde a una multiplicación y una suma por grado,
+    bastante menos que lo que usa el método ingenuo
+    de calcular las potencias de \(x\),
+    multiplicar por los coeficientes y sumar.
+  }
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Ejemplo --- cálculo del polinomio}
+
+  Acá efectuaremos cálculos en precisión simple,
+  (6 cifras significativas,
+   aproximadamente),
+  para que quede patente el efecto de errores intermedios en el resultado.
+
+  El polinomio se describe por el arreglo de coeficientes:
+  \\[0.5ex]
+  \lstinputlisting[language = C,
+                   linerange = {5-6}]
+                  {poly.c}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Ejemplo --- cálculo del polinomio}
+
+  El cálculo del polinomio es:
+  \\[0.5ex]
+  \lstinputlisting[language = C,
+                   linerange = {8-15}]
+                  {poly.c}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ejemplo --- resultados numéricos}
+
+  \includegraphics[width = 0.85\textwidth]{plot}
+
+  \uncover<+->{
+    Si buscáramos el cero,
+    los valores numéricos apoyarían valores entre \num{0,98}
+    y \num{1,02}.
+  }
+\end{frame}
+
+\section{Estabilidad, condicionamiento}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Estabilidad}
+
+  \uncover<+->{
+    La \emph{estabilidad} es una característica del algoritmo.
+    Se refiere a que el algoritmo automáticamente corrige errores intermedios.
+  }
+
+  \uncover<+->{
+    Un algoritmo inestable amplifica errores,
+    cosa para nada deseable.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Condicionamiento}
+
+  \uncover<+->{
+    El \emph{condicionamiento} es una característica del problema.
+    Se refiere a que pequeños cambios en los datos de entrada
+    cambian fuertemente los resultados.
+  }
+
+  \uncover<+->{
+    Obtener resultados precisos para un problema mal condicionado
+    siempre será difícil.
+  }
+
+  \uncover<+->{
+    El \emph{número de condición} es el error relativo del resultado
+    dividido por el error relativo de los datos de entrada.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El polinomio pérfido}
+
+  \uncover<+->{
+    Para probar rutinas de punto flotante,
+    Wilkinson calculó los coeficientes de un polinomio y buscó sus ceros.
+    Obtuvo resultados muy raros,
+    pero no pudo hallar errores en sus programas.
+  }
+
+  \uncover<+->{
+    Investigación más detallada reveló
+    que minúsculos cambios en los coeficientes
+    (redondeo en los cálculos)
+    pueden tener efecto dramático sobre los ceros.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El polinomio pérfido}
+
+  \uncover<+->{
+    Para ilustrar el fenómeno,
+    consideremos el polinomio:
+    \begin{equation*}
+      p(x)
+        = (x - 1) (x - 2) \dotsm (x - 10)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Introduciremos una pequeña perturbación en un solo término:
+    \begin{equation*}
+      q(x)
+        = p(x) + x^5
+    \end{equation*}
+    Es \(- 902055 x^5\) en \(p\),
+    un cambio de \SI{1,1e-4}{\percent} en el coeficiente.
+  }
+  \uncover<+->{
+    Los ceros de \(q(x)\) son:
+    \begin{align*}
+      &\num{1,0000027558}, \quad \num{1,99921},
+        \quad \num{3,02591}, \quad \num{3,82275}, \\
+      &\num{5,24676 \pm 0,751485 i}, \quad
+         \num{7,57271 \pm 1,11728 i}, \quad
+         \num{9,75659 \pm 0,368389 i}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Explicación}
+
+  \uncover<+->{
+    Resulta que cerca de un cero de \(p(x)\),
+    \(q(x) \approx x^5\)\ldots
+  }
+
+  \uncover<+->{
+    Un cero \textquote{chico} de \(p\) no se ve (demasiado) afectado,
+    uno grande bastante.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Fuentes de error en resultados numéricos
+  \item
+    Errores propios del algoritmo
+    (estabilidad,
+     aproximaciones en el método de cálculo)
+   \item
+     Errores atribuibles a redondeo
+   \item
+     Condicionamiento del problema,
+     pequeños cambios en los datos dan grandes cambios en resultados
+   \end{itemize}
+
+   \uncover<+->{
+     Métodos para estimar los efectos anteriores
+     se apoyan fuertemente en análisis asintótico.
+   }
+   \uncover<+->{
+     En nuestra somera introducción al análisis numérico
+     por lo general omitiremos estos efectos.
+   }
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode presentation modelamiento fl epsilon ex

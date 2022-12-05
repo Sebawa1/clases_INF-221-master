@@ -1,0 +1,896 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[es-noquoting]{babel}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{csquotes}
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{dcolumn}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{listings}
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{Python}
+
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Dividir y conquistar}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        tabsize = 4,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Técnica general}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La técnica general}
+
+  \uncover<+->{
+    Una técnica fructífera para diseñar buenos algoritmos
+    es dividir el problema original en problemas menores del mismo tipo,
+    resolver éstos y combinar los resultados.
+  }
+
+  \uncover<+->{
+    Ejemplos de esta estrategia son ordenamiento por intercalación
+    (\emph{\foreignlanguage{english}{mergesort}}),
+    búsqueda binaria,
+    algoritmos rápidos para calcular potencias,
+    también \emph{\foreignlanguage{english}{quicksort}}.
+  }
+
+  \uncover<+->{
+    Veremos varios ejemplos adicionales,
+    y discutiremos técnicas de análisis para estos algoritmos.
+  }
+\end{frame}
+
+\section{Ejemplos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Potencias}
+
+  \uncover<+->{
+    Es obvio que:
+    \begin{align*}
+      a^0
+        &= 1 \\
+      a^1
+        &= a \\
+      a^n
+        &= \left(a^{\lfloor n / 2 \rfloor}\right)^2 \cdot a^{[2 \nmid n]}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Potencias}
+
+  Esto sugiere el algoritmo:
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Function{\(\mathrm{power}(a, n)\)}{
+      \uIf{\(n = 0\)}{
+        \Return \(1\) \;
+      }
+      \uElseIf{\(n = 1\)}{
+        \Return \(a\) \;
+      }
+      \Else{
+        \(t \gets \mathrm{power}(a, \lfloor n / 2 \rfloor)\) \;
+        \(t \gets t \cdot t\)  \;
+        \If{\(2 \nmid n\)}{
+          \(t \gets t \cdot a\) \;
+        }
+        \Return \(t\) \;
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Potencias}
+
+  \uncover<+->{
+    En términos del número de multiplicaciones al calcular \(a^n\),
+    \(P(n)\),
+    obtenemos la recurrencia:
+    \begin{equation*}
+      P(n)
+        = P(\lfloor n / 2 \rfloor) + 1 + [2 \nmid n]
+        \qquad P(0) = P(1) = 0
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{\foreignlanguage{english}{Mergesort}}}
+
+  \uncover<+->{
+    Debemos ordenar una secuencia de largo \(n\).
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si \(n \le 1\) no hay nada que hacer.
+    Si \(n > 1\),
+    la dividimos en dos subsecuencias de largo similar
+    (\(\lfloor n / 2 \rfloor\) y \(\lceil n / 2 \rceil\)),
+    ordenamos las mitades recursivamente
+    e intercalamos los resultados.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Intercalar dos secuencias ordenadas de largos \(m\) y \(n\)
+    toma \(m + n\) operaciones
+    (debemos crear la nueva secuencia)
+    y \(\min\{m, n\}\) comparaciones
+    (debemos comparar los elementos de la secuencia más corta
+     con elementos de la otra para determinar en qué orden van).
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si llamamos \(M(n)\) al número de comparaciones
+    para ordenar \(n\) elementos
+    usando \emph{\foreignlanguage{english}{mergesort}},
+    obtenemos la recurrencia:
+    \begin{equation*}
+      M(n)
+        = M(\lfloor n / 2 \rfloor) + M(\lceil n / 2 \rceil)
+            + \lfloor n / 2 \rfloor
+      \qquad
+      M(0) = M(1) = 0
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Búsqueda binaria}
+
+  \uncover<+->{
+    Debemos ubicar el elemento \(e\)
+    en un arreglo ordenado \(\mathbf{a}\) de largo \(n\),
+    o reportar que no está.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si \(n = 0\),
+    reportamos que no está.
+    Si \(n = 1\),
+    comparamos con el único elemento.
+    Si \(n > 1\),
+    comparamos con el elemento en la posición \(\lfloor n / 2 \rfloor\).
+    Si resultan iguales,
+    damos esa posición.
+    Si es menor
+    buscamos
+    (recursivamente)
+    en la primera mitad del arreglo,
+    si es mayor en la segunda.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si \(B(n)\) es el número máximo de comparaciones
+    al buscar en un arreglo de \(n\) elementos,
+    podemos aproximarlo como buscar en mitades:
+    \begin{equation*}
+      B(n)
+        = B(\lfloor n / 2 \rfloor) + 1
+      \qquad
+      B(0) = 0, B(1) = 1
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Multiplicación de Karatsuba}
+
+  \uncover<+->{
+    Nos dan a multiplicar dos números \(A\) y \(B\),
+    de \(2 n\)~dígitos cada uno.
+  }
+  \uncover<+->{
+    Una estrategia es dividir los números en mitades:
+    \begin{equation*}
+      A
+        = A_h \cdot 10^n + A_l
+      \qquad
+      B
+        = B_h \cdot 10^n + B_l
+    \end{equation*}
+  }
+  \uncover<+->{
+    Álgebra elemental da:
+    \begin{align*}
+      A \cdot B
+        &= (A_h \cdot 10^n + A_l) \cdot (B_h \cdot 10^n + B_l) \\
+        &= A_h B_h \cdot 10^{2 n}
+             + (A_h B_l + A_l B_h) \cdot 10^n
+             + A_l B_l
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Multiplicación de Karatsuba}
+
+  \uncover<+->{
+    Notando que:
+    \begin{equation*}
+      (A_h + A_l) \cdot (B_h + B_l)
+        = A_h B_h + A_h B_l + A_l B_h + A_l B_l
+    \end{equation*}
+    podemos evaluar los coeficientes mediante tres multiplicaciones
+    (no cuatro):
+    \begin{align*}
+      &A_h B_h \\
+      &A_l B_l \\
+      &A_h B_l + A_l B_h
+         = (A_h + A_l) \cdot (B_h + B_l) - A_h B_h - A_l B_l
+    \end{align*}
+  }
+  \uncover<+->{
+    Llamando \(K(n)\) al número de operaciones de un dígito:
+    \begin{equation*}
+      K(2 n)
+        = 3 K(n) + 4 n
+      \qquad
+      K(1) = 1
+    \end{equation*}
+  }
+\end{frame}
+
+\section{El teorema maestro}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Características comunes de las recurrencias}
+
+  \uncover<+->{
+    Las recurrencias discutidas son:
+  }
+  \begin{align*}
+    \uncover<+->{
+       M(n)
+         &= M(\lfloor n / 2 \rfloor) + M(\lceil n / 2 \rceil)
+             + \lfloor n / 2 \rfloor
+       &&
+       M(0) = M(1) = 0 \\
+    }
+    \uncover<+->{
+      B(n)
+        &= B(\lfloor n / 2 \rfloor) + 1
+      &&
+      B(0) = 0, B(1) = 1 \\
+    }
+    \uncover<+->{
+      K(2 n)
+        &= 3 K(n) + 4 n
+      &&
+      K(1) = 1
+    }
+  \end{align*}
+  \uncover<+->{
+    Sea \(C(n)\) el costo para tamaño \(n\).
+    Las recurrencias pueden escribirse aproximadamente como:
+    \begin{align*}
+      C(n)
+        &= a C(n / b) + f(n)
+      &&\qquad
+      C(1)
+        = 1
+    \end{align*}
+  }
+  \uncover<+->{
+    (Omitimos pisos y cielos,
+     y despreciamos términos menores
+     para obtener una recurrencia más simple.
+     El valor inicial no tiene real impacto.
+     Puede justificarse rigurosamente que aproxima la solución exacta.)
+  }
+  \\ \smallskip
+  \uncover<+->{
+    En castellano:
+    Para resolver un problema de tamaño \(n\),
+    dividimos en \(a\) problemas de tamaño \(n / b\),
+    los resolvemos recursivamente
+    y combinamos las soluciones.
+  }
+  \uncover<+->{
+    El costo de dividir en subproblemas
+    y luego combinar soluciones es \(f(n)\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Recurrencia simplificada}
+
+  \uncover<+->{
+    Podemos simplificar la recurrencia si suponemos que \(n\)
+    es una potencia de \(b\).
+    Es de interés el caso \(a \ge 1\),
+    \(b > 1\), \(f(n) > 0\).
+    Cambiemos variables:
+    \begin{equation*}
+      n
+        = b^r
+      \qquad
+      C(b^r)
+         = W(r)
+    \end{equation*}
+    para obtener:
+    \begin{equation*}
+      W(r)
+        = a W(r - 1) + f(b^r)
+      \qquad
+      W(0)
+        = 1
+    \end{equation*}
+  }
+  \uncover<+->{
+    Una recurrencia lineal de primer orden con coeficientes constantes.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Solución de la recurrencia}
+
+  \uncover<+->{
+    La solución es rutina.
+    Dividimos por \(a^r\):
+  }
+  \begin{align*}
+    \uncover<+->{
+      \frac{W(r)}{a^r} - \frac{W(r - 1)}{a^{r - 1}}
+        &= a^{-r} f(b^r) \\
+    }
+    \uncover<+->{
+      \sum_{1 \le r \le s} \left(
+                            \frac{W(r)}{a^r} - \frac{W(r - 1)}{a^{r - 1}}
+                         \right)
+        &= \sum_{1 \le r \le s} a^{-r} f(b^r)
+    }
+  \end{align*}
+  \uncover<+->{
+    Esto se simplifica a:
+    \begin{equation*}
+      W(s)
+        = W(0) a^s + a^s \sum_{1 \le r \le s} a^{-r} f(b^r)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Solución de la recurrencia}
+
+  \uncover<+->{
+    Definamos \(\alpha = \log_b a\),
+    con lo que:
+    \begin{equation*}
+      a^r
+        = \left( b^{\log_b a} \right)^r
+        = \left( b^\alpha \right)^r
+        = \left( b^r \right)^\alpha
+        = n^\alpha
+    \end{equation*}
+  }
+  \uncover<+->{
+    La solución a la recurrencia en términos de las variables originales es:
+    \begin{equation*}
+      C(n)
+        = C(0) n^\alpha
+            + n^\alpha \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de la sumatoria}
+
+  \uncover<+->{
+    Es crucial la sumatoria:
+    \begin{equation*}
+      \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Hay varias situaciones a analizar.
+    Primero,
+    si la suma infinita respectiva converge,
+    lo que ocurre si \(f(n) = O(n^c)\) con \(c < \alpha\),
+    podemos acotar la sumatoria por su límite y queda:
+    \begin{equation*}
+      C(0) n^\alpha
+        \le C(n)
+        \le C(0) n^\alpha + n^\alpha \sum_{r \ge 1} a^{-r} f(b^r)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Concluimos:
+    \begin{equation*}
+      C(n)
+        = \Theta(n^\alpha)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de la sumatoria}
+
+  \uncover<+->{
+    Otra situación se da si la suma diverge.
+    Si \(f(n) = \Omega(n^c)\) con \(c > \alpha\),
+    el último término de la suma es el mayor,
+    con lo que obtenemos la estimación \(C(n) = \Omega(f(n))\).
+  }
+  \uncover<+->{
+    Suponiendo además \(a f(n / b) \le k f(n)\)
+    para algún \(k < 1\),
+    podemos escribir:
+    \begin{align*}
+      \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+        &=   a^{- \log_b n} \sum_{0 \le r < \log_b n} a^r f(n / b^r) \\
+        &\le n^{-\alpha} \sum_{0 \le r < \log_b n} k^r f(n) / a \\
+        &<   \frac{f(n)}{a n^\alpha} \sum_{r > 0} k^r \\
+        &=   \frac{f(n)}{a n^\alpha} \cdot \frac{1}{1 - k}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de la sumatoria}
+
+  \uncover<+->{
+    Con lo anterior esto da si \(f(n) = \Omega(n^c)\) con \(c > \alpha\)
+    y \(a f(n / b) \le k f(n)\) para algún \(k < 1\):
+    \begin{equation*}
+      C(0) n^\alpha + f(n)
+        \le C(n)
+        \le C(0) n^\alpha +  \frac{f(n)}{a} \cdot \frac{1}{1 - k}
+    \end{equation*}
+  }
+  \uncover<+->{
+    Podemos absorber los términos en \(n^\alpha\)
+    ya que \(f(n) = \Omega(n^\alpha)\),
+    y tenemos:
+    \begin{equation*}
+      C(n)
+        = \Theta(f(n))
+   \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de la sumatoria}
+
+  \uncover<+->{
+    Quedan las situaciones intermedias.
+    Las más interesantes en la práctica se resumen en:
+    \begin{equation*}
+      f(n)
+        = \Theta(n^\alpha \log^\beta n)
+    \end{equation*}
+  }
+  \uncover<+->{
+    La suma de marras es:
+    \begin{align*}
+      \sum_{1 \le r \le \log_b n} a^{-r} f(b^r)
+        &= \sum_{1 \le r \le \log_b n} a^{-r} \Theta(a^r r^\beta) \\
+        &= \sum_{1 \le r \le \log_b n} \Theta(r^\beta) \\
+        &= \Theta\left(
+                   \sum_{1 \le r \le \log_b n} r^\beta
+                 \right)
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de la sumatoria}
+
+  \uncover<+->{
+    La suma es convergente si \(\beta < -1\),
+    si \(\beta = -1\) son números harmónicos
+    (sabemos \(H_n \sim \ln n\)),
+    para \(\beta > -1\) podemos acotar mediante una integral.
+  }
+  \uncover<+->{
+    En resumen,
+    si \(f(n) = \Theta(n^\alpha \log^\beta n)\):
+    \begin{equation*}
+      C(n)
+        = \begin{cases}
+            \Theta(n^\alpha)		       & \beta < -1 \\
+            \Theta(n^\alpha \log \, \log n)	& \beta = -1 \\
+            \Theta(n^\alpha \log^{\beta + 1} n)	 & \beta > -1
+          \end{cases}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El teorema maestro}
+
+  \uncover<+->{
+    La solución a la recurrencia:
+    \begin{align*}
+      C(n)
+        &= a C(n / b) + f(n)
+      &&
+         C(0) = 1
+    \end{align*}
+    donde \(\alpha = \log_b a\)
+    y \(f(n)\) es como se indica
+    cumple:
+  }
+  \begin{align*}
+    \uncover<+->{
+      C(n)
+        &= \Theta(n^\alpha)
+      && f(n) = O(n^c) \text{\ con \(c < \alpha\)} \\
+    }
+    \uncover<+->{
+      C(n)
+        &= \Theta(n^\alpha )
+      && f(n) = \Theta(n^\alpha \log^\beta n) \text{\ con \(\beta < -1\)} \\
+    }
+    \uncover<+->{
+      C(n)
+        &= \Theta(n^\alpha \log \, \log n)
+      && f(n) = \Theta(n^\alpha \log^\beta n) \text{\ con \(\beta = -1\)} \\
+    }
+    \uncover<+->{
+      C(n)
+        &= \Theta(n^\alpha \log^{\beta + 1} n)
+      && f(n) = \Theta(n^\alpha \log^\beta n) \text{\ con \(\beta > -1\)} \\
+    }
+    \uncover<+->{
+      C(n)
+        &= \Theta(f(n))
+      && f(n) = \Omega(n^c) \text{\ con \(c > \alpha\))
+                                  y \(a f(n / b) \le k f(n)\)}
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Nuestros ejemplos}
+
+  \uncover<+->{
+    \begin{align*}
+      P(n)
+        &= P(\lfloor n / 2 \rfloor) + 1 + [2 \nmid n]
+        && P(0) = P(1) = 0 \\
+      M(n)
+        &= M(\lfloor n / 2 \rfloor) + M(\lceil n / 2 \rceil)
+            + \lfloor n / 2 \rfloor
+        && M(0) = M(1) = 0 \\
+      B(n)
+        &= B(\lfloor n / 2 \rfloor) + 1
+        && B(0) = 0, B(1) = 1 \\
+      K(2 n)
+        &= 3 K(n) + 4 n
+        && K(1) = 1
+    \end{align*}
+  }
+
+  \begin{center}
+    \uncover<+->{
+      \begin{tabular}{lrr*{2}{>{\(}l<{\)}}}
+        \multicolumn{1}{c}{\textbf{Algoritmo}}
+          & \multicolumn{1}{c}{\boldmath\(a\)\unboldmath}
+          & \multicolumn{1}{c}{\boldmath\(b\)\unboldmath}
+          & \multicolumn{1}{c}{\boldmath\(f(n)\)\unboldmath}
+          & \multicolumn{1}{c}{\boldmath\(C(n)\)\unboldmath} \\
+        \hline
+    }
+      \uncover<+->{
+        Potencia	 & 1 & 2 & \Theta(1) & \Theta(\log n) \\
+      }
+      \uncover<+->{
+        Mergesort	 & 2 & 2 & \Theta(n) & \Theta(n \log n) \\
+      }
+      \uncover<+->{
+        Búsqueda binaria & 1 & 2 & \Theta(1) & \Theta(\log n) \\
+      }
+      \uncover<+->{
+        Karatsuba	 & 3 & 2 & \Theta(n) & \Theta(n^{\log_2 3})
+      }
+    \end{tabular}
+  \end{center}
+\end{frame}
+
+\section{El teorema de Akra-Bazzi}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El teorema de Akra-Bazzi}
+
+  \uncover<+->{
+    Uno de los problemas de la derivación precedente
+    es que supone divisiones iguales
+    (no en \(1 / 3\) y \(2 / 3\),
+     por ejemplo),
+    además que es preocupante el barrer bajo la alfombra pisos y techos
+    (ya indicamos que puede justificarse rigurosamente,
+     claro).
+  }
+  \uncover<+->{
+    Este tipo de recurrencias se han estudiado intensamente,
+    sus soluciones muestran comportamientos bastante extraños.
+    Pero salvo algunas situaciones simples son difíciles de tratar.
+    Afortunadamente nuestras cotas son válidas.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Un camino distinto tomaron Akra y Bazzi,
+    planteando una recurrencia sobre los reales
+    (ahí no hay problema en basarse en los casos \(17 / 3\) y \(3 / 2\)
+     anteriores).
+    Leighton corrigió,
+    completó
+    y extendió lo anterior.
+ }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El teorema de Akra-Bazzi}
+
+  \begin{theorem}
+    Sea la recurrencia para \(z \ge z_0\):
+    \begin{equation*}
+      T(z)
+        = g(z) + \sum_{1 \le k \le n} a_k T(b_k z + h_k(z))
+    \end{equation*}
+    con \(z_0, a_k, b_k\) constantes,
+    sujeta a:
+    \begin{itemize}
+    \item<1->
+      Hay suficientes casos base
+    \item<1->
+      Para todo \(k\) es \(a_k > 0\) y \(0 < b_k < 1\)
+    \item<1->
+      Hay una constante \(c\) tal que \( \lvert g'(z) \rvert = O(z^c)\)
+    \item<1->
+      Para todo \(k\) es \(h_k(z) = O(z / \log^2 z)\)
+    \end{itemize}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \frametitle{El teorema de Akra-Bazzi}
+
+  \emph{
+    Si \(p\) es la única solución real de:
+    \begin{equation*}
+      \sum_{1 \le k \le n} a_k b_k^p
+        = 1
+    \end{equation*}
+    entonces la solución cumple:
+    \begin{equation*}
+      T(z)
+        = \Theta \left(
+                   z^p \left(
+                         1 +\int_1^z \frac{g(u)}{u^{p + 1}} \, \mathrm{d} u
+                       \right)
+                 \right)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Demostración}
+
+  \uncover<+->{
+    La demostración es un festival de aplicaciones del teorema del valor medio
+    para acotar integrales
+    y otras maniobras turbias.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aplicaciones}
+
+  \uncover<+->{
+    Vimos que la recurrencia correcta para ordenamiento por intercalación
+    es:
+    \begin{equation*}
+      M(n)
+        = M(\lfloor n / 2 \rfloor) + M(\lceil n / 2 \rceil)
+            + \lfloor n / 2 \rfloor
+      \qquad
+      M(0) = M(1) = 0
+    \end{equation*}
+  }
+  \uncover<+->{
+    Es directamente aplicable el teorema de Akra-Bazzi,
+    con \(a_1 = a_2 = 1\),
+    \(b_1 = b_2 = 1 / 2\),
+    \(h_1(z) = z / 2 - \lfloor z / 2 \rfloor\),
+    \(h_2(z) = z / 2 - \lceil z / 2 \rceil\),
+    \(g(z) = z\).
+  }
+  \uncover<+->{
+    De \(2 \cdot (1/2)^p = 1\) obtenemos \(p = 1\) y:
+    \begin{equation*}
+      M(n)
+        = \Theta\left(
+                  n^1 \left(
+                        1 + \int_1^n \frac{u\, \mathrm{d} u}{u^2}
+                      \right)
+                \right)
+        = \Theta(n \log n)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aplicaciones}
+
+  \uncover<+->{
+    Al analizar árboles de búsqueda aleatorizados
+    resulta la recurrencia:
+    \begin{equation*}
+      T(n)
+        = \frac{1}{4} T(n / 4) + \frac{3}{4} T(3 n / 4) + 1
+    \end{equation*}
+  }
+  \uncover<+->{
+    Obtenemos:
+    \begin{equation*}
+      \frac{1}{4} \left( \frac{1}{4} \right)^p
+        + \frac{3}{4} \left( \frac{3}{4} \right)^p
+       = 1
+    \end{equation*}
+    que da \(p = 0\) y:
+    \begin{equation*}
+      T(n)
+        = \Theta\left(
+                  n^0 \left(
+                        1 + \int_1^n \frac{1\, \mathrm{d} u}{u}
+                      \right)
+                \right)
+        = \Theta(\log n)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aplicaciones}
+
+  \uncover<+->{
+    El problema del valor recursivo de \(n\)
+    lleva a la recurrencia para el número de llamadas \(R(n)\):
+    \begin{equation*}
+      R(n)
+        = R(n / 2) + R(n / 3) + R(n / 4) + 1
+    \end{equation*}
+  }
+  \uncover<+->{
+    Obtenemos:
+    \begin{equation*}
+      \left( \frac{1}{2} \right)^p
+        + \left( \frac{1}{3} \right)^p
+        + \left( \frac{1}{4} \right)^p
+       = 1
+    \end{equation*}
+    que da \(p = \num{1,082131}\) y:
+    \begin{equation*}
+      R(n)
+        = \Theta\left(
+                  n^p \left(
+                        1 + \int_1^n \frac{1\, \mathrm{d} u}{u^{p + 1}}
+                      \right)
+                \right)
+        = \Theta(n^p)
+    \end{equation*}
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Dividir y conquistar es una técnica fructífera de diseño de algoritmos.
+  \item
+    Su análisis exacto es altamente complejo\ldots
+  \item
+    El teorema maestro da cotas asintóticas a la solución de las recurrencias
+    en muchos casos de interés práctico.
+  \item
+    Una variante muy útil del teorema maestro es el teorema de Akra-Bazzi.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step english mergesort quicksort
+% LocalWords:  subsecuencias lrr aleatorizados sumatoria handout

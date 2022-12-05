@@ -1,0 +1,73 @@
+\documentclass[english, spanish, fleqn]{article}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{babel}
+\usepackage{listings}
+\usepackage{pgf}
+\usepackage[colorlinks, urlcolor = blue]{hyperref}
+
+\lstloadlanguages{[ANSI]C}
+
+\title{Cálculo de un polinomio cerca de un cero}
+\author{\href{mailto:vonbrand@inf.utfsm.cl}{Horst H. von Brand}}
+
+\begin{document}
+
+\lstset{language = [ANSI]C,
+        basicstyle = \sffamily, commentstyle = \slshape,
+        frame = lines, numbers = none,
+        showstringspaces = false,
+        float, floatplacement = ht, captionpos = b,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+
+\renewcommand{\lstlistingname}{Listado}
+
+\maketitle
+\thispagestyle{empty}
+
+  Consideremos el polinomio:
+  \begin{equation*}
+    p(x)
+      = x^4 - 4 x^3 + 6 x^2 - 4 x + 1
+  \end{equation*}
+  Con su ojo de buen sansano,
+  reconocen inmediatamente que \(p(x) = (x - 1)^4\),
+  con lo que el único cero es obvio.
+  Pero supongamos que no somos tan pillos,
+  y calculamos el valor de \(p(x)\) con precisión simple
+  (para que quede más claro el efecto de los errores de redondeo).
+  Los coeficientes se pueden representar exactamente en punto flotante,
+  el valor de \(p\) en los alrededores del cero
+  es casi únicamente error.
+  El programa es el del listado~\ref{lst:poly}.
+  \lstinputlisting[caption = {Cálculo del polynomio por Horner},
+                   label = lst:poly]
+                  {poly.c}
+  Usa el método de Horner para calcular el polinomio,
+  vale decir escribir:
+  \begin{equation*}
+    a_n x^n + a_{n - 1} x^{n - 1} + \dotsb + a_0
+      = (\dotsc((a_n x + a_{n - 1}) x + a_{n - 2}) x + \dotsc + a_1) x + a_0
+  \end{equation*}
+  Esto significa una multiplicación y una suma por cada grado del polinomio,
+  un gran ahorro frente al cálculo ingenuo.
+  Graficamos los resultados en la figura~\ref{fig:poly}.
+  \begin{figure}[ht]
+    \centering
+    \pgfimage{plot}
+    \caption{Valor calculado del polinomio}
+    \label{fig:poly}
+  \end{figure}
+  Vemos que en vez de la curva suave que esperamos
+  hay un comportamiento bastante caótico.
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  empty sansano Graficamos plot

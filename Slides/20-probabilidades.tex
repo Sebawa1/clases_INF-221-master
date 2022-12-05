@@ -1,0 +1,864 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+\DeclareMathOperator{\var}{var}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Un pichintún de probabilidades}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Probabilidades}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Probabilidades}
+
+  \uncover<+->{
+    Un área de desarrollo activo
+    son algoritmos que dependen de elecciones aleatorias.
+    Sorprendentemente,
+    para muchos problemas dan soluciones simples,
+    elegantes,
+    que dan muy buenos resultados en promedio.
+  }
+  \uncover<+->{
+    Resumiremos los conceptos básicos de probabilidades
+    y algunos resultados no tan conocidos
+    que son cruciales en el análisis de estos algoritmos.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Definiciones básicas}
+
+  \uncover<+->{
+    Origen es el análisis de juegos de azar,
+    de parte de ludópatas que además eran matemáticos.
+  }
+  \uncover<+->{
+    Razonaban
+    (citando el \emph{principio de razón insuficiente}
+     o \emph{mínima sorpresa})
+    por ejemplo que si se toma un mazo de cartas inglés
+    (sin comodines),
+    se baraja y se extrae una carta,
+    un cuarto de las veces la carta es trébol,
+    y una en trece es un as.
+  }
+  \uncover<+->{
+    Definieron probabilidad
+    como el número de casos favorables dividido por el número total de casos,
+    con la justificación de que eran todos igualmente probables.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Esto tiene serios problemas:
+    supone un número finito de casos,
+    y,
+    mucho peor,
+    define \textquote{probabilidad}
+    en relación a \textquote{igualmente probable}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Formalizando probabilidades}
+
+  \uncover<+->{
+    Un \emph{espacio muestral}
+    (anotado \(\Omega\))
+    es un conjunto de posibles resultados de un \emph{experimento} al azar.
+    Cada ejecución del experimento da exactamente un resultado de \(\Omega\).
+  }
+
+  \uncover<+->{
+    Un \emph{evento} es un subconjunto del espacio muestral,
+    una pregunta con respuesta \textquote{sí} o \textquote{no}
+    respecto del resultado de un experimento.
+  }
+  \uncover<+->{
+    Anotaremos eventos con letras romanas mayúsculas.
+    Resultados en que el evento \(A\) se cumple
+    se llaman \emph{favorables para \(A\)}.
+    El evento \(\Omega\) es \emph{seguro},
+    \(\varnothing\) es \emph{imposible}.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Formalizando probabilidades}
+
+  \uncover<+->{
+    Estamos en condiciones de definir probabilidades de eventos.
+    Ponemos los siguientes requisitos:
+  }
+  \begin{align*}
+    \uncover<+->{
+      &0 \le \Pr[A] \le 1  \\
+    }
+    \uncover<+->{
+      &\Pr[\Omega] = 1 \\
+    }
+    \uncover<+->{
+      &\Pr[A \cup B]
+        = \Pr[A] + \Pr[B]
+        && \text{si \(A \cap B = \varnothing\)} \\
+    }
+    \uncover<+->{
+      &\Pr\left[ \bigcup_i A_i \right]
+         = \sum_i \Pr[A_i]
+        && \text{colecciones contables de \(A_i\) disjuntos}
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Formalizando probabilidades}
+
+  \uncover<+->{
+    Consecuencias simples:
+  }
+  \begin{itemize}
+  \item
+    \(\Pr[\varnothing] = 0\)
+
+    Como \(A \cup \varnothing = A\) y \(A \cap \varnothing = \varnothing\),
+    tenemos \(\Pr[A] = \Pr[A \cup \varnothing] = \Pr[A] + \Pr[\varnothing]\),
+    y concluimos \(\Pr[\varnothing] = 0\).
+  \item
+    \(\Pr[A \cup B] = \Pr[A] + \Pr[B] - \Pr[A \cap B]\)
+
+    Un caso especial
+    del principio de inclusión y exclusión.
+    En particular,
+    como \(\Pr[A \cap B] \ge 0\),
+    tenemos la \emph{cota de unión} \(\Pr[A \cup B] \le \Pr[A] + \Pr[B]\)
+  \item
+    Si \(A \subseteq B\),
+    entonces \(\Pr[A] \le \Pr[B]\),
+    específicamente
+      \(\Pr[B \smallsetminus A] = \Pr[B] - \Pr[A]\).
+  \item
+    Para una colección numerable de eventos \(A_i\)
+    se cumple
+    \(\Pr\left[ \bigcup_i A_i \right] \le \sum_i \Pr[A_i]\)
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Probabilidades condicionales}
+
+  \uncover<+->{
+    Dados dos eventos \(A\) y \(B\)
+    con \(\Pr[B] > 0\),
+    la \emph{probabilidad condicional} de \(A\) dado \(B\) se define como:
+    \begin{equation*}
+      \Pr[A \mid B]
+        = \frac{\Pr[A \cap B]}{\Pr[B]}
+    \end{equation*}
+    Estamos limitando nuestro universo al evento \(B\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Variables aleatorias}
+
+  \uncover<+->{
+    Una \emph{variable aleatoria} es el resultado de un experimento.
+    Más que nada nos interesará el caso de variables aleatorias numéricas.
+  }
+  \uncover<+->{
+    Usaremos letras mayúsculas hacia el final del alfabeto
+    (\(X, Y, \dotsc\))
+    para representar variables,
+    y las correspondientes letras minúsculas para sus valores.
+  }
+  \uncover<+->{
+    Eventos de interés pueden describirse como \(X = a\)
+    o \(a \le X \le b\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Variables aleatorias}
+
+  \uncover<+->{
+    Definimos el \emph{valor esperado} de la variable \(X\)
+    como:
+    \begin{equation*}
+      \Exp[X]
+        = \sum_x x \Pr[X = x]
+    \end{equation*}
+    y una medida importante de la dispersión es la \emph{varianza}:
+    \begin{equation*}
+      \var[X]
+        = \Exp[(X - \Exp[X])^2]
+    \end{equation*}
+  }
+  \uncover<+->{
+    Comúnmente se usan las notaciones \(\mu = \Exp[X]\)
+    y \(\sigma^2 = \var[X]\).
+    En el caso que las variables no tomen valores discretos
+    (como acá),
+    en vez de sumas aparecen integrales.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Distribución uniforme}
+
+  \uncover<+->{
+    Si se supone que los distintos resultados son igualmente probables
+    se habla de \emph{distribución uniforme}.
+  }
+  \uncover<+->{
+    Así se habla comúnmente de \emph{elegir uniformemente al azar}
+    para indicar que hay un conjunto de posibles resultados,
+    de los que se elige uno al azar
+    siendo igualmente probable que el elemento elegido
+    sea cualquiera del conjunto.
+  }
+\end{frame}
+
+\section{Algunos resultados importantes}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Linearidad del valor esperado}
+
+  \begin{theorem}[Linearidad del valor esperado]
+    \label{theo:E-lineal}
+    Sean \(X_1\), \(X_2\) variables aleatorias,
+    \(\alpha\) y \(\beta\) constantes arbitrarias.
+    Entonces:
+    \begin{align*}
+      \Exp[\alpha X_1 + \beta X_2]
+        = \alpha \Exp[X_1] + \beta \Exp[X_2]
+    \end{align*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Linearidad del valor esperado}
+
+  \begin{proof}
+    En el caso de variables discretas tenemos:
+    \begin{align*}
+      \Exp[ \alpha X_1 + \beta X_2 ]
+        &= \sum_x
+             (\alpha x \Pr[X_1 = x] + \beta x \Pr[X_2 = x]) \\
+        &= \alpha \sum_x x \Pr[X_1 = x]
+             + \beta \sum_x x \Pr[X_2 = x] \\
+        &= \alpha \Exp[X_1] + \beta \Exp[X_2]
+    \end{align*}
+    Las sumas se extienden sobre posibles valores de \(X_1\) y \(X_2\).
+  \end{proof}
+  \uncover<+->{
+    Esencialmente la misma demostración vale para variables continuas,
+    con integrales en vez de sumas.
+  }
+  \uncover<+->{
+    Nada suponemos sobre las variables.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Independencia}
+
+  \uncover<+->{
+    Decimos que dos variables \(X\) e \(Y\) son \emph{independientes}
+    si para todo par de valores \(x\) e \(y\):
+    \begin{equation*}
+         \Pr[(X = x) \wedge (Y = y)]
+        = \Pr[X = x] \cdot \Pr[Y = y]
+    \end{equation*}
+  }
+  \uncover<+->{
+    Una colección de variables es \emph{independiente a pares}
+    si para todo \(i \ne j\) y todo par de valores \(x_i, x_j\):
+    \begin{equation*}
+      \Pr[(X_i = x_i)
+            \wedge (X_j = x_j)
+        = \Pr[X_i = x_i]
+            \cdot \Pr[X_j = x_j]
+    \end{equation*}
+  }
+  \uncover<+->{
+    Una colección de variables es \emph{mutuamente independiente}
+    si para todo \(S \subseteq N\)
+    y toda colección de valores \(x_i\):
+    \begin{equation*}
+      \begin{split}
+        \Pr[(X_{i_1} = x_{i_1}) &
+              \wedge (X_{i_2} = x_{i_2})
+              \wedge \dotsb
+              \wedge (X_{i_s} = x_{i_s})] \\
+          &= \Pr[X_{i_1} = x_{i_1}]
+               \cdot \Pr[X_{i_2} = x_{i_2}]
+               \dotsm
+               \Pr[X_{i_s} = x_{i_s}]
+      \end{split}
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Independencia}
+
+  \begin{theorem}<+->
+    Si \(X_1, X_2\) son independientes:
+    \begin{align*}
+      \Exp[X_1 X_2]
+        &= \Exp[X_1] \cdot \Exp[X_2] \\
+      \Exp[f(X_1) f(X_2)]
+        &= \Exp[f(X_1)] \cdot \Exp[f(X_2)]
+    \end{align*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Independencia}
+
+  \begin{proof}<+->
+    Si las variables \(X_1\) y \(X_2\) son independientes,
+    entonces:
+    \begin{align*}
+      \Exp[ X_1 X_2 ]
+        &= \sum_{x_1, x_2} x_1 x_2 \Pr[ X_1 = x_1 \wedge X_2 = x_2 ] \\
+        &= \sum_{x_1, x_2} x_1 x_2 \Pr[ X_1 = x_1 ] \Pr[X_2 = x_2 ] \\
+        &= \sum_{x_1} x_1 \Pr[ X_1 = x_1 ]
+             \cdot \sum_{x_2} x_2 \Pr[X_2 = x_2 ]
+    \end{align*}
+    La misma demostración,
+    con integrales en vez de sumas,
+    vale para variables continuas.
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Independencia}
+
+  \begin{theorem}<+->
+    Si \(X_1\) y \(X_2\) son variables aleatorias independientes,
+    entonces:
+    \begin{equation*}
+      \var[X_1 + X_2]
+        = \var[X_1] + \var[X_2].
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Independencia}
+
+  \begin{proof}<+->
+    Abreviamos \(\mu_1 = \Exp[X_1]\) y \(\mu_2 = \Exp[X_2]\),
+    y sabemos \(\Exp[X_1 + X_2] = \mu_1 + \mu_2\):
+    \begin{align*}
+      \var[X_1 + X_2]
+        &= \Exp[(X_1 + X_2 - (\mu_1 + \mu_2))^2] \\
+        &= \Exp[(X_1 - \mu_1)^2
+                   + 2 (X_1 - \mu_1) (X_2 - \mu_2)
+                   + (X_2 - \mu_2)^2] \\
+       &= \Exp[(X_1 - \mu_1)^2]
+            + 2 \Exp[(X_1 - \mu_1)(X_2 - \mu_2)]
+            + \Exp[(X_2 - \mu_2)^2] \\
+       &= \Exp[(X_1 - \mu_1)^2]
+            + 2 \Exp[X_1 - \mu_1] \Exp[X_2 - \mu_2]
+            + \Exp[(X_2 - \mu_2)^2] \\
+       &= \var[X_1] + \var[X_2]
+    \end{align*}
+    El término mixto se anula ya que \(X_1\) y \(X_2\) son independientes.
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Repeticiones independientes}
+
+  \uncover<+->{
+    Es común considerar repetir un experimento en forma independiente:
+  }
+  \begin{theorem}<+->
+     \label{theo:repeat}
+     Sea un experimento con probabilidad de éxito \(p\).
+     El número de repeticiones independientes \(X\) hasta tener éxito
+     tiene valor esperado y varianza:
+     \begin{align*}
+       \Exp[X]
+         &= \frac{1}{p} \\
+       \var[X]
+         &= \frac{1 - p}{p^2}
+     \end{align*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Repeticiones independientes}
+
+  \uncover<+->{
+    \textcolor{blue}{Demostración.} \\
+    La variable \(X\) toma valores naturales.
+    Si tiene éxito en la \(x\)\nobreakdash-ésima repetición
+    quiere decir que falló \(x - 1\) veces y tuvo éxito una vez.
+    La probabilidad de este evento es:
+    \begin{equation*}
+      (1 - p)^{x - 1} p
+    \end{equation*}
+  }
+  \uncover<+->{
+    La \emph{función generatriz de probabilidad} relevante es:
+    \begin{align*}
+      G(z)
+        &= \sum_{x \ge 1} \Pr[X = x] z^x \\
+        &= \sum_{x \ge 1} (1 - p)^{x - 1} p z^x \\
+        &= p z \sum_{x \ge 0} ((1 - p) z)^x \\
+        &= \frac{p z}{1 - (1 - p) z}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Repeticiones independientes}
+
+  \uncover<+->{
+    Podemos calcular las estadísticas del caso:
+  }
+  \begin{align*}
+    \uncover<+->{
+      \Exp[X]
+        &= G'(1) \\
+        &= \frac{1}{p} \\
+    }
+    \uncover<+->{
+      \var[X]
+        &= G''(1) + G'(1) - \left( G'(1) \right)^2 \\
+        &= \frac{1 - p}{p^2}
+   }
+  \end{align*}
+  \uncover<.->{
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Convexitud}
+
+  \uncover<+->{
+    Suele ser útil considerar si las funciones entre manos
+    son \emph{convexas}
+    (o \emph{cóncavas}).
+  }
+  \begin{definition}<+->
+    La función \(f\) se dice \emph{convexa}
+    si para \(0 \le \alpha \le 1\):
+    \begin{equation*}
+      \alpha f(x) + (1 - \alpha) f(y)
+        \ge f(\alpha x + (1 - \alpha) y)
+    \end{equation*}
+
+    La función \(f\) se dice \emph{cóncava}
+    si para \(0 \le \alpha \le 1\):
+    \begin{equation*}
+      \alpha f(x) + (1 - \alpha) f(y)
+        \le f(\alpha x + (1 - \alpha) y)
+    \end{equation*}
+  \end{definition}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desigualdad de Jensen}
+
+  \uncover<+->{
+    Por inducción,
+    si \(\alpha_i \ge 0\) con \(\sum_i \alpha_i = 1\),
+    para una función convexa \(f\) es:
+    \begin{equation*}
+      \sum_i \alpha_i f(x_i)
+        \ge f\left( \sum_i \alpha_i x_i \right)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Aplicando esto a una variable aleatoria finita,
+    con los \(\alpha_i\) las probabilidades de los valores de \(X\),
+    obtenemos:
+  }
+  \begin{theorem}<+->[Desigualdad de Jensen]
+    Si la función \(f\) es convexa:
+    \begin{equation*}
+      f\left( \Exp[X] \right)
+        \le \Exp[f(X)]
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desigualdad de Markov}
+
+  \uncover<+->{
+    Sea \(X\) una variable aleatoria discreta,
+    no negativa,
+    y sea \(c > 0\) una constante.
+    Interesa derivar \(\Pr[ X \ge c ]\).
+  }
+  \uncover<+->{
+    Podemos escribir:
+    \begin{align*}
+      \mu
+        &=   \Exp[X] \\
+        &=   \sum_{x} x \Pr[X = x] \\
+        &=   \sum_{0 < x < c} x \Pr[X = x] + \sum_{x \ge c} x \Pr[X = x] \\
+        &\ge \sum_{x \ge c} x \Pr[X = x] \\
+        &\ge \sum_{x \ge c} c \Pr[X = x] \\
+        &=   c \sum_{x \ge c} \Pr[X = x] \\
+        &=   c \Pr[X \ge c]
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desigualdad de Markov}
+
+  \uncover<+->{
+    Resulta:
+  }
+  \begin{theorem}<+->[Desigualdad de Markov]
+    \label{theo:Markov-inequality}
+    Si \(X\) es una variable aleatoria no\nobreakdash-negativa
+    con valor esperado \(\mu\),
+    para \(c > 0\) es:
+    \begin{equation*}
+      \Pr[X \ge c]
+        \le \frac{\mu}{c}
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desigualdad de Chebyshev}
+
+  \uncover<+->{
+    Interesa acotar \(\Pr[ \lvert X - \mu \rvert > a ]\),
+    donde \(\mu = \Exp[X]\).
+  }
+  \uncover<+->{
+    Notamos que este es el mismo evento
+    \((X - \mu)^2 > a^2\);
+    como \((X - \mu)^2\) es una variable no negativa,
+    podemos aplicarle la desigualdad de Markov.
+  }
+  \uncover<+->{
+    Recordando que \(\Exp[ (X - \mu)^2 ] = \var[X] = \sigma^2\):
+    \begin{align*}
+      \Pr[ \lvert X - \mu \rvert > a ]
+        &=   \Pr[ (X - \mu)^2 > a^2 ] \\
+        &\le \frac{\Exp[ (X - \mu)^2 ]}{a^2} \\
+        &=   \frac{\sigma^2}{a^2}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Desigualdad de Chebyshev}
+
+  \uncover<+->{
+    En particular,
+    substituyendo \(a = c \sigma\):
+  }
+  \begin{theorem}<+->[Desigualdad de Chebyshev]
+    Si \(X\) es una variable aleatoria
+    con valor esperado \(\mu\) y varianza \(\sigma^2\):
+    \begin{equation*}
+      \Pr[ \lvert X - \mu \rvert \ge c \sigma ]
+        \le \frac{1}{c^2}
+    \end{equation*}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \begin{theorem}<+->[Cota superior de Chernoff]
+    Sean \(X_1, \dotsc, X_n\) variables aleatorias discretas
+    mutuamente independientes
+    con \(0 \le X_i \le 1\) para todo \(i\).
+    Sea \(X = X_1 + \dotsb + X_n\)
+    y sea \(\mu = \Exp[X]\).
+    Entonces para todo \(c \ge 1\):
+    \begin{equation*}
+      \Pr[X \ge c \mu]
+        \le \mathrm{e}^{- \beta(c) \mu}
+    \end{equation*}
+    donde \(\beta(c) = c \ln c - c + 1\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \uncover<+->{
+    En aras de la claridad,
+    partiremos con la demostración central,
+    lo que mostrará la necesidad
+    de acotar feos productos,
+    cotas que demostraremos inmediatamente a continuación como lemas.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Dejamos anotado para uso futuro
+    que la función \(\beta(c)\) es convexa para \(c > 0\),
+    con un mínimo en \(c = 1\) donde \(\beta(1) = 0\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \begin{proof}<+->
+    El punto clave es exponenciar ambos lados de la desigualdad
+    \(X \ge c \mu\) y aplicar la desigualdad de Markov:
+    \begin{align*}
+      \Pr[X \ge c \mu]
+        &=   \Pr[c^X \ge c^{c \mu}] \\
+        &\le \frac{\Exp[c^X]}{c^{c \mu}}
+                && \text{(cota de Markov)} \\
+        &\le \frac{\mathrm{e^{(c - 1) \mu}}}{\mathrm{e}^{\mu c \ln c}}
+               && \text{(ver lema siguiente)} \\
+        &=   \mathrm{e}^{- \beta(c) \mu}
+    \end{align*}
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \uncover<+->{
+    Hemos usado el siguiente resultado,
+    expresado con las mismas variables anteriores:
+  }
+  \begin{lemma}<+->
+    \begin{equation*}
+      \Exp[c^X]
+        \le \mathrm{e}^{(c - 1) \mu}
+    \end{equation*}
+  \end{lemma}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \begin{proof}
+    \begin{align*}
+      \Exp\left[ c^X \right]
+        &= \Exp\left[ c^{X_1 + \dotsb + X_n} \right]
+               && \text{(definición de \(X\))} \\
+        &=   \Exp\left[ c^{X_1} \dotsm c^{X_n} \right] \\
+        &=   \Exp\left[ c^{X_1} \right] \dotsm \Exp\left[ c^{X_n} \right]
+               && \text{(valores independientes)} \\
+        &\le \mathrm{e}^{(c - 1) \Exp[X_1]}
+                \dotsm \mathrm{e}^{(c - 1) \Exp[X_n]}
+               && \text{(ver lema más adelante)} \\
+        &= \mathrm{e}^{(c - 1) (\Exp[X_1] + \dotsb + \Exp[X_n])} \\
+        &= \mathrm{e}^{(c - 1) (\Exp[X_1 + \dotsb + X_n])}
+               && \text{(linearidad del valor esperado)} \\
+        &= \mathrm{e}^{(c - 1) \Exp[X]}
+    \end{align*}
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \uncover<+->{
+    Finalmente:
+  }
+  \begin{lemma}
+    \begin{equation*}
+      \Exp\left[ c^{X_i} \right]
+        \le \mathrm{e}^{(c - 1) \Exp[X_i]}
+    \end{equation*}
+  \end{lemma}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \uncover<+->{
+    \textcolor{blue}{Demostración.} \\
+    En lo que sigue,
+    las sumas son sobre valores \(x\) tomados por la variable \(X_i\).
+  }
+  \uncover<+->{
+    Por la definición de \(X_i\),
+    \(x \in [0, 1]\).
+    \begin{align*}
+      \Exp\left[ c^{X_i} \right]
+        &=   \sum_x c^x \Pr[X_i = x]
+                && \text{(valor esperado)} \\
+        &\le \sum_x (1 + (c - 1) x) \Pr[X_i = x]
+                && \text{(convexidad)} \\
+        &=   \sum_x ( \Pr[X_i = x] + (c - 1) x \Pr[X_i = x] ) \\
+        &=   1 + (c - 1) \Exp[X_i] \\
+        &\le \mathrm{e}^{(c - 1) \Exp[X_i]}
+                && \text{(porque \(1 + z \le \mathrm{e}^z\))}
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \uncover<+->{
+    El segundo paso usa la desigualdad:
+    \begin{equation*}
+      c^x
+        \le 1 + (c - 1) x
+    \end{equation*}
+    que vale para \(c \ge 1\) y \(0 \le x \le 1\)
+    ya que la función convexa \(c^x\)
+    está por debajo de la cuerda entre los puntos \(x = 0\) y \(x = 1\).
+    Esta es la razón de restringir las variables \(X_i\) a \([0, 1]\),
+    y el descomponer
+    la demostración del lema.
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \uncover<+->{
+    Ocasionalmente interesa una cota superior,
+    provista por el siguiente teorema.
+  }
+  \begin{theorem}<+->
+    Con las mismas suposiciones del teorema de Chernoff:
+    \begin{equation}
+      \label{eq:Chernoff-lower-tail}
+      \Pr[X < \mu / c]
+        \le \mathrm{e}^{- \beta(1 / c) \mu}
+    \end{equation}
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cotas de Chernoff}
+
+  \begin{proof}<+->
+    La demostración es esencialmente igual
+    a la del teorema de Chernoff.
+    \begin{align*}
+      \Pr[X < \mu / c]
+        &=   \Pr\left[ c^{-X} > c^{- \mu / c} \right] \\
+        &\le \frac{\Exp[c^{- X}]}{c^{- \mu / c}}
+                && \text{(cota de Markov)} \\
+        &\le \frac{\mathrm{e}^{-(1 - 1/c) \mu}}{\mathrm{e}^{- \mu \ln c / c}}
+                && \text{(ver lema)}
+    \end{align*}
+    Reorganizando esto obtenemos lo aseverado.
+  \end{proof}
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Definimos experimentos,
+    eventos,
+    probabilidades,
+    variables aleatorias.
+  \item
+    Definimos independencia entre variables aleatorias
+  \item
+    Definimos valor esperado y varianza de variables aleatorias.
+  \item
+    Dedujimos algunas relaciones y cotas importantes:
+    linearidad del valor esperado,
+    cotas de Markov,
+    Chebyshev y Chernoff.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode muestral Linearidad blue ésima Jensen
+% LocalWords:  Convexitud exponenciar linearidad

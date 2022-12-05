@@ -1,0 +1,1043 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Programación lineal}
+\label{cha:programacion-lineal}
+
+  Muchos de los problemas que queremos resolver
+  son problemas de \emph{optimización}:
+  hallar el camino \emph{más corto},
+  un árbol recubridor de \emph{costo mínimo},
+  la subsecuencia común \emph{más larga}.
+  Tenemos ciertas reglas:
+  hay que cumplir \emph{restricciones}
+  (solo usar arcos del grafo,
+   los objetos deben ir en el orden de las secuencias)
+  y debe ser \emph{mejor posible} según un criterio bien definido.
+
+  Un conjunto amplio de problemas de optimización
+  es la \emph{programación lineal}.
+  Como nota al margen,
+  en esto \textquote{programación}
+  se usa en el sentido de \textquote{planificación} o \textquote{asignar recursos},
+  no \textquote{elaborar programas para computadora}.
+  Tenemos una colección de restricciones lineales a cumplir,
+  para ellas nos interesa obtener el óptimo de una función objetivo
+  también lineal.
+  Muchísimos problemas pueden plantearse en esta forma,
+  su solución es un problema muy importante
+  que ha dado lugar a extensas investigaciones y extensiones.
+  Mucho más detalle del que podremos dar en este limitado espacio
+  dan Ferguson~%
+    \cite{ferguson15:_linear_programming},
+  Dasgupta, Papadimitriou y Vazirani~%
+    \cite[capítulo~7]{dasgupta06:_algorithms}
+  y también Erickson~%
+    \cite{erickson19:_algorithms},
+  quien reseña un poco de la historia del problema.
+  Sabemos que la variante del problema con variables
+  enteras es \NP\nobreakdash-completo,
+  nos interesa el caso de variables reales.
+
+\section{Solución gráfica}
+\label{sec:solucion-grafica}
+
+  Como un primer ejemplo,
+  consideremos el problema de hallar \(x_1\) y \(x_2\)
+  tales que \(x_1 \ge 0\), \(x_2 \ge 0\) y:
+  \begin{equation}
+    \label{eq:lp-restricciones}
+    \sysdelim..
+    \systeme{
+         x_1 +	 x_2 \leq \phantom{0}9,
+         x_1 + 3 x_2 \leq 12,
+      \- x_1 + 2 x_2 \leq \phantom{0}2
+    }
+  \end{equation}
+  tal que sea máximo \(x_1 + 2 x_2\).
+  Lo relevante en este ejemplo es que las restricciones
+  y la función objetivo son todas lineales.
+  Gráficamente podemos visualizar este problema
+  como en la figura~\ref{fig:lp-example}.
+  \begin{figure}[ht]
+    \centering
+      \begin{tikzpicture}
+        \coordinate (p0) at (0, 0);
+        \coordinate (p1)
+          at (intersection of {0, 0 -- 0, 11} and {0, 1 -- 10, 6});
+        \coordinate (p2)
+          at (intersection of {0, 4 -- 10, 1} and {0, 1 -- 10, 6});
+        \coordinate (p3)
+          at (intersection of {0, 9 -- 9, 0} and {0, 4 -- 10, 1});
+        \coordinate (p4)
+          at (intersection of {0, 9 -- 9, 0} and {0, 0 -- 11, 0});
+
+        \fill[yellow] (p0) -- (p1) -- (p2) -- (p3) -- (p4) -- (p0);
+
+        \draw[latex'-latex'] (0, 11) node [below left] {\(x_2\)}
+                                -- (0, 0)
+                                -- (11,	 0) node [below left] {\(x_1\)};
+
+        \draw (0,  9) -- ( 9, 0)
+                node [above, pos = 0.2, sloped] {\(x_1 + x_2 = 9\)};
+        \draw (0,  4) -- (10, 1)
+                node [above, pos = 0.2, sloped] {\(x_1 + 3 x_2 = 12\)};
+        \draw (0,  1) -- (10, 6)
+                node [above, pos = 0.8, sloped] {\(-x_1 + 2 x_2 = 2\)};
+
+        \draw[gray, dashed]  (0,  2) -- ( 4, 0)
+                node [black, above, pos = 0.8, sloped] {\(x_1 + 2 x_2 = 2\)};
+        \draw[gray, dashed]  (0,  4) -- ( 8, 0)
+                node [black, above, pos = 0.8, sloped] {\(x_1 + 2 x_2 = 4\)};
+        \draw[gray, dashed]  (0,  6) -- (10, 1)
+                node [black, above, pos = 0.8, sloped] {\(x_1 + 2 x_2 = 6\)};
+
+      \end{tikzpicture}
+    \caption{Un problema de programación lineal}
+    \label{fig:lp-example}
+  \end{figure}
+  El área en amarillo es el área factible,
+  donde se cumplen las restricciones.
+  La geometría de la situación nos indica que el máximo
+  de la función objetivo se encuentra en uno de los vértices del área factible,
+  en este caso en la intersección
+  entre \(x_1 + 3 x_2 = 12\)
+  y \(x_1 + x_2 = 9\),
+  que es \(x_1 = 15/2\) y \(x_2 = 3/2\),
+  donde vale \(21/2\).
+
+  El área factible está limitada por las restricciones
+  (cada restricción define un semiplano,
+   el área factible es la intersección entre ellos),
+  puede ser un polígono convexo
+  (y hay soluciones factibles),
+  puede no haber soluciones factibles
+  (la intersección entre los semiplanos es vacía),
+  o el área puede ser ilimitada,
+  en cuyo caso puede o no haber óptimo.
+
+\section{Problemas estándar}
+\label{sec:problemas-estandar}
+
+  En nuestro ejemplo,
+  tenemos restricciones de que las variables son no negativas,
+  que ciertas expresiones lineales en las variables
+  son menores o iguales que una constante,
+  y buscamos el máximo de una expresión lineal.
+  Nuestro ejemplo es un \emph{problema estándar de máximo},
+  si son solo restricciones de mayores o iguales
+  y minimizamos la función objetivo
+  se le llama \emph{problema estándar de mínimo}.
+  Todo problema de programación lineal puede llevarse a una de estas formas
+  usando las siguientes:
+  Si la variable \(x\) no tiene restricciones,
+  podemos reemplazarla por \(x^+\) y \(x^-\),
+  ambas no negativas,
+  y la reemplazamos por \(x^+ - x^-\).
+  Si tenemos restricciones lineales de mayor o igual,
+  basta multiplicarlas por \(-1\).
+  Si hay igualdades,
+  podemos despejar alguna de las variables de ellas
+  y reemplazar en las demás restricciones para eliminarlas.
+  Si buscamos un mínimo,
+  nuevamente basta multiplicar por \(-1\) la función objetivo.
+
+  Para simplificar notación,
+  para vectores \(\mathbf{x}\) e \(\mathbf{y}\)
+  escribiremos por ejemplo \(\mathbf{x} \ge \mathbf{y}\)
+  si cada componente de \(\mathbf{x}\)
+  es mayor o igual al elemento correspondiente de \(\mathbf{y}\).
+  Así el problema máximo estándar puede expresarse como:
+  \begin{equation}
+    \label{eq:std-max-problem}
+    \begin{aligned}
+      &\text{maximizar \(\mathbf{c}^T \mathbf{x}\)} \\
+      &\text{sujeto a las restricciones
+               \(\mathbf{A} \mathbf{x} \le \mathbf{b}\)
+               y \(\mathbf{x} \ge \mathbf{0}\)}
+    \end{aligned}
+  \end{equation}
+  Una manera alternativa de ver el problema~\ref{eq:std-max-problem}
+  es buscar una cota superior al valor buscado.
+  Esto lleva a considerar combinaciones lineales de las restricciones,
+  sujetas a la condición
+  que los coeficientes de las variables
+  no pueden sobrepasar los coeficientes respectivos en la función objetivo,
+  y buscamos la combinación que nos da el mínimo valor posible.
+  O sea,
+  tenemos un sistema para el vector \(\mathbf{y}\):
+  \begin{equation*}
+    (\text{restricción 1}) y_1 + (\text{restricción 2}) y_2
+      + \dotsb + (\text{restricción m}) y_m
+  \end{equation*}
+  Decir que este valor es mínimo dados los lados derechos de las restricciones
+  se traduce en:
+  \begin{equation*}
+    \mathbf{y}^T \mathbf{c} \text{\ mínimo}
+  \end{equation*}
+  Las restricciones de no sobrepasar los coeficientes en la función objetivo
+  se traducen en:
+  \begin{equation*}
+    \mathbf{A}^T \mathbf{y} \le \mathbf{b}
+  \end{equation*}
+  Obtuvimos un problema estándar de mínimo,
+  el \emph{dual} del problema~\eqref{eq:std-max-problem}:
+  \begin{equation}
+    \label{eq:std-max-problem-dual}
+    \begin{aligned}
+      &\text{minimizar \(\mathbf{y}^T \mathbf{b}\)} \\
+      &\text{sujeto a las restricciones
+               \(\mathbf{y}^T \mathbf{A} \ge \mathbf{c}^T\)
+               e \(\mathbf{y} \ge \mathbf{0}\)}
+    \end{aligned}
+  \end{equation}
+  Los vectores \(b\) y \(c\) cambiaron de posición,
+  y la matriz se traspone.
+  Repetir el ejercicio para el sistema resultante
+  nos lleva de vuelta al problema original.
+  El punto interesante es que los valores óptimos de ambos problemas
+  están relacionados.
+  Se dice que~\eqref{eq:std-max-problem} y~\eqref{eq:std-max-problem-dual}
+  son \emph{duales}.
+  El problema original suele llamarse \emph{primal}
+  para distinguirlo del \emph{dual}.
+
+  La relación entre problemas duales está dada por los siguientes resultados.
+  \begin{theorem}
+    \label{theo:lp-feasible-dual}
+    Si \(\mathbf{x}\) es factible
+    para el problema estándar de maximización~\eqref{eq:std-max-problem}
+    y es factible \(\mathbf{y}\) para su dual~\eqref{eq:std-max-problem-dual},
+    entonces:
+    \begin{equation}
+      \label{eq:lp-feasible-dual}
+      \mathbf{c}^T \mathbf{x}
+        \le \mathbf{y}^T \mathbf{b}
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    \begin{equation*}
+      \mathbf{c}^T \mathbf{x}
+        \le \mathbf{y}^T \mathbf{A} \mathbf{x}
+        \le \mathbf{y}^T \mathbf{b}
+    \end{equation*}
+    La primera desigualdad
+    es por \(\mathbf{c}^T \le \mathbf{y}^T \mathbf{A}\)
+    con \(\mathbf{x} \ge \mathbf{0}\),
+    la segunda de \(\mathbf{A} \mathbf{x} \le \mathbf{b}\)
+    con \(\mathbf{y} \ge \mathbf{0}\).
+  \end{proof}
+  \begin{corollary}
+    \label{cor:lp-feasible-dual-1}
+    Si un problema estándar y su dual son ambos factibles,
+    ambos son factibles acotados.
+  \end{corollary}
+  \begin{proof}
+    Si \(\mathbf{y}\) es factible para el problema mínimo,
+    por~\eqref{eq:lp-feasible-dual}
+    sabemos que \(\mathbf{y}^T \mathbf{b}\) es una cota superior
+    para los valores de \(\mathbf{c}^T \mathbf{x}\) de un \(\mathbf{x}\)
+    factible del problema máximo.
+    El converso es similar.
+  \end{proof}
+  \begin{corollary}
+    \label{cor:lp-feasible-dual-2}
+    Si hay vectores factibles \(\mathbf{x^*}\)
+    para el problema estándar máximo~\eqref{eq:std-max-problem}
+    e \(\mathbf{y^*}\)
+    para el problema dual~\eqref{eq:std-max-problem-dual}
+    tales que \(\mathbf{c}^T \mathbf{x^*} = \mathbf{y^*}^T \mathbf{b}\),
+    ambos son óptimos.
+  \end{corollary}
+  \begin{proof}
+    Si \(\mathbf{x}\) es una solución factible de~\eqref{eq:std-max-problem},
+    entonces
+    \(\mathbf{c}^T \mathbf{x}
+        \le \mathbf{y^*}^T \mathbf{b}
+        = \mathbf{c}^T \mathbf{x^*}\),
+    por lo que \(\mathbf{x^*}\) es óptimo.
+    Un argumento simétrico se aplica a \(\mathbf{y^*}\).
+  \end{proof}
+  Demostraremos el resultado fundamental siguiente usando el método Simplex
+  para resolver problemas de programación lineal más adelante.
+  En resumen,
+  si el problema o su dual es factible acotado,
+  se cumplen las condiciones del corolario~\ref{cor:lp-feasible-dual-2}.
+  \begin{theorem}[Dualidad]
+    \label{theo:lp-duality}
+    Si un problema estándar es factible acotado,
+    también lo es su dual,
+    sus óptimos son iguales
+    y hay vectores óptimos para ambos.
+  \end{theorem}
+  Básicamente,
+  de las nueve combinaciones posibles de factible acotado,
+  factible sin cota
+  y no factible para el problema y su dual
+  por el corolario~\ref{cor:lp-feasible-dual-1} tres no son posibles
+  (si el problema y su dual son factibles,
+   ambos son factibles acotados),
+  mientras el teorema~\ref{theo:lp-duality} elimina dos más.
+  Las combinaciones restantes
+  (ambos factibles no acotados,
+   uno factible no acotado y el otro no factible
+   y ambos no factibles)
+  son posibles.
+
+  Como corolario del teorema de dualidad,
+  tenemos:
+  \begin{theorem}[Equilibrio]
+    Sean \(\mathbf{x^*}\) e \(\mathbf{y^*}\) factibles
+    para el problema~\eqref{eq:std-max-problem}
+    y su dual~\eqref{eq:std-max-problem-dual},
+    respectivamente.
+    Entonces \(\mathbf{x^*}\) e \(\mathbf{y^*}\) son óptimos si y solo si:
+    \begin{alignat}{4}
+      y_i^* &= 0
+         &\quad& \text{para todo \(i\) para los cuales
+                 \(\sum_{j} a_{i j} x_j^* < b_i\)}
+         \label{eq:lp-equilibrium-y} \\
+      x_j^* &= 0
+         && \text{para todo \(j\) para los cuales
+                 \(\sum_{i}  y_i^* a_{i j} > c_j\)}
+         \label{eq:lp-equilibrium-x}
+    \end{alignat}
+  \end{theorem}
+  \begin{proof}
+    Demostramos implicancia en ambas direcciones.
+    Primero,
+    solo si para el índice \(i\) es \(\sum_{j} a_{i j} x_j^* = b_i\)
+    puede ser \(y_i^* \ne 0\),
+    y simétricamente
+    solo si para \(j\) es \(\sum_{i} y_i^* a_{i j} = c_j\)
+    es posible \(x_j^* \ne 0\),
+    con lo que:
+    \begin{equation*}
+      \sum_i y_i^* b_i
+        = \sum_{i, j} y_i^* a_{i j} x_j^*
+        = \sum_j c_j x_j^*
+    \end{equation*}
+    Pero eso es \(\mathbf{y^*}^T \mathbf{b} = \mathbf{c}^T \mathbf{x^*}\),
+    por el corolario~\ref{cor:lp-feasible-dual-2} ambos son óptimos.
+
+    En la dirección contraria,
+    por el corolario~\ref{cor:lp-feasible-dual-2}
+    si \(\mathbf{x^*}\) e \(\mathbf{y^*}\) son óptimos,
+    es \(\mathbf{y^*}^T \mathbf{b} = \mathbf{c}^T \mathbf{x^*}\).
+    Como \(\mathbf{x^*} \ge \mathbf{0}\)
+    e \(\mathbf{y^*} \ge \mathbf{0}\),
+    esta igualdad es imposible
+    a menos que se cumplan~\eqref{eq:lp-equilibrium-y}
+    y~\eqref{eq:lp-equilibrium-x}.
+  \end{proof}
+
+  Esto hace preguntarse el significado del vector \(\mathbf{y^*}\)
+  óptimo del problema dual.
+  Consideremos para ello el tipo de problema de programación lineal
+  conocido como \emph{problema de dieta}:
+  tenemos ciertas necesidades diarias de componentes de dieta
+  (carbohidratos,
+   proteínas,
+   diversas vitaminas,
+   minerales,
+   ácidos grasos y aminoácidos esenciales).
+  Sea~\(b_j\) la cantidad mínima diaria
+  que debemos ingerir del componente~\(j\).
+  Cada alimento provee ciertas cantidades de cada componente,
+  el alimento~\(i\) provee \(a_{i j}\) del nutriente \(j\) por gramo,
+  su costo es \(c_i\) por gramo.
+  Si nos interesa la dieta de mínimo costo
+  que cubre nuestras necesidades alimenticias,
+  este es un problema de mínimo estándar,
+  definido por la matriz \(\mathbf{A}\),
+  el vector de restricciones \(\mathbf{b}\)
+  y el vector de costos \(\mathbf{c}\).
+  El vector óptimo \(\mathbf{x^*}\)
+  expresa la cantidad de cada alimento a ingerir diariamente
+  para cubrir las necesidades alimenticias a mínimo costo,
+  el valor correspondiente de la función objetivo \(\mathbf{c}^T \mathbf{x^*}\)
+  es el costo diario de la dieta más barata.
+  La función objetivo del problema dual en su óptimo,
+  \(\mathbf{y^*}^T \mathbf{b}\) tiene el mismo valor
+  (por el corolario~\ref{cor:lp-feasible-dual-2}),
+  los \(y_j^*\) representan
+  lo que estamos pagando por unidad del componente~\(j\)
+  en la dieta óptima.
+  El hecho que los \(y_j^*\) se anulan cuando hay holgura en una restricción
+  significa que adquirir una unidad adicional de \(j\) sobre la necesaria
+  es gratis.
+
+\section{Geometría de programación lineal}
+\label{sec:geometria-programacion-lineal}
+
+  Muchos problemas de asignación de recursos
+  son naturalmente programas lineales.
+  Hay muchos otros problemas que se pueden traducir en programación lineal.
+  Es importante contar con algoritmos eficientes
+  para resolver esta clase de problemas.
+  El método Simplex~%
+    \cite{dantzig47:_Simplex}
+  es eficiente en la práctica
+  (aunque es necesario tener algunas precauciones que discutiremos luego).
+  Claro que Klee y Minty~%
+    \cite{klee69:_how_good_simplex_algo}
+  hallaron una familia infinita de modelos
+  (hipercubos en \(d\)~dimensiones)
+  en los cuales Simplex
+  usando la regla de pivote de Dantzig requiere \(2^d\)~iteraciones
+  para llegar al óptimo.
+  En la práctica es mucho mejor,
+  se ha demostrado que en hipercubos de \(d\)~dimensiones,
+  partiendo de un vértice al azar en promedio son \(d\)~iteraciones,
+  ver por ejemplo a Schrijver~%
+    \cite{schrijver98:_theo_linear_integ_progr}
+  o a Borgwardt~%
+    \cite{borgwardt87:_simplex_method}.
+  Sigue siendo un problema abierto si hay una regla de elección de pivotes
+  que garantiza tiempo polinomial.
+  Recién en 1979
+  Khachiyan~%
+    \cite{khachiyan79:_polynomial_algo_linear_programming}
+  dio un algoritmo polinomial,
+  aunque en la práctica es muy lento.
+  Karmarkar~%
+    \cite{karmarkar84:_new_polynomial_algorithm_linear_progr}
+  luego dio un algoritmo polinomial que en algunos casos es competitivo
+  en la práctica.
+
+  Discusión detallada de Simplex provee Reveliotis~%
+    \cite{reveliotis97:_intro_linear_progr_simplex_method},
+  parte de lo que sigue se adapta de allí.
+
+  Si tenemos \(n\) variables,
+  estamos operando en un espacio con \(n\)~dimensiones.
+  Las restricciones corresponden a hiperplanos,
+  cada una define un semi-espacio en el cual la restricción se cumple.
+  La intersección de tales semi-espacios
+  (donde se cumplen las restricciones)
+  define lo que se denomina \emph{politopo},
+  un politopo acotado se llama \emph{poliedro}.
+
+  Dados puntos \(\mathbf{x}_1 = (x_{1 1}, x_{1 2}, \dotsc, x_{1 n})^T\)
+  y \(\mathbf{x}_2 = (x_{2 1}, x_{2 2}, \dotsc, x_{2 n})^T\)
+  la línea recta que pasa por ellos puede expresarse como:
+  \begin{equation*}
+    \mathbf{x}_1 + t (\mathbf{x}_2 - \mathbf{x_1}),
+    t \in \mathbb{R}
+  \end{equation*}
+  El segmento de línea recta entre \(\mathbf{x}_1\) y \(\mathbf{x}_2\)
+  es el conjunto:
+  \begin{equation*}
+    \mathbf{x}_1 + t (\mathbf{x}_2 - \mathbf{x_1}),
+    t \in [0, 1]
+  \end{equation*}
+  Equivalentemente:
+  \begin{equation*}
+    \mu \mathbf{x}_1 + \kappa \mathbf{x}_2,
+    \mu + \kappa = 1,
+    \mu, \kappa \ge 0
+  \end{equation*}
+  Decimos que esto define
+  una \emph{combinación convexa} de \(\mathbf{x}_1\) y \(\mathbf{x}_2\).
+  Se dice que un conjunto de puntos es \emph{convexo}
+  si el segmento que conecta dos puntos del conjunto
+  está enteramente en su interior.
+  Vale decir,
+  si \(\mathbf{x}_1, \mathbf{x}_2 \in S\),
+  entonces \((1 - t) \mathbf{x}_1 + t \mathbf{x}_2 \in S\)
+  para todo \(0 \le t \le 1\).
+  Es claro que el semi-espacio definido por una restricción es convexo,
+  y por tanto lo es todo politopo resultante de sus intersecciones.
+  Como último concepto,
+  un \emph{punto extremo} de un conjunto convexo \(S\)
+  es un punto \(\mathbf{x}_0\)
+  tal que todo segmento que está enteramente en \(S\)
+  y que contiene \(\mathbf{x}_0\)
+  tiene a \(\mathbf{x}_0\) como uno de sus extremos.
+  O sea,
+  si \(\mathbf{x}_1, \mathbf{x}_2 \in S\),
+  y para \(\mathbf{x}_0 \in S\) podemos escribir
+     \(\mathbf{x}_0 = (1 - \kappa) \mathbf{x}_1 + \kappa \mathbf{x}_2\),
+  entonces \(\mathbf{x}_0 = \mathbf{x}_1\) o \(\mathbf{x}_0 = \mathbf{x}_2\).
+  En el caso particular de politopos convexos
+  se habla de \emph{vértices} para referirse a los puntos extremos.
+  Esto nos lleva a:
+  \begin{theorem}[Fundamental de la programación lineal]
+    Si un programa lineal tiene una solución óptima acotada,
+    existe un punto extremo de la región factible que es óptimo.
+  \end{theorem}
+  Note que pueden haber varios vértices óptimos
+  si resulta que un arista o una cara del politopo
+  es paralela al plano que define la función objetivo.
+
+\subsection{El método Simplex}
+\label{sec:simplex}
+
+  El método Simplex revisa distintos puntos extremos
+  (vértices)
+  del politopo definido por las restricciones.
+  El nombre del método
+  viene de que esos puntos extremos normalmente coinciden con vértices
+  de poliedros con el mínimo número de caras
+  si se omiten restricciones no involucradas
+  (en dos dimensiones,
+   un triángulo;
+   en tres es tetraedro;
+   en general,
+   en \(n\) dimensiones tiene \(n + 1\) caras).
+  A tales poliedros se les llama \emph{simplex}.
+
+  Volvamos a nuestro primer ejemplo,
+  maximizar \(x_1 + 2 x_2\) sujeto a \(x_i \ge 0\) y:
+  \begin{equation}
+    \label{eq:lp-restricciones-2}
+    \sysdelim..
+    \systeme{
+         x_1 +	 x_2 \leq \phantom{0}9,
+         x_1 + 3 x_2 \leq 12,
+      \- x_1 + 2 x_2 \leq \phantom{0}2
+    }
+  \end{equation}
+  Trabajar con desigualdades es incómodo,
+  introducimos variables holgura
+  (en inglés,
+   \emph{\foreignlanguage{english}{slack variables}})
+  para cada desigualdad,
+  que también cumplirán la restricción \(s_i \ge 0\).
+  Agregamos una igualdad adicional con holgura \(z\) para la función objetivo:
+  \begin{equation}
+    \label{eq:lp-igualdades}
+    \sysdelim..
+    \syssubstitute{{y_1}{s_1}{y_2}{s_2}{y_3}{s_3}}
+    \systeme{
+         x_1 +	 x_2 + y_1     = \phantom{0}9,
+         x_1 + 3 x_2 + y_2     = 12,
+      \- x_1 + 2 x_2 + y_3     = \phantom{0}2,
+      \- x_1 - 2 x_2	   + z = \phantom{0}0
+    }
+  \end{equation}
+  De~\eqref{eq:lp-igualdades} una solución factible al problema es obvia:
+  haga \(x_1 = x_2 = 0\),
+  y \(s_1 = 9\), \(s_2 = 12\), \(s_3 = 2\).
+  Se dice que \(s_1\) a \(s_3\) están en la base
+  las demás variables no
+  (estamos trabajando en el espacio vectorial definido por las variables,
+   las variables en la base están siendo usadas como base para el subespacio
+   definido por las ecuaciones).
+  Claro que esto nos da \(z = 0\) para la función objetivo.
+  De la última fila vemos que podemos aumentar \(z\)
+  aumentando \(x_1\) o \(x_2\)
+  (aparecen con coeficientes negativos).
+  Analicemos \(x_2\).
+  De la primera ecuación vemos que podemos aumentar \(x_2\) hasta \num{9},
+  dejando \(s_1 = 0\);
+  la segunda indica que \(x_2 = 4\) deja \(s_2 = 0\);
+  la tercera dicta \(x_2 = 1\) para \(s_3 = 0\).
+  Debemos elegir el mínimo de estos
+  (no se permiten holguras negativas).
+  Usamos la tercera ecuación para eliminar \(x_2\) de las demás ecuaciones:
+  \begin{equation}
+    \label{eq:lp-pivot-x2}
+    \sysdelim..
+    \syssubstitute{{y_1}{s_1}{y_2}{s_2}{y_3}{s_3}}
+    \systeme{
+         \frac{3}{2} x_1	      +	 y_1	   - \frac{1}{2} y_3	 = 8,
+         \frac{5}{2} x_1		     + y_2 - \frac{3}{2} y_3	 = 9,
+      \- \frac{1}{2} x_1 + x_2			   + \frac{1}{2} y_3	 = 1,
+      \- 2	     x_1			   +		 y_3 + z = 2
+    }
+   \end{equation}
+   El sistema resultante tiene la misma forma que el original,
+   claro que las variables independientes
+   (que aparecen en una ecuación solamente)
+   ahora son \(x_2, s_1, s_2\).
+   A esta operación le llaman \emph{pivotear}
+   (alrededor de \((x_2, s_3)\)),
+   \(x_2\) entra a la base mientras \(s_3\) sale.
+   El resultado corresponde
+   a la solución factible \(s_1 = 8, s_2 = 9, x_2 = 1\)
+   con \(x_1 = s_3 = 0\);
+   la función objetivo es \(z = 2\).
+   Ahora la única variable con coeficiente negativo
+   en la última fila es \(x_1\).
+   Debemos elegir entre \(16/3\) y \(18/5\),
+   es la segunda ecuación:
+  \begin{equation}
+    \label{eq:lp-pivot-x1}
+    \sysdelim..
+    \syssubstitute{{y_1}{s_1}{y_2}{s_2}{y_3}{s_3}}
+    \systeme{
+                                 y_1 - \frac{3}{5} y_2 + \frac{2}{5} y_3
+           = \frac{13}{5},
+                    x_1		     + \frac{2}{5} y_2 - \frac{3}{5} y_3
+           = \frac{18}{5},
+                        + x_2	     + \frac{1}{5} y_2 + \frac{1}{5} y_3
+           = \frac{14}{5},
+                                       \frac{4}{5} y_2 - \frac{1}{5} y_3
+                + z
+           = \frac{46}{5}
+    }
+   \end{equation}
+   Esto corresponde a \(x_1 = 18/5\), \(x_2 = 14/5\), \(s_1 = 13/5\)
+   y función objetivo \(z = 46/5\).
+   Coeficiente negativo en la última fila tiene \(s_3\);
+   como antes elegimos el menor,
+   en este caso \(13/2\) de la primera ecuación,
+   resultando:
+  \begin{equation}
+    \label{eq:lp-pivot-s3}
+    \sysdelim..
+    \syssubstitute{{y_1}{s_1}{y_2}{s_2}{y_3}{s_3}}
+    \systeme{
+    % \frac{1}{1} x_1 + \frac{1}{2} x_2
+    %	 + \frac{1}{3} s_1 + \frac{1}{4} s_2 + \frac{1}{5} s_3 + z
+    %	     = \frac{x}{y},
+      % No x_1, x_2
+            \frac{5}{2} y_1 - \frac{3}{2} y_2 +		   y_3
+             = \frac{13}{2},
+                  x_1
+          + \frac{3}{2} y_1 - \frac{1}{2} y_2
+             = \frac{15}{2},
+                                    x_2
+          - \frac{1}{2} y_1 + \frac{1}{2} y_2
+             = \frac{3}{2},
+      % No x_1, x_2
+           \frac{1}{2} y_1 + \frac{1}{2} y_2		       + z
+             = \frac{21}{2}
+    }
+  \end{equation}
+  No hay coeficientes negativos en la última fila,
+  es óptimo.
+  Es \(x_1 = 15/2, x_2 = 3/2, s_3 = 13/2\)
+  con función objetivo \(z = 21/2\).
+  Esto es lo mismo que habíamos obtenido de nuestra solución gráfica.
+  Si analizamos el camino seguido por nuestra técnica,
+  caminamos de un vértice a un vecino hasta alcanzar el óptimo.
+  En cada paso aumenta la función objetivo.
+
+  Es obvio abreviar esto registrando solo los coeficientes en una matriz.
+  Vemos también que en la matriz aparecen muchos ceros,
+  y hay columnas con un único \num{1}.
+  En vez de representar esto explícitamente,
+  podemos indicar para cada fila cuál es la columna (variable)
+  que tiene coeficiente uno
+  y cuyo coeficiente es cero en el resto de la columna.
+  Podemos reutilizar el espacio que se abre al eliminar una variable,
+  llenándolo con los coeficientes de la nueva columna.
+  Para ello debemos indicar a qué variable corresponde cada columna,
+  y qué variable es la que aparece como independiente en la fila.
+  A esta representación se llama un \emph{\foreignlanguage{french}{tableau}}
+  (plural del francés es \emph{\foreignlanguage{french}{tableaux}}).
+  El efecto de la operación
+  de pivote alrededor de \(p\) sobre elementos en su misma fila y columna
+  y otros elementos se describe mediante:
+  \begin{equation}
+    \label{eq:pivote}
+    \boxed{
+      \begin{array}{cc}
+        p & a \\
+        b & c
+      \end{array}
+    }
+    \rightsquigarrow
+    \boxed{
+      \begin{array}{cc}
+          1 / p & a / p \\
+        - c / p & c - a b / p
+      \end{array}
+    }
+  \end{equation}
+
+  Ilustramos el proceso de trabajar
+  con \emph{\foreignlanguage{french}{tableaux}}
+  con el ejemplo
+  de maximizar \(5 x_1 + 2 x_2 + x_3\) con las restricciones:
+  \begin{equation}
+    \label{eq:lp-example}
+    \sysdelim..
+    \systeme{
+        x_1 + 3 x_2 - x_3 \leq 6,
+                x_2 + x_3 \leq 4,
+      3 x_1 +	x_2	  \leq 7
+    }
+  \end{equation}
+  El \emph{\foreignlanguage{french}{tableau}} inicial es:
+  \begin{center}
+    \begin{tabular}[ht]{>{\(}c<{\)}|*{3}{>{\(}c<{\)}}|>{\(}c<{\)}}
+            & x_1 & x_2 & x_3 & \\
+      \hline
+        s_1 &	1 &   3 &  -1 & 6 \\
+        s_2 &	0 &   1 &   1 & 4 \\
+        s_3 &	3 &   1 &   0 & 7 \\
+      \hline
+            &  -5 &  -2 &  -1 & 0
+    \end{tabular}
+  \end{center}
+  Pivoteando alrededor de \(s_3, x_1\)
+  (intercambia el papel de estas variables)
+  da:
+  \begin{center}
+    \begin{tabular}[ht]{>{\(}c<{\)}|*{3}{>{\(}c<{\)}}|>{\(}c<{\)}}
+            & s_3  & x_2 & x_3 & \\
+      \hline
+        s_1 & -1/3 &  8/3 &  -1 & 11/3 \\
+        s_2 &	0  &  1	  &   1 &  4   \\
+        x_1 &  1/3 &  1/3 &   0 &  7/3 \\
+      \hline
+            &  5/3 & -1/3 &  -1 & 35/3
+    \end{tabular}
+  \end{center}
+  Ahora pivotear \((s_2, x_3)\) entrega:
+  \begin{center}
+    \begin{tabular}[ht]{>{\(}c<{\)}|*{3}{>{\(}c<{\)}}|>{\(}c<{\)}}
+            & s_3  & x_2 & s_2 & \\
+      \hline
+        s_1 & -1/3 & 11/3 &   1 & 23/3 \\
+        x_3 &	0  &  1	  &   1 &  4   \\
+        x_1 &  1/3 &  1/3 &   0 &  7/3 \\
+      \hline
+            &  5/3 &  2/3 &   1 & 47/3
+    \end{tabular}
+  \end{center}
+  Como no hay coeficientes negativos en la última fila,
+  es óptimo.
+  Leemos \(x_1 = 7/3\), \(x_2 = 0\) y \(x_3 = 4\);
+  la función objetivo es \(47/3\).
+
+  Si recordamos el problema dual,
+  su solución se obtiene de leer por columnas y no por filas.
+  El óptimo para este es \(y_1 = 0\), \(y_2 = 1\), \(y_3 = 5/3\),
+  con el mismo valor de la función objetivo.
+
+\subsection{Reglas de pivote}
+\label{sec:reglas-de-pivote}
+
+  Sistematizaremos la elección de pivotes.
+  Hay varios casos a considerar.
+  Supongamos que después de pivotear un rato
+  tenemos el \emph{\foreignlanguage{french}{tableau}}:
+  \begin{center}
+    \begin{tabular}[ht]{*{2}{>{\(}c<{\)}|}>{\(}c<{\)}}
+                   & \mathbf{y}	 &	      \\
+      \hline
+        \mathbf{x} & \mathbf{A}	 & \mathbf{b} \\
+      \hline
+                   & \mathbf{-c} & v
+    \end{tabular}
+  \end{center}
+  Si \(\mathbf{b} \ge \mathbf{0}\),
+  una solución factible para el problema máximo del que partimos
+  es \(\mathbf{x} = \mathbf{b}\), \(\mathbf{y} = \mathbf{0}\),
+  y tenemos el valor \(v\) de la función objetivo.
+  Si \(-\mathbf{c} \ge \mathbf{0}\),
+  una solución factible para el problema dual está dada por
+  \(\mathbf{y} = - \mathbf{c}\) y \(\mathbf{x} = \mathbf{0}\),
+  también con valor \(v\).
+  Sabemos que si \(\mathbf{b} \ge \mathbf{0}\)
+  y \(-\mathbf{c} \ge \mathbf{0}\)
+  tenemos los óptimos.
+
+  Consideraremos primero el caso en que ya tenemos un punto factible.
+  \begin{description}
+  \item[Caso 1:]
+    Si \(\mathbf{b} \ge \mathbf{0}\),
+    tome cualquier columna \(s\)
+    que contenga un elemento negativo en la última fila,
+    \(-c_s < 0\).
+    En esa columna elija \(r\)
+    tal que \(a_{r s} > 0\) y \(b_r / a_{r s}\) sea mínimo,
+    eligiendo cualquiera en caso de empate.
+    Pivotee alrededor de \(x_r, y_s\).
+
+    Si esta regla no es aplicable,
+    puede ser porque \(-\mathbf{c} \ge \mathbf{0}\),
+    en cuyo caso tenemos el óptimo;
+    o en la columna \(s\) todos los \(a_{i s} \le 0\).
+    En este último caso,
+    el problema de maximización es factible no acotado.
+    Para verlo,
+    considere un vector \(\mathbf{x} \ge \mathbf{0}\)
+    con \(x_s > 0\) y \(x_j = 0\) para \(j \ne s\).
+    Entonces \(\mathbf{x}\) es factible para el problema de maximización
+    ya que para todo \(i\):
+    \begin{equation*}
+      y_i
+        =   \sum_j (-a_{i j} x_j + b_i)
+        =   -a_{i s} x_s + b_i
+        \ge 0
+    \end{equation*}
+    Este vector da el valor \(\sum c_j x_j = c_s x_s\),
+    que podemos aumentar a gusto a través de \(r_s\).
+
+    Esta regla de pivote es conveniente
+    por las siguientes.
+    \begin{proposition}
+      \label{prop:pivot-1-1}
+      Si \(\mathbf{b} \ge \mathbf{0}\) antes de aplicar la regla,
+      entonces se cumple después de pivotear.
+    \end{proposition}
+    \begin{proof}
+      Marcamos los valores luego del pivote por circunflejos.
+      Debemos demostrar \(\widehat{b}_i \ge 0\) para todo \(i\).
+      Para \(i = s\)
+      es \(\widehat{b}_s = b_s / a_{r s}\),
+      no negativo ya que \(b_s \ge 0\) y \(a_{r s} > 0\).
+      Para \(i \ne s\) resulta:
+      \begin{equation*}
+        \widehat{b}_i
+          = b_i - \frac{a_{i s}}{b_s}{a_{r s}}
+      \end{equation*}
+      Si \(a_{i s} < 0\),
+      estamos restando un valor negativo,
+      \(\widehat{b}_i > b_i\);
+      si \(a_{i s} > 0\) por la regla para elegir el pivote
+      \(a_{i s} \le a_{r s}\),
+      estamos restando una fracción de \(b_i\) que se mantiene no negativo.
+    \end{proof}
+    \begin{proposition}
+      El valor del nuevo \emph{\foreignlanguage{french}{tableau}}
+      nunca es menor que el original.
+    \end{proposition}
+    \begin{proof}
+      Tenemos que \(-c_s < 0\), \(a_{r s} > 0\) y \(b_r \ge 0\),
+      por lo que:
+      \begin{equation*}
+        \widehat{v}
+          =   v - (-c_s) \frac{b_r}{a_{r s}}
+          \ge v
+      \end{equation*}
+    \end{proof}
+    Con estas dos propiedades,
+    como nos movemos de un vértice a uno vecino,
+    si en cada paso aumenta el valor
+    hallaremos el óptimo en un número finito de pasos
+    (el politopo tiene un número finito de vértices)
+    o concluiremos que es factible no acotado.
+  \item[Caso 2:]
+    Si hay \(b_i\) negativos,
+    elija el primero de ellos,
+    llamémosle \(b_k\)
+    (con esta elección tenemos \(b_1 \ge 0, b_2 \ge 0, \dotsc, b_{k - 1} \ge 0\)).
+    Elija alguna entrada negativa en la fila \(k\),
+    digamos \(a_{k s} < 0\).
+    Esta será la columna pivote.
+    Compare \(b_k / a_{k s}\) con los \(b_i / a_{i s}\)
+    con \(b_i > 0\) y \(a_{i s} > 0\),
+    sea \(r\) el índice que da la razón más pequeña
+    (podría ser \(r = k\)),
+    eligiendo cualquiera en caso de empate.
+    Pivotee alrededor de \((r, s)\).
+
+    Si esta regla no es aplicable,
+    el problema máximo no tiene soluciones factibles.
+    La fila \(k\) dice:
+    \begin{equation*}
+      - y_k
+        = \sum_j a_{k j} x_j - b_k
+    \end{equation*}
+    Para vectores factibles
+    \(\mathbf{x} \ge \mathbf{0}\),
+    \(\mathbf{y} \ge \mathbf{0}\)
+    el lado izquierdo es negativo o cero,
+    el lado derecho es positivo.
+
+    Lo que buscamos es aumentar ese \(b_k\),
+    de manera de llegar al caso~1 que sabemos manejar.
+    Esto por las siguientes.
+    \begin{proposition}
+      \label{prop:caso-2-1}
+      Los \(b_i\) no negativos se mantienen no negativos al pivotear.
+    \end{proposition}
+    \begin{proof}
+      Suponga que \(b_i \ge 0\),
+      o sea \(i \ne k\).
+      Si \(i = r\),
+      entonces \(\widehat{b}_r = b_r / a_{r s} \ge 0\).
+      Si \(i \ne r\),
+      entonces:
+      \begin{equation*}
+        \widehat{b}_i
+          = b_i - \frac{a_{i s}}{a_{r s}} b_r
+      \end{equation*}
+      Pero \(b_r / a_{r s} \ge 0\).
+      Si \(a_{i s} < 0\)
+      entonces \(\widehat{b}_i \ge b_i \ge 0\);
+      mientras que si \(a_{i s} > 0\)
+      entonces \(b_s / a_{r s} \le b_i / a_{i s}\),
+      con lo que \(\widehat{b}_i \ge b_i - b_i = 0\).
+    \end{proof}
+    \begin{proposition}
+      Al aplicar la regla,
+      \(b_k\) negativo no disminuye.
+    \end{proposition}
+    \begin{proof}
+      Si \(k = r\),
+      entonces \(\widehat{b}_k = b_k / a_{r s} > 0\)
+      (ambos son negativos).
+      Si \(k \ne r\),
+      entonces:
+      \begin{equation*}
+        \widehat{b}_k
+          =   b_k - \frac{a_{k s}}{a_{r s}} b_r
+          \ge b_k
+      \end{equation*}
+    \end{proof}
+    Si aplicamos la regla del caso~2,
+    y en cada paso aumenta \(b_k\),
+    en algún momento se hará positivo y eliminamos un \(b_k\) negativo.
+  \end{description}
+
+\subsection{Ciclos}
+\label{sec:ciclos}
+
+  Lamentablemente,
+  nuestras reglas no garantizan mejoras.
+  Existe la posibilidad de entrar en un ciclo,
+  como ilustra el siguiente ejemplo,
+  maximizar \(3 x_1 - 5 x_2 + x_3 - 2 x_4\) sujeto a \(x_i \ge 0\) y:
+  \begin{equation}
+    \label{eq:simplex-cycle}
+    \sysdelim..
+    \systeme{
+        x_1 - 2 x_2 - x_3 + 2 x_4 \leq 0,
+      2 x_1 - 3 x_2 - x_3 +   x_4 \leq 0,
+                      x_3	  \leq 1
+    }
+  \end{equation}
+  Si se pivotea en el orden \((x_1, y_1)\),
+  \((x_2, y_2)\),
+  \((x_3, x_1)\),
+  \((x_4, x_2)\),
+  \((y_1, x_3)\),
+  \((y_2, x_4\))
+  volvemos al \emph{\foreignlanguage{french}{tableau}} original.
+
+  El problema de ciclos en la práctica es muy raro.
+  Pero resulta que hay una regla simple y eficiente,
+  debida a Bland~%
+    \cite{bland77:_new_finite_pivot_rules_simplex_method},
+  que evita ciclos.
+  Esta regla,
+  llamada \emph{mínimo subíndice},
+  dice que en caso de empate de fila o columna pivote,
+  se seleccione la fila (o columna)
+  en la cual la variable \(x\) tenga el mínimo subíndice;
+  si no hay variables \(x\) elija la \(y\) con el mismo criterio.
+
+  Finalmente tenemos una demostración constructiva para el teorema de dualidad:
+  Use el método Simplex
+  para obtener la solución al problema de máximo acotado;
+  automáticamente obtenemos la solución al problema dual.
+
+\subsection{Comentarios finales}
+\label{sec:comentarios-simplex}
+
+  Esto en realidad es una familia de algoritmos.
+  No hemos especificado cómo elegir la columna pivote
+  si hay varios coeficientes negativos en la última fila.
+  Una regla simple,
+  propuesta por Dantzig,
+  es usar aquella columna con el coeficiente más negativo.
+  Hay varias otras opciones,
+  algunas de ellas discute Eigen~%
+    \cite{eigen11:_pivot_rules_simplex_method},
+  una comúnmente usada y generalmente efectiva
+  es la del programa Devex,
+  de Harris~%
+    \cite{harris73:_pivot_selec_metod_devex_lp_code}.
+  Lo que buscan es la arista que comienza el camino más corto
+  al óptimo,
+  pero hallarla es más difícil que resolver el problema,
+  se emplean diversas heurísticas.
+  Tampoco hay una regla para elegir en caso de empate
+  (aunque hemos dado la regla de Bland).
+
+  Un vértice de un politopo en \(n\) dimensiones
+  (si hay \(n\) variables)
+  está definido por \(n - 1\) hiperplanos,
+  si hay \(m\) restricciones esto está acotado por \(\binom{m}{n - 1}\),
+  lo que es más que cualquier polinomio en \(m n\)
+  (el número de coeficientes que definen el modelo).
+  Klee y Minty~%
+    \cite{klee69:_how_good_simplex_algo}
+  hallaron una familia infinita de modelos en los cuales Simplex
+  usando la regla de pivote de Dantzig toma tiempo exponencial.
+  En la práctica,
+  el método es notablemente eficiente,
+  particularmente con reglas de pivote elegidas cuidadosamente.
+
+\section*{Ejercicios}
+\label{sec:ex-17a}
+
+  \begin{enumerate}
+  \item
+    Dé y muestre gráficamente problemas de programación lineal
+    que no tienen soluciones factibles,
+    que tienen soluciones factibles acotadas
+    y soluciones factibles no acotadas.
+    ¿Es posible tener áreas no acotadas con soluciones acotadas?
+  \item
+    Considere el problema de programación lineal:
+    \begin{equation*}
+      \sysdelim..
+      \systeme{
+          x_1 + 2 x_2 - x_3 + 3 x_4 \leq 7,
+        2 x_1 - 3 x_2 - x_3 +	x_4 \leq 3,
+                        x_3	    \leq 1,
+          x_1 - x_2   + x_3 -	x_4 =	 3
+      }
+    \end{equation*}
+    \begin{enumerate}
+    \item
+      Resuélvalo usando nuestra técnica inicial
+      (mencionando explícitamente las ecuaciones completas),
+      sin utilizar la ecuación para reducir el problema.
+    \item
+      Describa las modificaciones necesarias a la técnica
+      usando \emph{\foreignlanguage{french}{tableaux}}
+      para representar esto.
+    \end{enumerate}
+  \item
+    \label{ex:-17a-cycle}
+    Considere el problema
+    de maximizar \(3 x_1 - 5 x_2 + x_3 - 2 x_4\) sujeto a \(x_i \ge 0\) y:
+    \begin{equation*}
+      \sysdelim..
+      \systeme{
+          x_1 - 2 x_2 - x_3 + 2 x_4 \leq 0,
+        2 x_1 - 3 x_2 - x_3 +	x_4 \leq 0,
+                        x_3	    \leq 1
+      }
+    \end{equation*}
+    \begin{enumerate}
+    \item
+      Escriba el \emph{\foreignlanguage{french}{tableau}} inicial
+      para este problema.
+    \item
+      Verifique que
+      pivotear en el orden \((x_1, y_1)\),
+      \((x_2, y_2)\),
+      \((x_3, x_1)\),
+      \((x_4, x_2)\),
+      \((y_1, x_3)\),
+      \((y_2, x_4\))
+      respeta las reglas planteadas,
+      pero volvemos a un \emph{\foreignlanguage{french}{tableau}}
+      equivalente al original.
+    \end{enumerate}
+  \item
+    Repita el ejercicio~\ref{sec:ex-17a},
+    pero esta vez usando la regla de Bland.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas.tex"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  recubridor subsecuencia eq std max problem lp feasible
+% LocalWords:  maximización Simplex equilibrium carbohidratos simplex
+% LocalWords:  hiperplanos english slack subespacio pivotear french
+% LocalWords:  tableau tableaux cc Pivoteando Pivotee pivotea

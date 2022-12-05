@@ -1,0 +1,651 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[utf8]{inputenc}
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{siunitx}
+\usepackage[es-noquoting]{babel}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{csquotes}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Argumento de adversario}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Idea básica}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Idea básica}
+
+  \uncover<+->{
+    Una técnica útil para demostrar una cota
+    es imaginar un adversario omnisciente
+    que da al algoritmo los peores posibles datos.
+  }
+  \uncover<+->{
+    El adversario puede ajustar su comportamiento
+    según lo que el algoritmo solicita,
+    solo debe ser consistente con sus respuestas previas.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un ejemplo simple}
+
+  \uncover<+->{
+    Nos dan un arreglo de \(n\) bits,
+    y piden determinar si hay algún bit \(1\) en él.
+  }
+  \uncover<+->{
+    Parece obvio que para asegurar que no hay ningún \(1\),
+    debemos revisar todos los bits.
+  }
+  \uncover<+->{
+    ¿Cómo asegurarnos que no hay alguna astuta estrategia
+    que evita revisarlos todos?
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Un adversario}
+
+  \uncover<+->{
+    Construiremos un adversario
+    que entrega los bits solicitados por el algoritmo,
+    de forma de poder entregar un arreglo consistente con sus respuestas
+    que contiene un \(1\) si se le pide.
+  }
+  \uncover<+->{
+    La idea es forzar que hayan varios arreglos posibles
+    consistentes con las respuestas dadas.
+    Si se solicita el bit \(i\),
+    el adversario retorna \(0\) y registra esa respuesta.
+    Mientras queden bits sin consultar,
+    estos pueden ser \(0\) o \(1\),
+    si se le pide al adversario
+    (que asegura que hay un \(1\))
+    que muestre sus cartas,
+    muestra el arreglo con algún no consultado en \(1\).
+  }
+  \uncover<+->{
+    Para asegurar que no hay \(1\),
+    hay que consultar los \(n\) bits,
+    como queríamos demostrar.
+  }
+\end{frame}
+
+\section{Propiedades elusivas}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedades elusivas}
+
+  \begin{definition}<+->
+    Una propiedad de una estructura de datos se llama \emph{elusiva}
+    si para determinar si la estructura cumple es necesario revisarla completa.
+  \end{definition}
+  \smallskip
+  \uncover<+->{
+    Demostramos antes
+    que la propiedad \textquote{el arreglo de bits contiene un \(1\)}
+    es elusiva.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Palabras que contienen \(01\)}
+
+  \uncover<+->{
+    Después de palabras que contienen (o no) \(1\),
+    es natural preguntar por otros patrones.
+  }
+  \uncover<+->{
+    Podemos verificar si una palabra contiene \(01\)
+    revisando todos sus bits.
+  }
+  \uncover<+->{
+    La pregunta es si se puede hacer sin revisar la palabra entera.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Palabras que contienen \(01\)}
+
+  \uncover<+->{
+    Si el largo \(n\) de la palabra es impar,
+    podemos revisar sus posiciones pares,
+    \(B[2], B[4], \dotsc, B[n - 1]\).
+  }
+  \uncover<+->{
+    Si para algún \(i < j\) vemos \(B[i] = 0\) y \(B[j] = 1\),
+    podemos parar:
+    sabemos que hay \(01\) entremedio.
+  }
+  \uncover<+->{
+    Si hay solo \(1\) seguidos por \(0\),
+    no tiene sentido revisar el bit entre el último \(1\) y el primer \(0\),
+    los demás son posibles candidatos a completar \(01\).
+  }
+  \uncover<+->{
+    Si hay solo \(0\),
+    debemos revisar si hay \(1\) en las posiciones \(3, 5, \dotsc, n\)
+    (un \(1\) en la primera posición iría seguido por \(0\));
+     si hay solo \(1\),
+    debemos revisar si hay \(0\) las posiciones \(1, 3, \dotsc, n - 2\)
+    (un \(0\) en la última posición seguiría un \(1\)).
+  }
+  \uncover<+->{
+    O sea,
+    basta revisar \(n - 1\) bits.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Palabras que contienen \(01\)}
+
+  \uncover<+->{
+    Si el largo de la palabra es par,
+    un argumento de adversario demuestra que deben revisarse todos los bits.
+  }
+
+  \uncover<+->{
+    Una palabra sin \(01\) debe tener la forma \(1^* 0^*\).
+  }
+  \uncover<+->{
+    El adversario mantiene índices \(r\) y \(s\),
+    el rango \(1, \dotsc, r\) son \(1\)
+    y el rango \(s, \dotsc, n\) son \(0\)
+    con el rango entre \(r + 1\) y \(s - 1\) indeciso.
+  }
+  \uncover<+->{
+    Si el rango indeciso siempre tiene largo par,
+    puede contener \(01\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Palabras que contienen \(01\)}
+
+  \uncover<+->{
+    Inicialmente \(r = 0\) y \(s = n + 1\).
+  }
+
+  \uncover<+->{
+    El adversario mantiene la invariante que \(s - r\) es par.
+  }
+  \uncover<+->{
+    Si el algoritmo solicita el bit \(i\) con \(i \le r\),
+    retorna \(1\).
+    Si el algoritmo solicita el bit \(i\) con \(i \ge s\),
+    retorna \(0\).
+  }
+  \uncover<+->{
+    Si se solicita el bit \(i\) con \(r < i < s\),
+    ajusta \(r\) o \(s\) a \(i\) y retorna el bit que corresponde.
+  }
+
+  \uncover<+->{
+    Como \(s - r\) siempre es par,
+    si no se han consultado todos los bit hay al menos \(2\) bits contiguos
+    que pueden ser \(01\).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ocultar \(01\)}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \(r \leftarrow 0; s \leftarrow n + 1\) \;
+    \;
+    \Function{\(\mathrm{Hide01}(i)\)}{
+      \uIf{\(i \le r\)}{
+        \(B[i] \leftarrow 1\) \;
+      }
+      \uElseIf{\(i \ge s\)}{
+        \(B[i] \leftarrow 0\) \;
+      }
+      \uElseIf{\(i - r\) is even}{
+        \(B[i] \leftarrow 0\) ; \(s \leftarrow i\) \;
+      }
+      \Else {
+        \(B[i] \leftarrow 1\) ; \(r \leftarrow i\) \;
+      }
+      \Return \(B[i]\) \;
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Patrones elusivos}
+
+  \uncover<+->{
+    O sea,
+    el patrón \(01\)
+    (y simétricamente \(10\))
+    es elusivo solo si el largo de la palabra es par.
+  }
+  \uncover<+->{
+    Resulta que los únicos patrones elusivos para todos los largos
+    son los patrones de un símbolo \(0\) y \(1\).
+  }
+\end{frame}
+
+\section{Ordenar por comparaciones}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ordenar por comparaciones}
+
+  \uncover<+->{
+    Tenemos \(n\) elementos distintos,
+    que debemos ordenar de menor a mayor usando comparaciones.
+  }
+  \uncover<+->{
+    Hay \(n!\) permutaciones de \(n\)~elementos,
+    el adversario mantiene el conjunto \(L\)
+    de las permutaciones consistentes con sus respuestas hasta el momento.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ordenar por comparaciones}
+
+  \uncover<+->{
+    Inicialmente \(L\) son todas las permutaciones.
+  }
+
+  \uncover<+->{
+    La consulta \textquote{¿es \(a[i] < a[j]\)?}
+    divide las permutaciones posibles
+    en conjuntos de permutaciones \(L_{\text{Si}}\) y \(L_{\text{No}}\),
+    el adversario da la respuesta que corresponde al conjunto mayor.
+  }
+  \uncover<+->{
+    Como cada comparación reduce el conjunto de permutaciones
+    en a lo más la mitad,
+    y debemos llegar a reducirlo a una sola,
+    se requieren al menos \(\log_2 n! = \Theta(n \log n)\) comparaciones.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Ordenar por comparaciones}
+
+  \uncover<+->{
+    Note que el adversario
+    no depende de las comparaciones hechas por el algoritmo.
+  }
+  \uncover<+->{
+    Obviamente es mucho trabajo del adversario,
+    pero es una construcción teórica.
+  }
+\end{frame}
+
+\section{Propiedades de grafos}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Propiedades de grafos}
+
+  \uncover<+->{
+    Supondremos grafos representados mediante matrices de adyacencia.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Grafo vacío}
+
+  \uncover<+->{
+    Un ejemplo obvio es preguntar si el grafo es vacío
+    (no tiene arcos).
+  }
+  \uncover<+->{
+    Dado el conjunto de vértices \(V\),
+    el adversario mantiene el grafo \(G\)
+    (esencialmente lo no revisado).
+  }
+  \uncover<+->{
+    Inicialmente \(G\) es el grafo completo sobre \(V\).
+    Cada vez que el algoritmo consulta si \(u v\) es un arco del grafo,
+    el adversario responde \textquote{No} y elimina \(u v\) de \(G\).
+    Si el algoritmo no consulta por algún posible arco,
+    el grafo vacío \(E = (V, \varnothing)\)
+    y el grafo no vacío \(G\) que mantiene el adversario
+    son ambos consistentes con las respuestas dadas,
+    el algoritmo no puede responder correctamente.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Conectividad}
+
+  \uncover<+->{
+    El adversario mantiene dos grafos,
+    \(S\) y \(T\)
+    (por \textquote{Sí} y \textquote{Tal vez}).
+    El grafo \(S\) contiene los arcos
+    que el algoritmo sabe pertenecen al grafo,
+    \(T\) además contiene los arcos aún no considerados.
+  }
+  \uncover<+->{
+    Inicialmente \(S = (V, \varnothing)\) es el grafo vacío
+    y \(T\) es el grafo completo sobre \(V\).
+  }
+  \uncover<+->{
+    Supondremos que el algoritmo no hace consultas redundantes,
+    si consulta sobre el arco \(e\) es que no ha consultado sobre él antes
+    (o sea,
+    \(e\) pertenece a \(T \smallsetminus S\)).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ocultar conectividad}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \(S \leftarrow (V, \varnothing);
+      T \leftarrow (V, \{ u v \colon u \ne v \})\) \;
+    \;
+    \Function{\(\mathrm{HideConnected}(e)\)}{
+      \If{\(T \smallsetminus \{e\}\) is connected}{
+        \(T \leftarrow T \smallsetminus \{ e \}\) \;
+        \Return \(\mathrm{False}\) \;
+      }
+      {
+        \(S \leftarrow S \cup \{ e \}\) \;
+        \Return \(\mathrm{True}\) \;
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Invariantes}
+
+  \begin{description}
+  \item[\boldmath\(S\) es subgrafo de \(T\)\unboldmath:]
+    Esto es obvio.
+  \item[\boldmath\(T\) es conexo\unboldmath:]
+    También es obvio.
+  \item[\boldmath Si \(T\) tiene un ciclo,
+        ninguno de sus arcos está en \(S\)\unboldmath:]
+    Si el algoritmo hubiese consultado por uno de los arcos del ciclo,
+    el adversario lo habría eliminado de \(T\) y no lo agregaría a \(S\).
+  \item[\boldmath\(S\) es acíclico\unboldmath:]
+    Esto es inmediato del invariante anterior.
+  \item[\boldmath Si \(S \ne T\), \(S\) no es conexo\unboldmath:]
+    Sabemos que los grafos conexos acíclicos son árboles.
+    Supongamos \(S\) es un árbol y \(e\) es un arco en \(T\) pero no en \(S\).
+    Entonces \(S \cup \{ e \}\) tiene un ciclo,
+    que está también en \(T\).
+    Esto viola el tercer invariante.
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Conclusión}
+
+  \uncover<+->{
+    Si el algoritmo no revisa todos los arcos,
+    \(S \ne T\),
+    ambos consistentes con las respuestas dadas,
+    pero uno es conexo y el otro no.
+    La conectividad es elusiva.
+  }
+\end{frame}
+
+\section{Máximo y mínimo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y mínimo}
+
+  \uncover<+->{
+    Para \(n\) elementos,
+    obvio es \(n - 1\) comparaciones para obtener el máximo
+    y \(n - 2\) para identificar el mínimo entre los demás,
+    total \(2 n - 3\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y mínimo}
+
+  \uncover<+->{
+    \begin{algorithm}[H]
+      \DontPrintSemicolon
+
+      \Function{\(\mathrm{MaxMin}(\mathbf{a})\)}{
+        \(m \leftarrow a[1]; M \leftarrow a[1]\) \;
+        \For{\(i \leftarrow 2\) \KwTo \(\mathrm{length}(\mathbf{a})\)}{
+           \uIf{\(a[i] > M\)}{
+             \(M \leftarrow a[i]\) \;
+           }
+           \ElseIf{\(a[i] < m\)}{
+            \(m \leftarrow a[i]\) \;
+          }
+        }
+        \Return \((M, m)\) \;
+      }
+    \end{algorithm}
+  }
+  \smallskip
+  \uncover<+->{
+    Este algoritmo bastante obvio
+    para un arreglo de largo \(n\)
+    efectúa \(n - 1\) comparaciones con \(M\) y \(n - 2\) con \(m\),
+    para un total de \(2 n - 3\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y mínimo}
+
+  \uncover<+->{
+    Mejor es dividir en pares,
+    comparar los pares y dejar los menores en \(L\) y los mayores en \(H\).
+    Si hay un número impar de elementos al último lo agregamos a ambos.
+  }
+  \uncover<+->{
+    Resulta \(\lvert L \rvert = \lvert H \rvert = \lceil n / 2 \rceil\).
+    Esto consume \(\lfloor n / 2 \rfloor\) comparaciones.
+  }
+
+  \uncover<+->{
+    Obtenemos el mínimo de \(L\) con \(\lvert L \rvert - 1\) comparaciones,
+    el máximo de \(H\) con \(\lvert H \rvert - 1\) comparaciones,
+    para un total de:
+    \begin{equation*}
+      \left\lfloor \frac{n}{2} \right\rfloor
+        + \left\lceil \frac{n}{2} \right\rceil - 1
+        + \left\lceil \frac{n}{2} \right\rceil - 1
+        = \left\lceil \frac{3 n}{2} \right\rceil - 2
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y mínimo}
+
+  \uncover<+->{
+    Para una cota inferior,
+    usamos un argumento de adversario.
+  }
+  \uncover<+->{
+    El adversario mantiene marcas en los elementos,
+    \(+\) si puede ser el máximo y \(-\) si puede ser el mínimo.
+  }
+  \uncover<+->{
+    Inicialmente todos los elementos llevan marcas \(+\) y \(-\),
+    un total de \(2 n\) marcas.
+    Al final debe quedar exactamente un elemento marcado \(+\)
+    y uno marcado \(-\)
+    (el adversario puede declarar cualquier elemento marcado \(+\) como máximo
+    y cualquier elemento marcado \(-\) como mínimo).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y mínimo}
+
+  \uncover<+->{
+    Al comparar dos elementos marcados \(\pm\),
+    el adversario declara uno mayor y el otro menor,
+    eliminando las marcas \(-\) y \(+\) de los dos elementos,
+    respectivamente.
+  }
+  \uncover<+->{
+    En todos los otros casos
+    el adversario puede responder
+    de manera de eliminar a lo más una de las marcas.
+  }
+  \uncover<+->{
+    Al comparar un elemento marcado \(\pm\) con uno marcado \(-\),
+    declara que el segundo es menor y deja la marca \(+\)
+    (el marcado \(\pm\) ya no es el mínimo)
+    y \(-\)
+    (sigue pudiendo ser el menor).
+  }
+  \uncover<+->{
+    El caso de comparar \(\pm\) con \(+\) es similar.
+  }
+  \uncover<+->{
+    Comparar dos elementos marcados ambos \(+\) o \(-\)
+    elimina la marca de uno de ellos y declara al otro mayor
+    (respectivamente menor),
+    comparar uno marcado \(+\) con uno marcado \(-\) no requiere cambios
+    (el primero es mayor).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Máximo y mínimo}
+
+  \uncover<+->{
+    Un algoritmo correcto debe remover \(2 n - 2\) marcas.
+    A lo más \(\lfloor n / 2 \rfloor\) comparaciones eliminan dos marcas,
+    otras comparaciones eliminan a lo más una.
+    Si el número de comparaciones requeridas es a lo menos \(C\):
+  }
+  \begin{align*}
+    \uncover<.->{
+      C - \left\lfloor \frac{n}{2} \right\rfloor
+        &= 2 n - 2 - 2 \left\lfloor \frac{n}{2} \right\rfloor \\
+    }
+    \uncover<+->{
+      C
+        &= \left\lceil \frac{3 n}{2} \right\rceil - 2
+    }
+  \end{align*}
+
+  \uncover<+->{
+    Como tenemos una cota superior igual a la inferior,
+    este es el número exacto de comparaciones requerido
+    (y el algoritmo esbozado es óptimo).
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Planteamos argumento de adversario,
+    permiten obtener cotas para el rendimiento de algoritmos
+    y el trabajo necesario para resolver ciertos problemas.
+  \item
+    Vimos propiedades elusivas.
+    \uncover<+->{
+      Significan que el algoritmo obvio de revisar todo
+      es óptimo.
+    }
+  \item
+    Discutimos varias aplicaciones:
+    patrones en palabras,
+    propiedades de grafos,
+    ordenamiento,
+    máximo y mínimo.
+  \item
+    Para máximo y mínimo
+    hallamos un algoritmo que hace exactamente el trabajo mínimo,
+    es óptimo
+    (en término de número de comparaciones).
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode is even connected subgrafo handout

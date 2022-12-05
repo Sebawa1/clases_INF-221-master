@@ -1,0 +1,1450 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Hashing}
+\label{cha:hashing}
+
+  Una \emph{tabla \foreignlanguage{english}{hash}}
+  es una estructura que almacena un conjunto de objetos,
+  permitiendo determinar rápidamente si un objeto dado está o no presente.
+  Generalmente se asocia una \emph{clave} que define el objeto,
+  como es un nombre,
+  un rol o un número de inventario.
+  La idea central
+  es elegir una \emph{función de hashing} \(h\) que mapea toda clave posible
+  a un entero pequeño \(h(x)\).
+  Almacenamos el objeto asociado a \(x\) en la posición \(h(x)\) de un arreglo,
+  este arreglo es la \emph{tabla \foreignlanguage{english}{hash}}.
+  La idea se le atribuye a Dumey~%
+    \cite{dumey56:_indexing_rapid_random_access_memory_systems},
+  quien discute ideas afines
+  en sistemas de inventario usando tarjetas perforadas
+  y las extiende a memorias de acceso aleatorio.
+
+  La importancia de esta idea
+  es que ofrece algoritmos que dan tiempos de búsqueda
+  constantes,
+  independientes del número de datos almacenados.
+  Por esta razón es la técnica de búsqueda preferida.
+  Lo malo es que el buen rendimiento es solo en valor esperado,
+  los peores casos son \emph{muy} malos
+  (pero extremadamente poco probables si se toman precauciones apropiadas).
+
+  El análisis de los algoritmos discutidos
+  requiere rudimentos de probabilidades,
+  para notación y discusión de los conceptos usados
+  revise el apéndice~\ref{apx:pizca-probabilidades}.
+  Usaremos varias cotas simples,
+  pero extraordinariamente útiles,
+  que no se han tratado anteriormente.
+  Las demostraciones se encuentran en el apéndice.
+
+\section{Algunos resultados previos}
+\label{sec:resultados-previos}
+
+  Requeriremos algunos resultados auxiliares
+  para analizar \emph{\foreignlanguage{english}{hashing}}.
+  Primero,
+  un límite clásico:
+  \begin{lemma}
+    \label{lem:classic-limit}
+    Para todo \(x \in \mathbb{R}\) se tiene que:
+    \begin{equation*}
+      \lim_{n \to \infty} \left( 1 + \frac{x}{n} \right)^n
+        = \mathrm{e}^x
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    Como \(\mathrm{e}^x\) es continua,
+    podemos escribir:
+    \begin{align*}
+      \lim_{n \to \infty} \left( 1 + \frac{x}{n} \right)^n
+        &= \exp\left(
+                 \lim_{n \to \infty} n \ln \left( 1 + \frac{x}{n} \right)
+               \right) \\
+        &= \exp\left(
+                  \lim_{n \to \infty} \frac{\ln (1 + x / n)}{1/n}
+               \right) \\
+        &= \exp\left(
+                  \lim_{n \to \infty}
+                   \frac{\frac{- x / n^2}{1 + x / n}}{- 1 / n^2}
+               \right) \\
+        &= \mathrm{e}^x
+    \end{align*}
+    Acá usamos l'Hôpital para calcular el límite interno.
+  \end{proof}
+  Luego un par de cotas extremadamente útiles.
+  \begin{lemma}
+    \label{lem:bounds-(1+x/n)^n}
+    Para todo \(x \ge 0\):
+    \begin{equation*}
+      1 + x
+        \le \left( 1 + \frac{x}{n} \right)^n
+        \le \mathrm{e}^x
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    Para la primera desigualdad,
+    del teorema del binomio:
+    \begin{align*}
+      \left( 1 + \frac{x}{n} \right)^n
+        &=   \sum_k \binom{n}{k} \left( \frac{x}{n} \right)^k \\
+        &=   1 + x
+               + \sum_{k \ge 2} \binom{n}{k} \left( \frac{x}{n} \right)^k \\
+        &\ge 1 + x
+    \end{align*}
+
+    Para la segunda desigualdad
+    escribimos por el teorema del binomio:
+    \begin{align*}
+      \left( 1 + \frac{x}{n} \right)^n
+        &= \sum_{k \ge 0} \binom{n}{k} \left( \frac{x}{n} \right)^k \\
+        &= \sum_{k \ge 0} \frac{n^{\underline{k}}}{n^k} \frac{x^k}{k!}
+    \end{align*}
+    Comparando con la serie para \(\mathrm{e}^x\),
+    ambas son series de términos positivos ya que \(x\) no es negativo,
+    como \(n^{\underline{k}} / n^k \le 1\)
+    los términos de la segunda acotan a los de la primera por arriba.
+  \end{proof}
+
+  Otro resultado que requeriremos es la cota siguiente:
+  \begin{lemma}
+    \label{lem:binomial}
+    Para \(n > t > 0\) se cumple:
+    \begin{equation*}
+      \binom{n}{t}
+        \le \frac{n^n}{t^t (n - t)^{n - t}}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    Primeramente,
+    sabemos que:
+    \begin{equation*}
+      \binom{n}{t}
+        = \frac{n!}{t! (n - t)!}
+    \end{equation*}
+    Usando la fórmula de Stirling
+    para factoriales:
+    \begin{equation}
+      \label{eq:Stirling}
+      n!
+        = \sqrt{ 2 \pi n}
+             \left( \frac{n}{\mathrm{e}} \right)^n
+             \mathrm{e}^{r(n)}
+    \end{equation}
+    donde usaremos las cotas de Robbins~%
+      \cite{robbins55:_remark_Stirlings_formula}
+    para \(r(n)\):
+    \begin{equation}
+      \label{eq:Robbins}
+      \frac{1}{12 n + 1}
+        < r(n)
+        < \frac{1}{12 n}
+    \end{equation}
+    Con la fórmula de Stirling obtenemos:
+    \begin{align*}
+      \binom{n}{t}
+        &= \frac{(n / \mathrm{e})^n \sqrt{2 \pi n} \mathrm{e}^{r(n)}}
+                {(t / \mathrm{e})^t \sqrt{2 \pi t} \mathrm{e}^{r(t)}
+                 ((n - t) / \mathrm{e})^{n - t}
+                   \sqrt{2 \pi (n - t)} \mathrm{e}^{r(n - t)}} \\
+        &= \frac{n^n}{t^t (n - t)^{n - t}}
+             \cdot \frac{\sqrt{n} \mathrm{e}^{r(n) - r(t) - r(n - t)}}
+                        {\sqrt{2 \pi} \sqrt{t (n - t)}}
+    \end{align*}
+    Nos interesa demostrar que el segundo factor es menor a \num{1}.
+    De partida,
+    vemos que el mínimo de \(t (n - 1)\)
+    en el rango de interés \(1 \le t \le n - 1\)
+    se da para \(t = 1\) o \(t = n - 1\),
+    aporta un factor:
+    \begin{align*}
+      \frac{\sqrt{n}}{\sqrt{t (n - t)}}
+        &\le \frac{\sqrt{n}}{\sqrt{n - 1}} \\
+        &\le \sqrt{2}
+    \end{align*}
+    Con las cotas de Robbins para \(r(n)\) podemos escribir:
+    \begin{equation*}
+      \frac{1}{12 n + 1}
+        - \frac{1}{12 (n - t)}
+        - \frac{1}{12 t}
+        \le r(n) - r(t) - r(n - t)
+        \le \frac{1}{12 n}
+               - \frac{1}{12 t + 1}
+               - \frac{1}{12 (n - t) + 1}
+    \end{equation*}
+    El mínimo de la cota izquierda se da para \(n = 2\), \(t = 1\),
+    donde vale \(-19/150\);
+    la cota derecha es menor a \num{0}
+    (cada uno de los términos que se restan a \(1 / 12 n\)
+     es mayor a este).
+    Juntando todas las piezas,
+    vemos que:
+    \begin{align*}
+      \binom{n}{t}
+        &\le \frac{n^n}{t^t (n - t)^{n - t}}
+               \cdot \frac{\sqrt{2} \mathrm{e}^{0}}{\sqrt{2 \pi}} \\
+        &=   \frac{1}{\sqrt{\pi}} \cdot \frac{n^n}{t^t (n - t)^{n - t}} \\
+        &<   \frac{n^n}{t^t (n - t)^{n - t}}
+    \end{align*}
+    dado que el primer factor definitivamente es menor a \num{1}.
+  \end{proof}
+
+\section{La escena de hashing}
+\label{sec:escena-hashing}
+
+  Seamos más específicos.
+  Nos interesa almacenar \(n\) objetos,
+  que pertenecen a un universo \(\mathscr{U}\).
+  La tabla \emph{\foreignlanguage{english}{hash}}
+  es un arreglo \(T[0..m - 1]\),
+  donde \(m\) es el tamaño de la tabla.
+  En estos términos:
+  \begin{equation*}
+    h \colon \mathscr{U} \to [0, m - 1]
+  \end{equation*}
+  Obviamente,
+  si \(\lvert \mathscr{U} \rvert = m\),
+  podemos usar simplemente \(x\) como índice de la tabla.
+  El caso de interés nuestro es que \(n\)
+  (el número de objetos a almacenar)
+  es muchísimo menor que el total de objetos posibles;
+  buscamos que \(m\) no sea mucho mayor que \(n\) para ahorrar espacio.
+  Pero en caso que \(m < \lvert \mathscr{U} \rvert\)
+  necesariamente debemos manejar \emph{colisiones},
+  situaciones en que queremos almacenar dos objetos \(x \ne y\)
+  tales que \(h(x) = h(y)\).
+  Para esto hay tres alternativas de solución:
+  \begin{description}
+  \item[Direccionamiento cerrado:]
+    Los objetos que colisionan se almacenan en una estructura secundaria,
+    como una lista o un árbol binario de búsqueda.
+  \item[Direccionamiento abierto:]
+    Si se produce una colisión,
+    almacenamos uno de los objetos en alguna otra ubicación libre de la tabla.
+    Si al agregar elementos se llena demasiado la tabla,
+    podemos usar la idea básica de arreglos dinámicos
+    (sección~\ref{sec:arreglo-dinámico}).
+  \item[Hashing perfecto:]
+    Si conocemos los objetos a almacenar de antemano,
+    podemos elegir \(h\) de forma que no hayan colisiones.
+    Pero las funciones de \emph{\foreignlanguage{english}{hashing}} perfectas
+    (esencialmente permutaciones)
+    son relativamente raras.
+    Para \(n\) elementos hay \(n!\) permutaciones y \(n^n\) funciones en total,
+    o sea,
+    usando la fórmula de Stirling
+    la proporción es aproximadamente:
+    \begin{align}
+      \frac{n!}{n^n}
+        &\approx \frac{\sqrt{2 \pi n} (n / \mathrm{e})^n}{n^n} \\
+        &=	 \sqrt{2 \pi n} \mathrm{e}^{-n}
+                      \label{eq:fraction.perfect}
+    \end{align}
+    Fredman, Komlós y Szemerédi~%
+      \cite{fredman84:_perfect_hashing}
+    describen una técnica eficiente
+    para construir funciones
+    de \emph{\foreignlanguage{english}{hashing}} perfectas.
+  \end{description}
+
+\section{Importancia del azar}
+\label{sec:azar-hash}
+
+  Por el principio del palomar,
+  sea cual sea la función de \emph{\foreignlanguage{english}{hashing}}
+  elegida para una tabla de tamaño \(m\)
+  hay al menos \(\lceil \lvert \mathscr{U} \rvert / m \rceil\) objetos
+  que dan a la misma posición.
+  Si en una aplicación aparecen muchos objetos que caen en la misma posición,
+  ya sea por mala suerte o por elección maliciosa,
+  el rendimiento será horrible.
+  Este es un riesgo de seguridad importante
+  cuando se procesan datos controlados
+  por un potencial adversario
+  (los llamados ataques de complejidad algorítmica,
+   ver por ejemplo Crosby y Wallach~%
+     \cite{crosby03:_DoS_algo_compl_attack}).
+  La única solución práctica es elegir la función al azar
+  entre una colección suficientemente grande.
+  Específicamente,
+  fijamos una colección de funciones \(\mathscr{H}\)
+  de \(\mathscr{U}\) a \([0, m - 1]\),
+  y elegimos \(h \in \mathscr{H}\) al azar según alguna distribución.
+  Distintos conjuntos de funciones y distribuciones
+  dan garantías teóricas diferentes.
+
+  El análisis teórico es más simple
+  si se suponen funciones \emph{\foreignlanguage{english}{hash}}
+  \emph{ideales al azar},
+  se elige \(h\) uniformemente al azar
+  entre todas las funciones de \(\mathscr{U}\) a \([0, m - 1]\).
+  Es un modelo simple y limpio,
+  que da las máximas garantías posibles,
+  pero requiere elegir el valor de \(h(x)\) al azar para cada \(x\),
+  lo que significaría tener que registrar su valor\ldots{}
+  y volvemos a nuestro problema inicial.
+  En la práctica,
+  nos restringimos a familias de funciones
+  \textquote{lo suficientemente al azar}
+  para dar buen rendimiento.
+
+  Una propiedad que intuitivamente parece útil es \emph{uniformidad}.
+  Se dice que la familia de funciones \(\mathscr{H}\) es uniforme
+  si eligiendo una función \(h\) uniformemente al azar de \(\mathscr{H}\)
+  cada valor es igualmente probable para cada objeto del universo:
+  \begin{equation}
+    \label{eq:hash-uniform}
+    \Pr_{h \in \mathscr{H}}[ h(x) = i ]
+      = \frac{1}{m}
+      \quad\text{para todo \(x \in \mathscr{U}\)
+                 y todo \(i \in [0, m - 1]\)}
+  \end{equation}
+  Sin embargo,
+  esto no es particularmente relevante.
+  Considere la familia \(\mathscr{K}\) de funciones constantes
+  definidas mediante \(\mathrm{const}_a(x) = a\) para todo \(x\).
+  La familia \(\mathscr{K}\) es perfectamente uniforme y totalmente inútil.
+
+  Lo que buscamos realmente es minimizar colisiones.
+  Se dice que la familia \(\mathscr{H}\) es \emph{universal}
+  si la probabilidad de colisión entre dos objetos diferentes
+  es la menor posible:
+  \begin{equation}
+    \label{eq:hash-universal}
+    \Pr_{h \in \mathscr{H}}[ h(x) = h(y) ]
+      \le \frac{1}{m}
+      \quad\text{para todo \(x \ne y\)}
+  \end{equation}
+
+  La mayor parte de los análisis elementales
+  requieren una versión menos exigente,
+  se dice que la familia \(\mathscr{H}\)
+  es \emph{cercana a universal}
+  si la probabilidad de colisión es cercana a la ideal:
+  \begin{equation}
+    \label{eq:hash-near-universal}
+    \Pr_{h \in \mathscr{H}}[ h(x) = h(y) ]
+      \le \frac{2}{m}
+      \quad\text{para todo \(x \ne y\)}
+  \end{equation}
+  No hay nada especial en la constante \num{2},
+  toda constante explícita mayor a \num{1} sirve.
+
+  Análisis más detallado
+  requiere considerar colisiones en grupos mayores de objetos.
+  Para cada entero \(k\) se dice que la familia \(\mathscr{H}\)
+  es \emph{fuertemente \(k\)\nobreakdash-universal}
+  o \emph{\(k\)\nobreakdash-uniforme}
+  si para toda colección de \(k\) objetos y de \(k\) índices:
+  \begin{equation}
+    \label{eq:hash-k-uniform}
+    \Pr_{h \in \mathscr{H}}
+       \left[
+         \bigwedge_{1 \le j \le k} h(x_j) = i_j
+       \right]
+       = \frac{1}{m^k}
+      \quad\text{para todos \(x_1, \dotsc x_k\) distintos
+                 y todos \(i_1, \dotsc i_k\)}
+  \end{equation}
+  Familias de funciones \emph{\foreignlanguage{english}{hash}} ideales al azar
+  son \(k\)\nobreakdash-uniformes para todo \(k\).
+
+\section{Una familia de funciones hash universal}
+\label{sec:familia-hash-universal}
+
+  Hay varias construcciones de familias
+  \emph{\foreignlanguage{english}{hash}} universales,
+  presentamos una de ellas.
+  Una discusión más detallada
+  y ejemplos adicionales
+  se encuentra por ejemplo en el apunte de Erickson~%
+    \cite{erickson19:_algorithms}.
+  \begin{theorem}
+    \label{theo:universal-multiplicative-hash}
+    Considere un primo \(p\).
+    Para cualquier par de enteros \((a, b)\)
+    con \(1 \le a < p\) y \(0 \le b < p\)
+    y \(m \le p\)
+    defina la función \(h_{a, b} \colon \mathscr{U} \to [0, m - 1]\)
+    mediante:
+    \begin{equation}
+      h_{a, b}(x)
+        = ((a x + b) \bmod p) \bmod m
+    \end{equation}
+    Esta familia es universal.
+  \end{theorem}
+  \begin{proof}
+    Fije enteros \(r, s, x, y\)
+    con \(x \not\equiv y \pmod{p}\) y \(r \not\equiv s \pmod{p}\).
+    El sistema lineal:
+    \begin{align*}
+      a x + b
+        \equiv r \pmod{p} \\
+      a y + b
+        \equiv s \pmod{p}
+    \end{align*}
+    por el teorema chino de los residuos
+    tiene solución única \((a, b)\) módulo \(p\)
+    si y solo si \(x \not\equiv y \pmod{p}\).
+    Se sigue que:
+    \begin{equation*}
+      \Pr_{a, b}[(a x + b) \bmod p = r
+                    \wedge (a y + b) \bmod p = s]
+        = \frac{1}{p (p - 1)}
+    \end{equation*}
+    por lo que:
+    \begin{equation*}
+      \Pr_{a, b}[h_{a, b}(x) = h_{a, b}(y)]
+        = \frac{N}{p (p - 1)}
+    \end{equation*}
+    donde \(N\) es el número de pares ordenados \((r, s) \in \mathbb{Z}_p^2\)
+    tales que \(r \ne s\) pero \(r \equiv s \pmod{m}\).
+    Para cada \(r \in \mathbb{Z}_p\) fijo,
+    hay a lo más \(\lfloor p / m \rfloor\) enteros \(s \in \mathbb{Z}_p\)
+    tales que \(r \ne s\) pero \(r \bmod m = s \bmod m\).
+    Como \(p\) es primo,
+    \(\lfloor p / m \rfloor \le (p - 1) / m\),
+    con lo que \(N \le p (p - 1) / m\).
+    Concluimos
+    \begin{equation*}
+      \Pr_{a, b}[h_{a, b}(x) = h_{a, b}(y)]
+        \le \frac{1}{m}
+    \end{equation*}
+    como queríamos demostrar.
+  \end{proof}
+
+  Para aplicar esto en la práctica,
+  al momento de crear la tabla se eligen \(a\) y \(b\),
+  uniformemente al azar y se usan durante su existencia.
+
+% Sedgewick cites Knuth for number of probes as follows (a = n/m):
+%
+%				    Unsuccessful	     Successful
+% Closed addressing (lists)	      1 + a/2		     (a + 1)/2
+% Open addressing, linear probing  1/2 + 1/(2 (1 - a)^2)  1/2 + 1 / (2 (1 - a))
+% Open addressing, double hashing    1 / (1 - a)	    -ln(1 - a)/a
+%
+% Unsuccessful for closed addressing is cut in half if lists are kept sorted
+%
+% Check/derive
+
+\section{Direccionamiento cerrado}
+\label{sec:hashing-cerrado}
+
+  Esta situación es la más sencilla de analizar matemáticamente,
+  usando herramientas simples de probabilidades.
+  Nuestro desarrollo sigue al de Bogart, Stein y Drysdale~%
+    \cite{bogart10:_discr_math_comp_sci}.
+  Suponemos \emph{\foreignlanguage{english}{hashing}} ideal.
+
+\subsection{Posiciones libres y ocupadas}
+\label{sec:posiciones-libres-ocupadas}
+
+  Sea \(X_i\) el número de objetos en la posición \(i\) de la tabla.
+  Es claro que:
+  \begin{equation*}
+    \sum_i X_i
+      = n
+  \end{equation*}
+  Por linealidad sabemos entonces:
+  \begin{equation*}
+    \sum_i \Exp[ X_i ]
+      = n
+  \end{equation*}
+  Por simetría,
+  \(\Exp[ X_i ]\) no depende de \(i\):
+  \begin{equation*}
+    \Exp[ X_i ]
+      = \frac{n}{m}
+  \end{equation*}
+  Hemos demostrado:
+  \begin{theorem}
+    \label{theo:hash-expected}
+    Con \emph{\foreignlanguage{english}{hashing}} ideal,
+    al almacenar \(n\) objetos a una tabla de tamaño \(m\),
+    el número esperado de objetos en cada posición es \(n/m\).
+  \end{theorem}
+
+  Después de agregar un objeto a la tabla,
+  la probabilidad que la posición \(i\) esté vacía es \(1 - 1/m\).
+  Después de \(n\) objetos agregados a la tabla,
+  la probabilidad que siga vacío es \((1 - 1/m)^n\)
+  (son \(n\) intentos independientes).
+  Consideremos la misma secuencia de objetos,
+  y sea \(X_i = 1\) si la posición \(i\) está libre,
+  \(X_i = 0\) en caso contrario.
+  El número de posiciones libres es:
+  \begin{equation*}
+    \sum_i X_i
+  \end{equation*}
+  Nuevamente por linealidad,
+  como \(\Exp[ X_i ] = (1 - 1/m)^n\),
+  tenemos:
+  \begin{align*}
+    \Exp\left[ \sum_i X_i \right]
+      &= \sum_i \Exp[X_i] \\
+      &= \sum_i \left( 1 - \frac{1}{m} \right)^n \\
+      &= m \left( 1 - \frac{1}{m} \right)^n
+  \end{align*}
+  Hemos demostrado:
+  \begin{theorem}
+    \label{theo:hash-expected-free}
+    Al hashear \(n\) objetos a una tabla de \(m\) ubicaciones,
+    el número esperado de ubicaciones vacías es \(m (1 - 1/m)^n\).
+  \end{theorem}
+  Incidentalmente,
+  si \(n = m\),
+  la fracción esperada de espacios libres es \((1 - 1/m)^m\).
+  Cuando \(n \to \infty\),
+  por el límite clásico del lema~\ref{lem:classic-limit}
+  cuando \(n = m\) y \(m \to \infty\),
+  la fracción de espacios libres es \(\mathrm{e}^{-1}\),
+  esperamos \(m/\mathrm{e}\) espacios libres.
+
+\subsection{Problema del coleccionista de cupones}
+\label{sec:coupon-collector}
+
+  Es de interés calcular el número de objetos requeridos
+  para llenar la tabla de tamaño \(m\).
+  Esto se conoce como el \emph{problema del coleccionista de cupones}
+  (\emph{\foreignlanguage{english}{coupon collector problem}},
+   alguien recibe cupones elegidos al azar entre \(m\)
+   y busca armar la colección completa).
+  Planteamos el problema como ir llenando sucesivamente \(k\) posiciones,
+  estamos interesados en ir de \(k\) llenas a \(k + 1\).
+  Como los cupones llegan al azar,
+  si hay \(k\) posiciones ocupadas la probabilidad de tener éxito
+  (llenar una libre)
+  en cada intento será:
+  \begin{equation*}
+    p_k
+      = \frac{m - k}{m}
+  \end{equation*}
+  por lo que el número esperado de pasos
+  requeridos en esta etapa es:
+  \begin{equation*}
+    \frac{1}{p_k}
+      = \frac{m}{m - k}
+  \end{equation*}
+  Por la linealidad del valor esperado
+  el valor esperado del número de pasos total \(T\) es:
+  \begin{align*}
+    \Exp[T]
+      &=    \sum_{0 \le k \le m - 1} \frac{1}{p_k} \\
+      &=    m \sum_{0 \le k \le m - 1} \frac{1}{m - k} \\
+      &=    m \sum_{1 \le k \le m} \frac{1}{k} \\
+      &=    m H_m \\
+      &\sim m \ln m
+  \end{align*}
+  Acá hemos usado la definición de números harmónicos:
+  \begin{equation*}
+    H_n
+      = \sum_{1 \le k \le n} \frac{1}{k}
+  \end{equation*}
+  Se sabe
+  (ver por ejemplo el apunte de Fundamentos de Informática~%
+    \cite[capítulo~18]{brand17:_fundamentos_informatica})
+  que:
+  \begin{equation*}
+    H_n
+      = \ln n + \gamma + O\left( \frac{1}{n} \right)
+  \end{equation*}
+  donde \(\gamma \approx 0,57721\) es la constante de Euler.
+
+  Para la varianza,
+  como el número de cupones recibidos en cada paso
+  son variables aleatorias independientes:
+  \begin{align*}
+    \var[T]
+      &=   \var[t_1] + \var[t_2] + \dotsb + \var[t_{m - 1}] \\
+      &=   \frac{1 - p_1}{p_1^2}
+             + \frac{1 - p_2}{p_2^2}
+             + \dotsb
+             + \frac{1 - p_{m - 1}}{p_{m - 1}^2} \\
+      &\le \frac{m^2}{m^2}
+             + \frac{m^2}{(m - 1)^2}
+             + \dotsb
+             + \frac{m^2}{1^2} \\
+      &=   m^2 \left(
+                 \frac{1}{1^2} + \frac{1}{2^2} + \dotsb + \frac{1}{m^2}
+               \right) \\
+      &<   \frac{\pi^2 m^2}{6}
+  \end{align*}
+  Esto último por la solución al famoso problema de Basilea
+  (ver por ejemplo el apunte de Fundamentos de Informática~%
+    \cite[capítulo~18]{brand17:_fundamentos_informatica}):
+  \begin{equation*}
+    \sum_{k \ge 1} \frac{1}{k^2}
+      = \frac{\pi^2}{6}
+  \end{equation*}
+
+\subsection{Número esperado de colisiones}
+\label{sec:numero-colisiones}
+
+  El número de posiciones de la tabla que contienen más de un objeto
+  es el número total \(n\) de objetos menos el número de ubicaciones ocupadas.
+  Por los teoremas~\ref{theo:hash-expected} y~\ref{theo:hash-expected-free}
+  tenemos:
+  \begin{align*}
+    \Exp[ \text{colisiones} ]
+      &= n - \Exp[ \text{posiciones ocupadas} ] \\
+      &= n - m + \Exp[ \text{posiciones libres} ]
+  \end{align*}
+  y tenemos otro teorema:
+  \begin{theorem}
+    \label{theo:hash-expected-collisions}
+    Usando \emph{\foreignlanguage{english}{hashing}} ideal,
+    al agregar \(n\) objetos a una tabla de tamaño \(m\),
+    el número esperado de colisiones es:
+    \begin{equation*}
+      n - m + m \left( 1 - \frac{1}{m} \right)^n
+    \end{equation*}
+  \end{theorem}
+  Esto va contra la intuición:
+  en promedio,
+  al agregar \(m\) objetos a una tabla de tamaño \(m\) cuando \(m\) es grande,
+  esperamos un objeto en cada posición,
+  pero una fracción de \(\mathrm{e}^{-1} = 0,3679\) de posiciones queda libre,
+  y hay \(m \mathrm{e}^{-1}\) colisiones.
+
+\subsection{Largo esperado de la lista más larga}
+\label{sec:lista-mas-larga}
+
+  Suponiendo que los elementos que dan en una posición dada de la tabla
+  se almacenan en una lista,
+  tiene sentido preguntarse por el peor caso de esta.
+  Es claro que lo peor que puede ocurrir es que todos den en la misma posición,
+  con lo que el peor largo es directamente \(n\).
+  Pero esto es extremadamente poco probable,
+  no es una medida realista.
+  Usar listas es una buena opción,
+  en promedio
+  para tablas no demasiado llenas las listas serán cortas
+  e importa que sean simples de administrar.
+  Otras posibilidades son usar
+  a su vez tablas \emph{\foreignlanguage{english}{hash}}
+  con direccionamiento cerrado,
+  que se hacen crecer cuando se llenen demasiado.
+
+  Nos interesa acotar el valor esperado del tamaño de la lista más larga,
+  cuando se ingresan \(n\) objetos a una tabla de tamaño \(n\).
+  Usaremos la fórmula de Stirling~\eqref{eq:Stirling}:
+  \begin{equation*}
+    x!
+      = \left( \frac{x}{\mathrm{e}} \right)^x
+          \sqrt{2 \pi x}
+          \mathrm{e}^{r(x)}
+  \end{equation*}
+  donde las cotas de Robbins~\eqref{eq:Robbins} son:
+  \begin{equation*}
+    \frac{1}{12 x + 1}
+      < r(x)
+      < \frac{1}{12 x}
+  \end{equation*}
+  Nos dice que,
+  en términos gruesos,
+  \((x/\mathrm{e})^x\) es una buena aproximación para \(x!\).
+  Por lo demás,
+  el factor de error es casi uno,
+  podemos omitirlo.
+
+  Partiremos por una cantidad que sabemos cómo calcular:
+  sea \(H_{i t}\) el evento que \(t\) claves dan en la posición \(i\).
+  Entonces \(\Pr[ H_{i t} ]\) es la probabilidad de exactamente \(t\) éxitos
+  en \(n\) intentos independientes con probabilidad de éxito \(1/n\),
+  o sea:
+  \begin{equation}
+    \label{eq:Pr[Hit]}
+    \Pr[ H_{i t} ]
+      = \binom{n}{t}
+         \left( \frac{1}{n} \right)^t \left( 1 - \frac{1}{n} \right)^{n - t}
+  \end{equation}
+  Sea \(M_t\) el evento que la lista más larga sea de largo \(t\).
+  Tenemos:
+  \begin{lemma}
+    \label{lem:Mt}
+    Sea \(M_t\) el evento que la cola más larga al hashear \(n\) objetos
+    en una tabla de tamaño \(n\) sea de largo \(t\),
+    y sea \(H_{i t}\) el evento que exactamente \(t\) claves
+    dan en la posición \(i\).
+    Entonces:
+    \begin{equation*}
+      \Pr[ M_t ]
+        \le n \Pr[H_{1 t} ]
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    Analizaremos el caso de la cola más larga en cualquier posición \(i\);
+    por simetría la posición da lo mismo,
+    podemos plantear el resultado para la posición \num{1},
+    como hace el enunciado.
+
+    Sea \(M_{i t}\) el evento que el largo máximo sea \(t\)
+    y que está en la posición \(i\).
+    Es claro que \(M_{i t} \subseteq H_{i t}\),
+    por lo que \(\Pr[M_{i t}] \le \Pr[H_{i t}]\).
+    Además:
+    \begin{equation*}
+      M_t
+        = M_{1 t} \cup M_{2 t} \cup \dotsb \cup M_{n t}
+    \end{equation*}
+    Por simetría,
+    \(\Pr[H_{i t}]\) son todas iguales,
+    y por la cota de la unión
+    resulta lo prometido.
+  \end{proof}
+  Podemos usar~\eqref{eq:Pr[Hit]} y el lema~\ref{lem:binomial}
+  para acotar:
+  \begin{align*}
+    \Pr[H_{i t}]
+      &=   \binom{n}{t}
+             \left( \frac{1}{n} \right)^t
+             \left(1 - \frac{1}{n} \right)^{n - t} \\
+      &\le \frac{n^n}{t^t (n - t)^{n - t}}
+             \left( \frac{1}{n} \right)^t
+             \left(1 - \frac{1}{n} \right)^{n - t} \\
+    \intertext{Simplificando,
+               como \((1 - 1/n)^{n - t} < 1\):}
+    \Pr[H_{i t}]
+      &\le \frac{n^n}{t^t (n - t)^{n - t}}
+              \left( \frac{1}{n} \right)^t \\
+      &=   \left( \frac{n}{n - t} \right)^{n - t} \frac{1}{t^t} \\
+    \intertext{Como \(\ln(1 + u) < u\) si \(u > 0\),
+               exponenciando es \((1 + 1/x)^x < \mathrm{e}\):}
+      &=   \left(
+              \left( 1 + \frac{t}{n - t} \right)^{\frac{n - t}{t}}
+            \right)^t \frac{1}{t^t} \\
+      &\le \frac{\mathrm{e}^t}{t^t}
+  \end{align*}
+  Juntando los anteriores resultados:
+  \begin{lemma}
+    \label{lem:Pr[Mt]}
+    \begin{equation*}
+      \Pr[ M_t ]
+        \le \frac{n \mathrm{e}^t}{t^t}
+    \end{equation*}
+  \end{lemma}
+  Tenemos una cota,
+  que podemos usar para acotar la cantidad de interés,
+  el largo promedio de la lista más larga:
+  \begin{equation}
+    \label{eq:hash-longest-length-1}
+    \sum_{0 \le t \le n} t \Pr[M_t]
+  \end{equation}
+  Pero hay un problema:
+  la cota del lema~\ref{lem:Pr[Mt]}
+  da valores absurdos para \(t\) pequeño.
+  Por ejemplo,
+  para \(t = 1\) da \(\Pr[M_1] \le n \mathrm{e}\),
+  lo que está totalmente fuera de proporción.
+  Para valores grandes de \(t\),
+  el lema indica que \(\Pr[M_t]\) es pequeño,
+  y la cota resulta ajustada.
+  El truco para estimar la suma~\eqref{eq:hash-longest-length-1}
+  es dividir en una suma sobre valores \textquote{chicos} y \textquote{grandes},
+  y estimar las sumas por separado.
+  Suponiendo que \(n \ge 3\)
+  (para evitar logaritmos de números negativos)
+  cortamos en \(t^* = \lfloor 5 \ln n / \ln \ln n \rfloor\):
+  \begin{equation}
+    \label{eq:hash-longest-length-cut}
+    \sum_{0 \le t \le n} t \Pr[M_t]
+      = \sum_{0 \le t \le t^*} t \Pr[M_t]
+          + \sum_{t^* < t \le n} t \Pr[M_t]
+  \end{equation}
+
+  Para la primera suma,
+  observamos que \(t \le t^*\),
+  de manera que:
+  \begin{align}
+    \sum_{0 \le t \le t^*} t \Pr[M_t]
+      &\le \sum_{0 \le t \le t^*} t^* \Pr[M_t] \notag \\
+      &=   t^* \sum_{0 \le t \le t^*} \Pr[M_t] \notag \\
+      &\le t^*
+           \label{eq:hash-longest-length-small}
+  \end{align}
+  Lo último resulta simplemente porque las probabilidades de eventos disjuntos
+  suman a lo más a uno.
+
+  Para la segunda usamos nuestro lema~\ref{lem:Pr[Mt]}.
+  Dijimos que esperamos que \(\Pr[M_t]\) acá sea pequeño,
+  y la cota disminuye.
+  Por el lema,
+  para \(t \ge t^*\) después de algún álgebra tediosa vemos que:
+  \begin{equation*}
+    \Pr[M_t]
+      \le \frac{1}{n^2}
+  \end{equation*}
+  Podemos entonces acotar la suma para \(t\) mayores:
+  \begin{align}
+    \sum_{t^* < t \le n} t \Pr[M_t]
+      &\le \sum_{t^* < t \le n} n \frac{1}{n^2} \notag \\
+      &=   \sum_{t^* < t \le n} \frac{1}{n} \notag \\
+      &\le 1
+           \label{eq:hash-longest-length-large}
+  \end{align}
+  Combinando~\eqref{eq:hash-longest-length-small}
+  con~\eqref{eq:hash-longest-length-large}
+  obtenemos:
+  \begin{equation}
+    \label{eq:hash-longest-length-estimate}
+    \sum_{0 \le t \le n} t \Pr[M_t]
+      \le 5 \ln n / \ln \ln n + 1
+      = O( \ln n / \ln \ln n )
+  \end{equation}
+
+  La elección de \(t^*\) para cortar la suma parece magia.
+  Nos pusimos una cota para \(\Pr[M_t]\) cercana a \(1/n^2\),
+  que da la cómoda cota~\eqref{eq:hash-longest-length-large}.
+  Esto da la ecuación:
+  \begin{equation}
+    \label{eq:relacion-base-corte}
+    \frac{n \mathrm{e}^t}{t^t}
+      = \frac{1}{n^2}
+  \end{equation}
+  Esto no puede resolverse para \(t\),
+  pero es más o menos similar a
+  (tome logaritmos y omita constantes molestas):
+  \begin{align}
+    t^t
+      &= n \notag \\
+    t
+      &= \frac{\ln n}{\ln t} \label{eq:equacion-corte}
+  \end{align}
+  Tomando una aproximación inicial \(t = \ln n\),
+  iterar una vez nos da:
+  \begin{equation}
+    \label{eq:aproximacion-corte}
+    t
+      \approx \frac{\ln n}{\ln \ln n}
+  \end{equation}
+  Sospechamos que la solución
+  de nuestra ecuación~\eqref{eq:relacion-base-corte} es algo como:
+  \begin{equation}
+    \label{eq:corte-aproximado}
+    t
+      = c \frac{\ln n}{\ln \ln n}
+  \end{equation}
+  y un poco de experimentación muestra que \(c = 5\)
+  da una división manejable en~\eqref{eq:hash-longest-length-cut}.
+
+\subsection{Usar más de una función de hashing}
+\label{sec:two-choices}
+
+  Una idea sorprendentemente efectiva
+  es usar varias funciones
+  de \emph{\foreignlanguage{english}{hashing}} independientes
+  y elegir aquella posición en la cual la lista es más corta.
+  Mitzenmacher~%
+   \cite{mitzenmacher96:_power_two_choic_random_load_balan}
+  demostró que al usar dos el largo de la lista más larga
+  es \(\Theta(\log \log n)\) con alta probabilidad.
+  Esto es una reducción exponencial
+  frente a la cota~\eqref{eq:hash-longest-length-estimate}.
+  El desarrollo es complejo,
+  no lo repetiremos acá.
+  Una revisión reciente de este resultado y afines,
+  junto a una discusión de aplicaciones,
+  dan Mitzenmacher, Richa y Sitaraman~%
+   \cite{mitzenmacher01:_power_two_random_choic}.
+  Es de interés práctico porque disminuye el tiempo de búsqueda,
+  además que las búsquedas en ambas listas pueden paralelizarse fácilmente.
+
+\subsection{Análisis de direccionamiento cerrado}
+\label{sec:analisis-cerrado}
+
+  Consideremos los programas para direccionamiento cerrado,
+  listado~\ref{lst:hashing-closed}.
+  Usamos listas sin ordenar para cada casillero,
+  por ser lo más simple.
+  Arbitrariamente usamos 10267
+  (un número primo)
+  como número de casilleros.
+  \lstinputlisting[float,
+                   firstline = 4,
+                   caption = {Hashing cerrado},
+                   label = lst:hashing-closed]
+                  {code/hashing-closed.c}
+  Usaremos como medida de costo los nodos considerados en cada caso.
+  Como antes,
+  sea \(m\) el tamaño de la tabla y \(n\) el número de elementos que contiene,
+  y suponemos \emph{\foreignlanguage{english}{hashing}} ideal.
+  Abreviaremos
+  el \emph{factor de carga} de la tabla por:
+  \begin{equation}
+    \label{eq:def-alpha}
+    \alpha
+      = \frac{n}{m}
+  \end{equation}
+
+\subsubsection{Inserción}
+\label{sec:hashing-cerrado-insercion}
+
+  Es claro
+  (comparar con el listado~\ref{lst:hashing-closed})
+  que el número de posiciones consideradas es constante
+  (\(O(1)\)),
+  no verificamos que el elemento a insertar no esté ya presente.
+
+\subsubsection{Búsqueda exitosa}
+\label{sec:hashing-cerrado-busqueda-exitosa}
+
+  Sea la secuencia en que se ingresaron los objetos
+  \(\langle x_i \rangle\),
+  que suponemos todos diferentes entre sí.
+  Buscamos hallar el costo promedio de búsqueda de los objetos,
+  suponiendo que cada uno es buscado con la misma frecuencia.
+  Como insertamos nuevos objetos a cada lista al comienzo,
+  debemos comparar y pasar sobre los insertados después.
+
+  Sean \(X_{i j}\) variables indicadoras,
+  \(X_{i j} = [h(x_i) = h(x_j)]\).
+  Por la suposición sobre la función \(h\)
+  para todo \(i \ne j\) tenemos:
+  \begin{equation*}
+    \Exp[X_{i j}]
+      = \frac{1}{m}
+  \end{equation*}
+  El valor esperado del número de posiciones revisadas
+  es:
+  \begin{align}
+    \Exp\left[
+          \frac{1}{n} \sum_{1 \le i \le n}
+                        \left(
+                          1 + \sum_{i + 1 \le j \le n} X_{i j}
+                        \right)
+          \right]
+      &=	   \frac{1}{n} \sum_{1 \le i \le n}
+                          \left(
+                            1 + \sum_{i + 1 \le j \le n} \Exp[X_{i j}]
+                          \right) \notag \\
+      &=	   \frac{1}{n} \sum_{1 \le i \le n}
+                          \left(
+                            1 + \frac{1}{m} (n - i)
+                          \right) \notag \\
+      &=	   1 + \frac{1}{m n}
+                  \left(
+                    \sum_{1 \le i \le n} n - \sum_{1 \le i \le n} i
+                  \right) \notag \\
+      &=	   1 + \frac{n}{2 m} - \frac{1}{2 m} \\
+      &=	   1 + \frac{\alpha}{2} - \frac{\alpha}{2 n} \notag \\
+      &\sim 1 + \frac{\alpha}{2}
+         \label{eq:hashing-closed-success}
+  \end{align}
+
+\subsubsection{Búsqueda fallida}
+\label{sec:hashing-cerrado-busqueda-fallida}
+
+  La situación es la misma anterior,
+  solo que en este caso debemos revisar la lista completa:
+  \begin{align}
+    \Exp\left[
+          \frac{1}{n} \sum_{1 \le i \le n}
+                        \left(
+                          1 + \sum_{1 \le j \le n} X_{i j}
+                        \right)
+        \right]
+      &=	   \frac{1}{n} \sum_{1 \le i \le n}
+                          \left(
+                            1 + \sum_{1 \le j \le n} \Exp[X_{i j}]
+                          \right) \notag \\
+      &=	   \frac{1}{n} \sum_{1 \le i \le n}
+                          \left(
+                            1 + \frac{1}{m} n
+                          \right) \notag \\
+      &=	   1 + \frac{n}{m} \notag \\
+      &=	   1 + \alpha
+         \label{eq:hashing-closed-failure}
+  \end{align}
+
+\subsection{Variantes de interés}
+\label{sec:hash-closed-variants}
+
+  Algunas variantes que vale la pena considerar es manejar las listas ordenadas
+  (esto encarece la inserción de nuevos elementos,
+   pero disminuye el costo de búsquedas fallidas),
+  o utilizar estructuras más sofisticadas en cada casillero,
+  como árboles binarios
+  o derechamente nuevas tablas \emph{\foreignlanguage{english}{hash}}.
+  Claro que por lo discutido antes,
+  estas generalmente solo tienen sentido
+  en caso que \(n\) sea substancialmente mayor a \(m\).
+
+\section{Direccionamiento abierto}
+\label{sec:hash-open}
+
+  Una alternativa es usar posiciones libres de la tabla
+  cuando ocurren colisiones.
+  El análisis de Knuth~%
+    \cite{knuth63:_notes_open_addressing}
+  de direccionamiento abierto con prueba lineal es considerado por muchos
+  como el nacimiento del análisis de algoritmos.
+  Una discusión detallada de estas técnicas ofrecen Sedgewick y Flajolet~%
+    \cite[capítulo~8]{sedgewick13:_introd_anal_algor}.
+
+  El algoritmo es~\ref{alg:hash-open},
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \For{\(i \gets 0\) \KwTo \(m - 1\)}{
+      \uIf{\(T[h_i(x)] = x\)}{
+        \Return \(h_i(x)\) \;
+      }
+      \ElseIf{\(T[h_i(x)] = \varnothing\)}{
+        \Return Absent \;
+      }
+    }
+    \caption{Direccionamiento abierto}
+    \label{alg:hash-open}
+  \end{algorithm}
+  supone una secuencia de funciones \emph{\foreignlanguage{english}{hash}}
+  \(\langle h_0, h_1, \dotsc, h_{m - 1} \rangle\)
+  tales que para todo \(x \in \mathscr{U}\)
+  tenemos que
+  \(\langle h_0(x), h_1(x), \dotsc, h_{m - 1}(x) \rangle\)
+  es una permutación de \(\{ 0, 1, 2, \dotsc, m - 1 \}\).
+  En otras palabras,
+  para \(1 \le i \le m - 1\)
+  las funciones \(h_i\) mapean \(x\) a posiciones diferentes de la tabla.
+
+  Un modelo simple
+  (pero un tanto irreal)
+  es el que planteó Peterson~%
+    \cite{peterson57:_addressing_random_access_storage}:
+  suponiendo que las \(n\)~posiciones ocupadas están distribuidas al azar
+  entre las \(m\)~casillas del arreglo,
+  la probabilidad de que se requieran \(r\)~accesos
+  al insertar el siguiente elemento es simplemente:
+  \begin{equation*}
+    p_r
+      = \binom{m - r}{n - r + 1} \bigg/ \binom{m}{n}
+  \end{equation*}
+  (fije \(r\)~posiciones a ser revisadas,
+   \(r - 1\)~ocupadas y \num{1}~libre;
+   entre ellas elegimos las demás \(n - (r - 1)\)~posiciones ocupadas).
+  El número esperado de posiciones revisadas al insertar un elemento nuevo es:
+  \begin{align}
+    \Exp[\text{inserción}]
+      &= \sum_{1 \le r \le m} r p_r \notag \\
+      &= \sum_{1 \le r \le m} r \binom{m - n}{n - r + 1} \bigg/ \binom{m}{n} \notag \\
+      &= m + 1
+           - \sum_{1 \le r \le m}
+               (m + 1 - r) \binom{m - r}{n - r + 1} \bigg/ \binom{m}{n} \notag \\
+      &= m + 1
+           - \sum_{1 \le r \le m}
+               (m + 1 - r) \binom{m - r}{n - r + 1} \bigg/ \binom{m}{n} \notag \\
+      &= m + 1
+           - \sum_{1 \le r \le m}
+               (m - n) \binom{m + 1 - r}{m - n} \bigg/ \binom{m}{n} \notag \\
+      &= m + 1
+           - (m - n) \binom{m + 1}{m - n} \bigg/ \binom{m}{n} \notag \\
+      &= m + 1
+           - (m - n) \frac{m + 1}{m - n + 1} \notag \\
+      &= \frac{m + 1}{m - n + 1} \notag \\
+      &= \frac{1 + 1 / m}{1 - \alpha + 1 / m} \notag \\
+      &\approx \frac{1}{1 - \alpha}
+            \label{eq:open-hashing:insert}
+  \end{align}
+  Exactamente las mismas posiciones se revisan en una búsqueda fallida.
+
+  Una búsqueda exitosa revisa las mismas posiciones
+  consideradas al insertar el elemento del caso:
+  \begin{align*}
+    \Exp[\text{exitosa}]
+      &= \frac{1}{n}
+           \sum_{0 \le k \le n - 1} \frac{m + 1}{m - k + 1} \notag \\
+      &= \frac{m + 1}{n}
+            \left(
+              \sum_{1 \le k \le m + 1} \frac{1}{k}
+                - \sum_{1 \le k \le m - n + 1} \frac{1}{k}
+            \right) \notag \\
+      &= \frac{m + 1}{n} (H_{m + 1} - H_{m - n + 1}) \notag \\
+      &\approx \frac{1}{\alpha} \ln \frac{1}{1 - \alpha}
+            \label{eq:open-hashing:success}
+  \end{align*}
+
+  El supuesto de secuencias de intentos independientes es irreal,
+  en la práctica debemos usar secuencias más manejables.
+  Tal vez la más sencilla es \emph{prueba lineal},
+  usar una única función \(h\)
+  e intentar las posiciones \((h(x) + i) \bmod m\).
+  Además de ser simple,
+  tiene la ventaja que intenta posiciones consecutivas,
+  lo que funciona bien en arquitecturas de memoria con caché.
+  Por otro lado,
+  esto tiene el efecto de apiñar las posiciones ocupadas
+  (una secuencia de \(k\) posiciones ocupadas tiene una probabilidad
+   de \(k / m\) de alargarse
+   porque el nuevo elemento cae en alguna de sus posiciones,
+   lo que en realidad es aún peor ya que puede llegar a llenar posiciones
+   entre secuencias),
+  alargando las búsquedas al aumentar \(\alpha\).
+  Propuestas para evitar este efecto son \emph{doble hashing},
+  que calcula una nueva función de hashing independiente \(h_1(x)\)
+  y revisa las posiciones \((h(x) + i h_1(x)) \bmod m\);
+  o usar \emph{prueba cuadrática},
+  que intenta \((h(x) + i^2) \bmod m\).
+  Esto igual presenta apiñamiento
+  si hay claves del mismo valor de \(h\)
+  (le llaman secundario).
+  Claro que esto solo revisa la mitad de las posiciones del arreglo
+  si su tamaño es primo
+  (recuerde que \(\mathbb{Z}_p^\times\) es cíclico,
+   solo la mitad de sus elementos
+   --los que son potencias pares del generador--
+   son cuadrados).
+  Otra opción es \emph{prueba binaria},
+  que usa \(h_i(x) = h(x) \oplus i\),
+  donde \(\oplus\) es la operación de o exclusivo bit a bit.
+  Tiene la ventaja de revisar un rango de entradas contiguas
+  antes de pasar a otra
+  (o sea,
+   recorre líneas de caché completas),
+  pero no las recorre secuencialmente
+  (evitando apiñamiento).
+  Detalles da Erickson~%
+    \cite{erickson19:_algorithms}.
+
+\subsection{Análisis de direccionamiento abierto}
+\label{sec:analisis-hashing-abierto}
+
+  Como antes,
+  sea \(m\) el tamaño de la tabla y \(n\) el número de elementos que contiene.
+  Nuevamente la medida de costo es el número de posiciones revisadas,
+  y promediamos sobre todos los elementos con probabilidad uniforme.
+  Debemos hallar un espacio vacío para el elemento a insertar
+  en caso que \(h(x)\) ya esté ocupado.
+  La suposición más simple es que cada intento sucesivo
+  considera las posiciones aún no consideradas en forma uniforme,
+  esencialmente \emph{\foreignlanguage{english}{hashing}} ideal.
+
+\subsubsection{Búsqueda fallida}
+\label{sec:hashing-abierto-busqueda-fallida}
+
+  Sea \(X\) el número de intentos al buscar \(x\),
+  y sea \(A_i\) el evento que hay \(i\) intentos
+  y la posición intentada en el intento \(i\) está ocupada.
+  Entonces:
+  \begin{align*}
+    \Pr[X \ge i]
+      &= \Pr\left[ \bigcap_{1 \le j \le i - 1} A_j \right] \\
+      &= \Pr[A_1]
+           \cdot \Pr[A_2 \mid A_1]
+           \cdot \Pr[A_3 \mid A_1 \cap A_2]
+           \cdot \dotsm
+           \cdot \Pr[A_{i - 1} \mid A_1 \cap A_2 \cap \dotsb \cap A_{i - 2}]
+  \end{align*}
+  En el intento \(i\) ya descartamos \(i - 1\) posiciones a revisar,
+  ocupadas por los \(i - 1\) elementos que están en ellas,
+  quedan \(m - i + 1\) posiciones de las cuales hay \(n - i + 1\) ocupadas,
+  y estamos eligiendo uniformemente al azar entre ellas:
+  \begin{equation*}
+    \Pr[A_i]
+      = \frac{n - i + 1}{m - i + 1}
+  \end{equation*}
+  Como son intentos independientes:
+  \begin{align*}
+    \Pr[X \ge i]
+      &=   \prod_{0 \le j \le i - 2} \frac{n - j}{m - j} \\
+      &\le \left( \frac{n}{m} \right)^{i - 1} \\
+      &=   \alpha^{i - 1}
+  \end{align*}
+  Por lo tanto:
+  \begin{align}
+    \Exp[X]
+      &=   \sum_{i \ge 1} \Pr[X \ge i] \notag \\
+      &\le \sum_{i \ge 1} \alpha^{i - 1} \notag \\
+      &=   \sum_{i \ge 0} \alpha^i \notag \\
+      &=   \frac{1}{1 - \alpha}
+         \label{eq:hashing-open-failure}
+  \end{align}
+
+  Insertar un nuevo elemento en la tabla es una búsqueda fallida
+  para hallar su lugar.
+
+\subsubsection{Búsqueda exitosa}
+\label{sec:hashing-abierto-busqueda-exitosa}
+
+  Las posiciones revisadas al insertar \(x_{i + 1}\)
+  (y revisadas al buscarlo luego)
+  son exactamente las mismas
+  que las búsquedas fallidas que llevaron a insertar ese elemento,
+  cuando la tabla tenía \(i\) elementos,
+  o sea,
+  se revisaron a lo más \(1 / (1 - i / m) = m / (m - i)\)~posiciones.
+  El promedio cumple:
+  \begin{align}
+    \frac{1}{n} \sum_{0 \le i \le n - 1} \frac{m}{m - i}
+      &=   \frac{m}{n} \sum_{0 \le i \le n - 1} \frac{1}{m - i} \notag \\
+      &=   \frac{1}{\alpha} (H_m - H_{m - n}) \notag \\
+      &\le \frac{1}{\alpha} \int_{m - n}^m \frac{\mathrm{d} x}{x} \notag \\
+      &=   \frac{1}{\alpha} \ln \frac{m}{m - n} \notag \\
+      &=   \frac{1}{\alpha} \ln \frac{1}{1 - \alpha}
+         \label{eq:hashing-open-success}
+  \end{align}
+
+\subsection{Resumen del análisis}
+\label{sec:resumen-del-analisis}
+
+  El cuadro~\ref{tab:hashing-analysis-summary}
+  resume los resultados anteriores.
+  El detalle se basa en el desarrollo de CLRS~%
+    \cite{cormen09:_CLRS}.
+  Sedgewick y Flajolet~%
+    \cite{sedgewick13:_introd_anal_algor}
+  analizan estas mismas situaciones usando el método simbólico,
+  obteniendo resultados más ajustados y también varianzas.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{l*{2}{>{\rule{0pt}{2em}\(\displaystyle{}}c<{\)}}}
+      \multicolumn{1}{c}{\textbf{Técnica}}
+        & \multicolumn{1}{c}{\textbf{Exitosa}}
+        & \multicolumn{1}{c}{\textbf{Fallida}} \\
+      \hline
+      Direccionamiento cerrado
+        & 1 + \frac{\alpha}{2} & 1 + \alpha \\
+      Direccionamiento abierto
+        & \frac{1}{\alpha} \ln \frac{1}{1 - \alpha} & \frac{1}{1 - \alpha}
+      \end{tabular}
+    \caption{Resumen de posiciones revisadas en hashing}
+    \label{tab:hashing-analysis-summary}
+  \end{table}
+
+% To do: Cucoo hashing...
+
+\section{Otras aplicaciones}
+\label{sec:otras-aplicaciones}
+
+  La misma idea tiene otras aplicaciones.
+  Exploraremos un par de ellas.
+
+\subsection{Filtro de Bloom}
+\label{sec:filtro-de-bloom}
+
+  Hay situaciones en las que interesa
+  representar un conjunto grande en forma compacta.
+  Si aceptamos la posibilidad de errores,
+  en particular \emph{falso positivo}
+  (respondemos \textquote{sí},
+   pero la respuesta correcta es \textquote{no}),
+  una opción es un filtro de Bloom~%
+   \cite{bloom70:_space_time_trade_hash_codin_allow_error}.
+  Una discusión detallada,
+  particularmente aplicaciones a sistemas distribuidos,
+  dan Broder y Mitzenmacher~%
+    \cite{broder04:_network_appl_bloom_filters}.
+  La idea es representar el conjunto mediante un arreglo de \(m\) bits,
+  para agregar el elemento \(x\)
+  aplicarle \(k\) funciones \emph{\foreignlanguage{english}{hash}}
+  independientes \(h_i\),
+  poniendo en \num{1} los bits respectivos.
+  Ver si \(x\) pertenece al conjunto es revisar los bits respectivos,
+  si todos son \num{1}
+  probablemente pertenece;
+  si alguno es \num{0},
+  definitivamente no pertenece.
+
+  Interesa derivar la probabilidad de error si hay \(n\) elementos del conjunto
+  representado con \(m\) bits
+  y \(k\) funciones \emph{\foreignlanguage{english}{hash}}.
+  Para ello primero derivaremos la probabilidad
+  que luego de insertar \(n\) elementos,
+  un bit dado siga en \num{0}.
+  Esto corresponde a \(n k\) intentos fallidos de apuntarle a ese bit,
+  con probabilidad de éxito \(1 / m\) en cada intento,
+  o sea:
+  \begin{align*}
+    \Pr[\text{bit \(i\) en cero luego de agregar \(n\)}]
+      &=	   \left( 1 - \frac{1}{m} \right)^{n k} \\
+      &=	   \left( \left( 1 - \frac{1}{m} \right)^m \right)^{n k / m} \\
+      &\approx \mathrm{e}^{- n k / m}
+  \end{align*}
+
+  Un falso positivo,
+  por otro lado,
+  corresponde a tener \(k\) éxitos
+  (encontrar bit en \num{1})
+  en \(k\) intentos independientes.
+  La probabilidad de éxito en cada intento viene del punto anterior:
+  \begin{align*}
+    \Pr[\text{falso positivo}]
+      &=	    \prod_{1 \le i \le k}
+                \Pr[\text{bit \(h_i(x)\) es \num{1}}] \\
+      &=	    \left(
+                  1 - \left( 1 - \frac{1}{m} \right)^{n k}
+                \right)^k \\
+      &\approx \left( 1 - \mathrm{e}^{-n k / m} \right)^k
+  \end{align*}
+
+  Los filtros de Bloom balancean varios efectos contrarios:
+  queremos usar poca memoria
+  (\(m\) pequeño,
+   pero eso hace más probables las colisiones,
+   falsos positivos),
+  poco tiempo de cómputo
+  (\(k\) pequeño,
+   usa menos cómputo pero hace más probables las colisiones).
+  Un análisis aproximado es como sigue.
+  Sea \(f(k)\) la función que nos interesa,
+  queremos minimizar
+  la probabilidad de falso positivo para \(m\) y \(n\) fijos,
+  donde suponemos \(m\) lo suficientemente grande
+  para poder aplicar la aproximación por la exponencial.
+  Minimizar \(f(k)\) es minimizar \(\ln f(k)\):
+  \begin{align*}
+    \frac{\mathrm{d}}{\mathrm{d} k} \ln f(k)
+      &= \frac{\mathrm{d}}{\mathrm{d} k}
+           k \ln \left( 1 - \mathrm{e}^{- n k / m} \right) \\
+      &= \ln \left( 1 - \mathrm{e}^{- n k / m} \right)
+           + \frac{n k}{m}
+               \cdot \frac{\mathrm{e}^{- n k / m}}
+                          {1 - \mathrm{e}^{- n k / m}}
+  \end{align*}
+  Igualando a cero la derivada,
+  hallamos que el mínimo se da con \(k = \frac{m}{n} \ln 2\),
+  y este mínimo es global.
+  En el mínimo,
+  la probabilidad de falso positivo es:
+  \begin{equation*}
+    \left( \frac{1}{2} \right)^k
+      = 0,6185^{m/n}
+  \end{equation*}
+  Conforme \(m\) crece respecto de \(n\),
+  disminuye la tasa de falsos positivos.
+
+  Un problema de los filtros de Bloom
+  es que podemos \emph{agregar} elementos al conjunto,
+  pero no \emph{eliminarlos}.
+  Una posibilidad es no usar un simple bit,
+  sino un contador.
+  Este es el caso que discuten Fan et al~%
+    \cite{fan00:_summary_cache}.
+
+\subsection{Contar elementos distintos}
+\label{sec:contar-distintos}
+
+  En muchas aplicaciones hay un gran flujo de elementos,
+  e interesa estimar cuántos elementos distintos hay.
+  Por ejemplo,
+  en páginas web interesa saber el número de visitantes diferentes.
+  Una posibilidad es registrarlos y procesar la lista.
+  Acá discutiremos una posibilidad más simple
+  (aunque menos precisa).
+
+  La idea básica es calcular una función \emph{\foreignlanguage{english}{hash}}
+  de cada elemento e ir recordando el mínimo visto.
+  Resulta que el mínimo tiene una relación simple
+  con el número de elementos diferentes.
+
+  \begin{theorem}
+    \label{theo:minimum-iid}
+    Si \(X_1, X_2, \dotsc, X_n\) son variables aleatorias
+    independientes idénticamente distribuidas
+    con función de distribución cumulativa \(F\),
+    la función cumulativa del mínimo de los \(X_i\)
+    es:
+    \begin{equation*}
+      F_{\text{min}}(y)
+        = 1 - (1 - F(y))^n
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    Nos interesa:
+    \begin{align*}
+      F_{\text{min}}(y)
+        &= \Pr[ \min\{ X_1, \dotsc, X_n \} \le y ] \\
+        &= 1 - \Pr[ \min\{ X_1, \dotsc, X_n \} > y ] \\
+        &= 1 - \Pr[ X_1 > y \wedge \dotsm \wedge X_n > y ] \\
+        &= 1 - \Pr[ X_1 > y ] \cdot \dotsm \cdot \Pr[ X_n > y ] \\
+        &= 1 - ( \Pr[ X_1 > y ] )^n \\
+        &= 1 - (1 - \Pr[ X_1 \le y ] )^n \\
+        &= 1 - (1 - F(y))^n
+    \end{align*}
+    \qedhere
+  \end{proof}
+  En particular,
+  si \(X_i \sim \mathrm{\boldsymbol{\mathsf{U}}}(0, 1)\)
+  (distribución uniforme continua)
+  la función cumulativa es simplemente \(F(y) = y\) para \(0 \le y \le 1\)
+  y resulta:
+  \begin{equation*}
+    F_{\text{min}}(y)
+      = 1 - (1 - y)^n
+  \end{equation*}
+  De acá la función de densidad de probabilidad es la derivada:
+  \begin{equation*}
+    f_{\text{min}}(y)
+      = n (1 - y)^{n - 1}
+  \end{equation*}
+  Es rutina calcular:
+  \begin{align*}
+    \Exp[\min\{ X_1, \dotsc, X_n \}]
+      &= \int_0^1 y f_{\text{min}}(y) \, \mathrm{d} y \\
+      &= \frac{1}{n + 1} \\
+    \var[\min\{ X_1, \dotsc, X_n \}]
+      &= \int_0^1
+           \left( y - \frac{1}{n + 1} \right)^2
+             f_{\text{min}}(y) \, \mathrm{d} y \\
+      &= \frac{n}{(n + 1)^2 (n + 2)}
+  \end{align*}
+  O sea,
+  registrando el mínimo de \(h(x)\)
+  (normalizado a \([0, 1]\))
+  para los elementos conforme llegan,
+  obtenemos una estimación de \(n\),
+  el número de elementos distintos observados.
+  Lamentablemente la desviación es bastante grande,
+  pero podemos usar el promedio de varias funciones para mejorar la estimación.
+
+\section*{Ejercicios}
+\label{sec:exercises-27-previa}
+
+  \begin{enumerate}
+  \item
+    Las direcciones IPv4 se escriben tradicionalmente
+    en la forma \(a.b.c.d\),
+    donde \(a, b, c, d\) están entre \num{0} y \num{255}.
+    Se propone
+    la siguiente familia de funciones \emph{\foreignlanguage{english}{hash}}:
+    se elige un primo \(p\),
+    y se eligen al azar \(\alpha, \beta, \gamma, \delta \in \mathbb{Z}_p\),
+    y:
+    \begin{equation*}
+      h(a, b, c, d)
+        = (\alpha a + \beta b + \gamma c + \delta d) \bmod p
+    \end{equation*}
+    \begin{enumerate}
+    \item
+      Discuta porqué algunos miembros de la familia son malos.
+      En particular,
+      vea los casos \(\alpha = 1, \beta = \gamma = \delta = 0\)
+      y	 \(\alpha = \beta = \gamma = 0, \delta = 1\).
+    \item
+      ¿Es universal la familia completa?
+    \item
+      ¿Qué pasa con versiones restringidas,
+      como \(\alpha, \beta, \gamma, \delta \ne 0\)?
+      ¿Al menos un coeficiente no cero?
+      ¿Exactamente un coeficiente no cero?
+    \end{enumerate}
+  \item
+    Considere una variante de filtros de Bloom,
+    en la cual los \(m\) bits se dividen en \(k\) grupos de \(m / k\),
+    cada uno reservado
+    a una de las funciones \emph{\foreignlanguage{english}{hash}}.
+    Esto tiene la ventaja que pueden calcularse en paralelo,
+    incluso con memorias separadas.
+    Compare la tasa de falsos positivos con la derivada en el texto.
+  \end{enumerate}
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Hashing english hash hashing hashear coupon collector
+% LocalWords:  problem Basilea eq Pr Hit longest length small large
+% LocalWords:  relacion cut estimate Absent CLRS et cumulativa min
+% LocalWords:  IPv

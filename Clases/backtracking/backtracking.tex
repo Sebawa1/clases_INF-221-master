@@ -1,0 +1,499 @@
+\bibliographystyle{babplain-fl}
+
+\setchessboard{
+  showmover = false,
+  label = false
+}
+
+\chapter{Backtracking}
+\label{cha:backtracking}
+
+  Una idea al resolver problemas complejos
+  es ir construyendo la solución incrementalmente,
+  explorando distintas ramas
+  y volviendo atrás
+  (\emph{\foreignlanguage{english}{backtrack}} en inglés)
+  si resulta que un camino es sin salida.
+  Es aplicable a problemas de búsqueda
+  (estamos buscando un objeto con ciertas características,
+   debemos contabilizar cuántos hay,
+   nos interesa el \textquote{mejor} de ellos).
+  En términos generales,
+  buscamos construir el objeto buscado por etapas,
+  en cada etapa interesa eliminar de consideraciones futuras
+  objetos parcialmente construidos que no pueden completarse a lo buscado.
+  La manera natural de organizar esto es mediante una estructura global,
+  que representa un objeto parcialmente construido,
+  en la cual se registra el trabajo de construcción.
+  Generalmente habrán varias opciones de paso siguiente,
+  intentamos cada una de ellas por turno,
+  deshaciendo el cambio si no lleva al destino
+  (o debemos explorarlas todas porque interesa hallarlos todos).
+  Es básicamente un recorrido parcial
+  de un árbol de objetos construidos a medias,
+  en el cual tenemos un único objeto parcial activo.
+  Esto corresponde a búsqueda en profundidad,
+  efectuada naturalmente mediante recursión
+  (aunque podríamos usar búsqueda en profundidad no recursiva
+   de ser necesario).
+
+  El esquema general es el dado por el algoritmo~\ref{alg:backtrack-schema}.
+  \begin{algorithm}
+    \DontPrintSemicolon
+
+    \tcc*[l]{Set up basic object} \;
+
+    \Function{\(\mathrm{backtrack}()\)}{
+      \eIf{\(\mathrm{object}\) is complete}{
+        Process \(\mathrm{object}\) \;
+      }
+      {
+        \(S \gets \text{set of possible next steps}\) \;
+        \ForEach{\(s \in S\)}{
+          Do step \(s\) on \(\mathrm{object}\) \;
+          \(\mathrm{backtrack}()\) \;
+          Undo step \(s\) on \(\mathrm{object}\) \;
+        }
+      }
+    }
+    \caption{Esquema básico de \emph{\foreignlanguage{english}{backtracking}}}
+    \label{alg:backtrack-schema}
+  \end{algorithm}
+
+  Resolver un problema usando \emph{\foreignlanguage{english}{backtracking}}
+  significa efectuar los siguientes pasos:
+  \begin{enumerate}[font = \textbf, label = {(\alph*)}]
+  \item
+    Definir los pasos de la construcción del objeto buscado.
+  \item
+    Diseñar la estructura de datos
+    que representa objetos parcialmente construidos.
+  \item
+    Definir cómo determinar si se ha llegado a destino.
+  \item
+    Diseñar posibles estructuras auxiliares
+    que ayuden a determinar pasos siguientes.
+  \item
+    Definir cómo hacer y deshacer modificaciones.
+  \item
+    Definir criterios que permitan abortar la búsqueda
+    porque el objeto parcial no puede completarse a una solución.
+    Esto puede requerir estructuras globales auxiliares.
+    Esto es parte clave de la determinación de los pasos candidatos.
+  \item
+    Definir qué hacer con objetos completos.
+    La opción de terminar la búsqueda es poco natural
+    en la versión recursiva,
+    considere basar su programa en búsqueda en profundidad no recursiva
+    si no se requiere exploración completa.
+  \end{enumerate}
+  El esbozo anterior supone que todos los datos son globales.
+  Puede tener sentido que la función \(\mathrm{backtrack}()\)
+  tome como argumento el número del paso a tomar,
+  o incluso la lista de decisiones que llevan a la situación presente.
+
+  El esbozo no puede explicitar el orden en que se intentan pasos candidatos,
+  Una elaboración obvia si solo interesa hallar un objeto
+  es intentar los candidatos
+  en algún orden que prometa hallar pronto un destino.
+
+  \begin{ejemplo}[Un clásico]
+    En el ajedrez la reina es la pieza más poderosa.
+    Amenaza los casilleros en su fila y columna,
+    y los ubicados en diagonal.
+    La figura~\ref{fig:reina-amenaza} muestra los casilleros
+    que amenaza una reina en el ajedrez.
+    \begin{figure}[ht]
+      \centering
+      \setchessboard{setpieces = {Qc5}}
+      \chessboard[pgfstyle = {[fill]circle},
+                  padding = -1ex,
+                  backfields  = {a5, b5, d5, e5, f5, g5, h5,
+                                 c1, c2, c3, c4, c6, c7, c8,
+                                 a3, b4, d6, e7, f8,
+                                 a7, b6, d4, e3, f2, g1}
+                 ]
+      \caption{Los casilleros amenazados por una reina}
+      \label{fig:reina-amenaza}
+    \end{figure}
+    Un problema clásico
+    (propuesto por Max Bezzel en 1848)
+    es determinar
+    si se pueden ubicar ocho reinas en el tablero
+    de manera que ninguna pueda amenazar a otra.
+    Claramente no pueden ser más de ocho,
+    puede haber a lo más una reina por columna.
+    Resolver este problema
+    mediante \emph{\foreignlanguage{english}{backtracking}}
+    fue un ejemplo de programación estructurada de Dijkstra~%
+      \cite{dijkstra72:_structured_programming}.
+
+    Siguiendo los pasos:
+    \begin{enumerate}[font = \textbf, label = {(\alph*)}]
+    \item
+      \textbf{Pasos de la construcción:}
+      Agregamos reinas una a una al tablero.
+      Un orden simple útil
+      (porque elimina posiciones imposibles)
+      es agregar reinas por columnas en orden.
+    \item
+      \textbf{Objetos parciales:}
+      Basta registrar la fila en que se ubica la reina de cada columna
+    \item
+      \textbf{Estamos en el destino:}
+      Ubicamos la reina en la última columna.
+    \item
+      \textbf{Estructuras auxiliares:}
+      Es útil registrar qué filas y diagonales están libres.
+    \item
+      \textbf{Hacer/deshacer:}
+      A cada columna le corresponde la posición de la reina,
+      hacer y deshacer es actualizar esto.
+      Se deben marcar libres filas y diagonales de la reina que se remueve,
+      y marcar ocupadas las de la reina que se ubica.
+    \item
+      \textbf{Criterios para abortar:}
+      No intentamos posicionar reinas en la columna en filas ya ocupadas.
+    \item
+      \textbf{Objetos completos:}
+      Solo los contabilizamos
+      o escribimos la solución,
+      según sea el caso.
+    \end{enumerate}
+    En este caso:
+    \begin{itemize}
+    \item
+      Ubicar reina en columna 1, 2, \ldots
+    \item
+      Registrar filas libres
+      (para omitir ocupadas al ubicar la siguiente reina)
+    \item
+      Registrar diagonales libres.
+
+      Reina en \(r, c\):
+      \begin{align*}
+        y - c
+          &= 1 \cdot (x - r) \\
+        r - c
+          &= x - y \text{\ es constante} \\
+        y - c
+          &= -1 \cdot (x - r) \\
+        c - r
+          &= x + y \text{\ es constante}
+      \end{align*}
+    \end{itemize}
+    Por ejemplo,
+    luego de ubicadas las primeras tres reinas
+    en las filas \num{1}, \num{3} y \num{5} la configuración resultante
+    es la de la figura~\ref{fig:tres-reinas}.
+    \begin{figure}[ht]
+      \centering
+      \setchessboard{setpieces = {Qa1, Qb3, Qc5}}
+      \chessboard[pgfstyle = {[fill]circle},
+                  padding = -1ex,
+                  backfields  = {a2, a3, a4, a5, a6, a7, a8,
+                                   b1, c1, d1, e1, f1, g1, h1,
+                                   b2, c3, d4, e5, f6, g7, h8,
+                                 b1, b2, b4, b5, b6, b7, b8,
+                                   a3, c3, d3, e3, f3, g3, h3,
+                                   a2, c4, d5, e6, f7, g8,
+                                   a4, c2, d1,
+                                 c1, c2, c3, c4, c6, c7, c8,
+                                    a5, b5, d5, e5, f5, g5, h5,
+                                    a7, b6, d4, e3, f2, g1,
+                                    a3, b4, d6, e7, f8
+                                }
+                 ]
+      \caption{Configuración con tres reinas}
+      \label{fig:tres-reinas}
+    \end{figure}
+    Vemos que las filas y diagonales amenazadas por estas tres
+    restringen muchísimo las posiciones viables
+    para la cuarta y siguientes.
+    Con estas tres reinas,
+    para la cuarta reina quedan solo \num{3} posibilidades.
+
+    Elegimos Python (!),
+    en Python los arreglos tienen índices desde \num{0},
+    rango de las variables \(r\), \(c\) es de \num{0} a~\num{7}.
+    Interesan los rangos de las expresiones:
+    \begin{description}
+    \item[\boldmath\(r - c\)\unboldmath:]
+      Rango es \(-7, \dotsc, 7\),
+      sumar \num{7} para llevar al rango \(0, \dotsc, 14\).
+    \item[\boldmath\(r + c\)\unboldmath:]
+      Rango es \(0, \dotsc, 14\)
+    \end{description}
+    El programa final es el del listado~\ref{lst:8queens}.
+    \lstinputlisting[float,
+                     language = Python,
+                     firstline = 3,
+                     caption = {Ocho reinas en Python},
+                     label = lst:8queens]
+                    {code/8queens}
+    La figura~\ref{fig:8reinas} muestra una de las \num{92}~soluciones.
+    \begin{figure}[ht]
+      \centering
+      \setchessboard{setpieces = {Qa1, Qb5, Qc8, Qd6,
+                                  Qe3, Qf7, Qg2, Qh4}}
+      \chessboard
+      \caption{Una solución para el problema de 8 reinas.}
+      \label{fig:8reinas}
+    \end{figure}
+  \end{ejemplo}
+
+\section{El algoritmo de Warnsdorf}
+\label{sec:Warnsdorf-algo}
+
+  Un problema también relacionado al ajedrez
+  es determinar si un caballo puede visitar cada casillero del tablero
+  exactamente una vez.
+  La figura~\ref{fig:knight-moves} muestra las posibles movidas de un caballo.
+  \begin{figure}[ht]
+    \centering
+    \setchessboard{setpieces = {Nd5}}
+    \chessboard[pgfstyle = {[fill]circle},
+                padding = -1ex,
+                backfields  = {b6, c7, e7, f6, f4, e3, c3, b4}
+               ]
+    \caption{Movidas posibles de un caballo}
+    \label{fig:knight-moves}
+  \end{figure}
+  Warnsdorf~%
+    \cite{warnsdorf23:_roesselsprung_loesung}
+  halló un algoritmo simple para resolver este problema
+  sin tener que reconsiderar movidas:
+  en cada paso elija la posición siguiente como aquella
+  que da menos movidas posibles a continuación.
+
+  En forma abstracta,
+  este problema corresponde a determinar
+  si el grafo con vértices los casilleros
+  y arcos los posibles saltos entre ellos
+  tiene un camino o ciclo hamiltonianos
+  (que visitan cada vértice exactamente una vez).
+  En el caso de grafos generales esto no evita reconsideraciones,
+  pero resulta un criterio eficiente para hallar soluciones.
+  La idea de considerar a continuación
+  la configuración con menos vecinos es una heurística útil en muchos casos.
+
+\section{Sudoku}
+\label{sec:sudoku}
+
+  En Sudoku se plantea una grilla de \(9 \times 9\) casillas
+  a ser llenadas con los dígitos \num{1} a \num{9}
+  de forma que cada fila, columna y subcuadrado de \(3 \times 3\)
+  contenga cada dígito exactamente una vez.
+  Un ejemplo de Sudoku
+  es el dado en la figura~\ref{fig:Sudoku-dificil}.
+  \begin{figure}[ht]
+    \centering
+    \subfloat[Problema]{
+      \begin{tabular}{|*{3}{c@{\;\,}c@{\;\,}c|}}
+        \hline
+           &   &   &
+           &   &   &
+           & 1 & 2 \\
+
+           &   &   &
+           & 3 & 5 &
+           &   &   \\
+
+           &   &   &
+         6 &   &   &
+           & 7 &   \\
+        \hline
+         7 &   &   &
+           &   &   &
+         3 &   &   \\
+
+           &   &   &
+         4 &   &   &
+         8 &   &   \\
+
+         1 &   &   &
+           &   &   &
+           &   &   \\
+        \hline
+           &   &   &
+         1 & 2 &   &
+           &   &   \\
+
+           & 8 &   &
+           &   &   &
+           & 4 &   \\
+
+           & 5 &   &
+           &   &   &
+         6 &   &   \\
+        \hline
+      \end{tabular}
+    }
+    \hspace*{3em}
+    \subfloat[Solución]{
+      \begin{tabular}{|*{3}{c@{\;\,}c@{\;\,}c|}}
+        \hline
+         6 & 7 & 3 &
+         8 & 9 & 4 &
+         5 & 1 & 2 \\
+
+         9 & 1 & 2 &
+         7 & 3 & 5 &
+         4 & 8 & 6 \\
+
+         8 & 4 & 5 &
+         6 & 1 & 2 &
+         9 & 7 & 3 \\
+        \hline
+         7 & 9 & 8 &
+         2 & 6 & 1 &
+         3 & 5 & 4 \\
+
+         5 & 2 & 6 &
+         4 & 7 & 3 &
+         8 & 9 & 1 \\
+
+         1 & 3 & 4 &
+         5 & 8 & 9 &
+         2 & 6 & 7 \\
+        \hline
+         4 & 6 & 9 &
+         1 & 2 & 8 &
+         7 & 3 & 5 \\
+
+         2 & 8 & 7 &
+         3 & 5 & 6 &
+         1 & 4 & 9 \\
+
+         3 & 5 & 1 &
+         9 & 4 & 7 &
+         6 & 2 & 8 \\
+        \hline
+        \end{tabular}
+    }
+    \caption{Sudoku muy difícil}
+    \label{fig:Sudoku-dificil}
+  \end{figure}
+  Estrategias para elegir siguiente casillero a llenar:
+  \begin{itemize}
+  \item
+    Al azar/primero libre.
+  \item
+    Más restringido.
+  \end{itemize}
+  Estrategias para podar:
+  \begin{itemize}
+  \item
+    Cuenta local
+    (revisar si quedan opciones fila/columna/cuadrante)
+  \item
+    \emph{\foreignlanguage{english}{Look ahead}}
+    (revisar si quedan casilleros sin opciones)
+  \end{itemize}
+  Norvig~%
+    \cite{norvig:_sudoku}
+  discute algunas estrategias y da un programa que resuelve Sudoku,
+  reportando resultados.
+  Skiena~%
+    \cite{skiena08:_algor_desig_manual}
+  reporta resultados del cuadro~\ref{tab:backtracking-Sudoku}
+  para distintos problemas.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{l|l|r|r|r}
+      \multicolumn{1}{c|}{\textbf{Combinaciones}}
+         & \textbf{Criterio de Poda}
+         & \multicolumn{1}{c|}{\textbf{Simple}}
+         & \multicolumn{1}{c|}{\textbf{Mediano}}
+         & \multicolumn{1}{c}{\textbf{Difícil}} \\
+      \hline
+      Azar & Local & 1\,904\,832 & 863\,305 & No \ldots\\
+      Azar & Look ahead & 127 & 142 & 12\,507\,212\\
+      Restringida & Local & 48 & 84 & 1\,243\,838\\
+      Restringida & Look ahead & 48 & 65 & 10\,374
+    \end{tabular}
+    \caption{Rendimiento de variantes
+             de \emph{\foreignlanguage{english}{backtracking}} en Sudoku}
+    \label{tab:backtracking-Sudoku}
+  \end{table}
+  El simple es de los que típicamente se dan para principiantes,
+  el mediano se planteó en un campeonato
+  (y ninguno de los participantes pudo resolverlo),
+  el difícil es el de la figura~\ref{fig:Sudoku-dificil}
+  (tiene 17 pistas,
+   es de los con menos pistas que tiene una única solución).
+  El programa que obtiene estos valores es~%
+    \cite{skiena06:_backtr_progr_solve_sudoku}.
+  Las estrategias aplicadas por Skiena no son las únicas posibles,
+  todo jugador serio aplica un menú de estrategias adicionales,
+  como las que discute Norvig~%
+    \cite{norvig:_sudoku}.
+  Un buen ejemplo es el texto de Zambon~%
+    \cite{zambon15:_sudoku_programming_c},
+  quien desarrolla programas alrededor de Sudoku,
+  incluyendo una gran colección de estrategias,
+  usando \emph{\foreignlanguage{english}{backtracking}}
+  solo como último recurso.
+  En 2012 McGuire, Tugemann y Civario~%
+    \cite{mcguire12:_no_16-clue_sudoku}
+  demostraron mediante una búsqueda exhaustiva
+  que tomó \num{7,1}~millones de horas-núcleo en un supercomputador
+  que no hay problemas con solo \num{16}~pistas con solución única.
+
+\section*{Ejercicios}
+\label{sec:ejercicios-backtracking}
+
+  \begin{enumerate}
+  \item
+    Podemos generalizar el problema de las 8~reinas en forma obvia
+    al problema de \(n\)~reinas.
+    Nuestra estrategia bastante ingenua funciona bien en el caso \(n = 8\),
+    pero rápidamente se meterá en problemas si \(n\) es mayor.
+    En particular,
+    si solo interesa determinar si hay o no solución,
+    basta revisar una parte de las opciones.
+    Experimente con otras estrategias,
+    como elegir la columna que tiene menos filas libres,
+    definir un criterio para elegir dentro de la columna
+    de manera de restringir al máximo hacia adelante
+    (considerar por ejemplo las columnas más cercanas aún libres).
+  \item
+    Una \emph{rotulación graciosa} de un grafo \(G = (V, E)\)
+    con \(n\) vértices asigna los rótulos \num{1} a \(n\) a los vértices,
+    tal que al rotular los arcos
+    con el valor absoluto de la diferencia entre los rótulos de sus vértices
+    los arcos están rotulados con los números de \num{1} a \(n - 1\),
+    cada uno exactamente una vez.
+    Es claro que esto solo se puede hacer en árboles.
+
+    Escriba un programa para determinar
+    cuántas rotulaciones graciosas tiene el grafo \(P_n\).
+  \item
+    Determine si es posible que un caballo del ajedrez
+    visite exactamente una vez cada una de las casillas del tablero.
+  \item
+    Nuestra solución al problema de 8~reinas
+    considera las columnas estrictamente en orden.
+    Una variante es considerar a continuación
+    la columna con menos casilleros libres.
+    Experimente con esta variante,
+    contabilizando el número de posiciones de reinas que se intentan
+    y también el tiempo total de solución.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  showmover label Backtracking incrementalmente english
+% LocalWords:  backtrack recursión setpieces Qc pgfstyle fill circle
+% LocalWords:  padding backfields b f g h c Subproblemas Qa Qb Python
+% LocalWords:  Qd Qe Qf Qg Qh backtracking ht subproblemas reusarse
+% LocalWords:  subcuadrado Look ahead Zambon supercomputador false ex
+% LocalWords:  rotulación rotulaciones Steven is solution Process Set
+% LocalWords:  Register move Undo Sudoku up basic object step on Max
+% LocalWords:  backtracling Nd hamiltonianos

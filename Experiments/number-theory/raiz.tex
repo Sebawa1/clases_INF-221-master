@@ -1,0 +1,211 @@
+\documentclass[english,spanish,fleqn]{article}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{babel}
+\usepackage[colorlinks, urlcolor = blue]{hyperref}
+\usepackage[ruled, noline]{algorithm2e}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+
+\title{Cálculo de raíces cuadradas módulo \(p\)}
+\author{\href{mailto:vonbrand@inf.utfsm.cl}{Horst H. von Brand}}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+  En lo que sigue,
+  \(p\) es un primo impar
+  (el caso  \(p = 2\) es trivial).
+  Casi todas las equivalencias serán módulo \(p\),
+  omitiremos el módulo cuando así sea.
+
+\section{Preliminares}
+\label{sec:preliminares}
+
+  Si \(p\) es primo,q
+  el conjunto de residuos módulo \(p\) forma un campo,
+  \(\mathbb{Z}_p\).
+  Sabemos también que si \(x^2 = 1\) en un campo debe ser \(x = \pm 1\).
+
+  El grupo de unidades \(\mathbb{Z}_p^\times\)
+  (los elementos relativamente primos a \(p\),
+   residuos \(1\) a \(p - 1\),
+   con la multiplicación módulo \(p\))
+  es cíclico,
+  vale decir,
+  hay un generador \(g\)
+  (llamado \emph{raíz primitiva de \(p\)})
+  tal que todo elemento \(a \in \mathbb{Z}_p^\times\) puede representarse como:
+  \begin{equation}
+    \label{eq:units-powers}
+    a
+      \equiv g^r
+  \end{equation}
+  Las raíces primitivas son relativamente frecuentes,
+  es simple ver que si \(\gcd(r, p - 1) = 1\)
+  entonces \(g^r\) es raíz primitiva;
+  hay \(\phi(p - 1)\) raíces primitivas módulo \(p)\).
+
+  Sabemos del pequeño teorema de Fermat que para \(a \in \mathbb{Z}_p^\times\)
+  es:
+  \begin{equation}
+    \label{eq:Fermat}
+    a^{p - 1}
+      \equiv 1
+  \end{equation}
+  Es claro que si y solo si \(a \equiv g^{2 k}\) es un cuadrado
+  (les llaman \emph{residuos cuadráticos}),
+  exactamente la mitad de los elementos de \(\mathbb{Z}_p^\times\)
+  es un cuadrado.
+  Resulta el \emph{criterio de Euler}:
+  \begin{equation}
+    \label{eq:Euler-criterion}
+    a^{(p - 1) / 2}
+      \equiv \begin{cases}
+                1 & \text{\(a\) es residuo cuadrático} \\
+               -1 & \text{\(a\) no es residuo cuadrático}
+             \end{cases}
+  \end{equation}
+  Para referencia futura,
+  al multiplicar residuos cuadráticos y no cuadráticos
+  da un residuo cuadrático
+  si y solo si hay un número par de residuos no cuadráticos en el producto.
+
+\section{Raíz cuadrada módulo \(p\)}
+\label{sec:sqrt-mod-p}
+
+  Si \(a = 0\),
+  su raíz cuadrada es \(0\).
+
+  En caso contrario,
+  sea \(a\) un residuo cuadrático módulo \(p\),
+  buscamos resolver \(x^2 \equiv a\).
+
+  Debemos considerar varios casos.
+
+\subsection{Caso \(p = 2\)}
+\label{sec:p=2}
+
+  Este caso es trivial,
+  simplemente es \(\operatorname{sqrt}(a, 2) = a\).
+
+\subsection{Caso \(p \equiv 3 \pmod{4}\)}
+\label{sec:p-equiv-3}
+
+  En este caso \((p - 1) / 2\) es impar,
+  con lo que por el criterio de Euler:
+  \begin{align*}
+    a^{(p - 1) / 2}
+      &\equiv 1 \\
+    a \cdot a^{(p - 1) / 2}
+      &\equiv a^{(p + 1) / 2} \\
+      &\equiv a
+  \end{align*}
+  Como \(4 \mid (p + 1)\) en este caso,
+  vemos que una raíz cuadrada es \(a^{(p + 1) / 4}\).
+
+\subsection{Caso \(p \equiv 1 \pmod{4}\)}
+\label{sec:p-equiv-3}
+
+  Ahora \((p - 1) / 2\) es par.
+  Sabemos que \(a^{(p - 1) / 2} \equiv 1\) por el criterio de Euler.
+  Extrayendo raíz cuadrada sucesivamente
+  (o sea,
+   dividiendo el exponente por \(2\))
+  obtendremos una secuencia de \(1\).
+  Si llegamos a \(a^s \equiv 1\) con \(s\) impar,
+  estamos listos:
+  la raíz buscada es \(a^{(s + 1) / 2}\).
+
+  Si no,
+  en algún punto será \(a^s \equiv -1\) con \(s\) par.
+  Ahora,
+  si \(b\) es un residuo no cuadrático
+  por el criterio de Euler es \(b^{(p - 1) / 2} \equiv -1\)
+  y \(a^s b^{(p - 1) / 2} \equiv 1\).
+  El punto es que conocemos su raíz cuadrada
+  \(a^{s / 2} b^{(p - 1) / 4}\),
+  podemos reiniciar el proceso de disminuir el exponente de \(a\).
+  Como hemos llegado a \(s\)
+  por sucesivas divisiones de \((p - 1) / 2\) por \(2\),
+  no llegaremos a un exponente impar de \(b\) antes que de \(a\).
+  Si tropezamos con \(-1\)
+  nuevamente ajustamos multiplicando por \(b^{(p - 1) / 2}\).
+
+  Un problema es que no se conoce un algoritmo determinista
+  que dé un residuo no cuadrático
+  en corto tiempo.
+  Pero una búsqueda al azar rápidamente dará con uno
+  (más de la mitad de los elementos entre \(2\) y \((p - 1) / 2\)
+   son residuos no cuadráticos).
+
+  Resulta el algoritmo~\ref{alg:sqrt-mod-p},
+  donde hemos hecho un caso especial de \(p \equiv 5 \pmod{8}\).
+  En este caso además de simplificar algo el código,
+  aprovechamos que \(2\) es residuo no cuadrático
+  para ahorrar la búsqueda.
+  \begin{algorithm}
+    \selectlanguage{english}
+    \DontPrintSemicolon
+
+    \Function{\(\operatorname{sqrt}(a, p)\)}{
+      \uIf{\(p \equiv 3	 \pmod{4}\)}{
+        \Return \(a^{(p + 1) / 4} \bmod p\) \;
+      }
+      \uElseIf{\(p \equiv 5  \pmod{8}\)}{
+        \eIf{\(a^{(p - 1) / 4} \equiv 1 \pmod{p}\)}{
+          \Return \(a^{(p + 3) / 8} \bmod p\) \;
+        }
+        {
+          \Return \(2^{(p - 1) / 4} \cdot a^{(p + 3) / 8} \bmod p\) \;
+        }
+      }
+      \Else{
+        \(s \leftarrow (p - 1) / 4\) \;
+        \While{\(a^s \equiv 1 \pmod{p}\)}{
+          \eIf{\(\operatorname{odd}(s)\)}{
+            \Return \(a^{(s + 1) / 2} \bmod p\) \;
+          }
+          {
+            \(s \leftarrow s / 2\) \;
+          }
+        }
+        \Repeat{\(b^{(p - 1) / 2} \equiv -1 \pmod{p}\)}{
+          Select \(b\) at random from \([2, (p - 1) / 2]\) \;
+        }
+        \(t \leftarrow (p - 1) / 2\) \;
+        \While{\(\neg \operatorname{odd}(s)\)}{
+          \(s \leftarrow s / 2\); \(t \leftarrow t / 2\) \;
+          \If{\(a^s \cdot b^t \equiv -1 \pmod{p}\)}{
+            \(t \leftarrow t + (p - 1) / 2\) \;
+          }
+        }
+        \Return \(a^{(s + 1) / 2} \cdot b^{t / 2} \bmod p\) \;
+      }
+    }
+    \selectlanguage{spanish}
+    \caption{Raíz cuadrada módulo \(p\)
+             (casos no triviales)}
+    \label{alg:sqrt-mod-p}
+  \end{algorithm}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  empty Select at random from

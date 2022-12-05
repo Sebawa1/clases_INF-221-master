@@ -1,0 +1,538 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Métodos simples de ordenamiento}
+\label{cha:metodos-simples-ordenamiento}
+
+  Como una ilustración de técnicas de análisis de algoritmos más avanzadas,
+  analizaremos los métodos de ordenamiento más simples.
+  Tenemos los métodos
+  de la burbuja
+  (listado~\ref{lst:bubblesort},
+   ver también la discusión histórica de Astrachan~%
+     \cite{astrachan03:_bubble_sort}),
+  selección,
+  (listado~\ref{lst:selection}),
+  e inserción
+  (listado~\ref{lst:insertion}).
+  Es fácil ver que todos ellos tienen tiempo de ejecución \(O(n^2)\).
+  El método de selección tiene mejor caso \(O(n^2)\),
+  los otros dos tienen mejor caso \(O(n)\).
+  \lstinputlisting[float,
+                   language = C,
+                   firstline = 8,
+                   caption = {Método de la burbuja},
+                   label = lst:bubblesort]
+                  {code/bubblesort.c}
+  \lstinputlisting[float,
+                   language = C,
+                   firstline = 8,
+                   caption = {Método de selección},
+                   label = lst:selection]
+                  {code/selection.c}
+  \lstinputlisting[float,
+                   language = C,
+                   firstline = 8,
+                   caption = {Método de inserción},
+                   label = lst:insertion]
+                  {code/insertion.c}
+
+\section{Rendimiento de métodos simples de ordenamiento}
+\label{sec:rendimiento-metodos-simples}
+
+  Nos interesa obtener información más detallada que esta
+  sobre el rendimiento de estos algoritmos.
+  En particular,
+  interesa el tiempo promedio de ejecución.
+  Para ello debemos considerar una distribución de los datos de entrada
+  (valores repetidos,
+   orden original del arreglo).
+  Para simplificar,
+  supondremos que no hay datos repetidos,
+  y como los algoritmos únicamente comparan elementos
+  podemos asumir que la entrada es una permutación de \(1, \dotsc, n\).
+  O sea,
+  requerimos la distribución de las permutaciones dadas al algoritmo.
+  Esto en general es imposible de conseguir
+  (y engorroso de tratar),
+  así que supondremos que todas las permutaciones son igualmente probables.
+  Esto reduce el análisis detallado a derivar propiedades promedio
+  de las permutaciones.
+  \begin{definition}
+    Una \emph{inversión} de la permutación \(\pi\) de \(1, \dotsc, n\)
+    es un par de índices \(i\), \(j\) tales que \(i < j\)
+    y \(\pi(i) > \pi(j)\).
+  \end{definition}
+  El número mínimo de inversiones es \num{0}
+  (el arreglo ordenado no tiene inversiones),
+  el máximo es \(n (n - 1) / 2\)
+  (en el arreglo ordenado de mayor a menor
+   el elemento en la posición~\(i\)
+   participa en \(i - 1\) inversiones con elementos previos,
+   sumando para \(1 \le i \le n\) se tiene el valor citado).
+
+  Es claro que en el método de la burbuja cada intercambio
+  elimina exactamente una inversión.
+  Vale decir,
+  el número de asignaciones de elementos
+  es tres veces el número de inversiones.
+
+  El método de inserción funciona esencialmente como el de la burbuja,
+  solo que en vez de intercambiar en cada paso
+  deja un espacio libre en la posición original,
+  copia cada elemento una posición hacia arriba
+  si es mayor que el elemento bajo consideración,
+  moviendo la posición libre hacia abajo;
+  finalmente ubica el elemento en su posición
+  (la que queda libre después de los malabares anteriores).
+  Compare con la figura~\ref{fig:insercion}.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[scale = 0.75]
+        \draw[thick] (0, 0) rectangle (13, 1);
+        \draw[thick] (2, 0) rectangle (3, 1);
+        \draw[thick, fill = blue!10] (3, 0) rectangle (9, 1);
+        \draw[thick] (8, 0) rectangle (9, 1);
+        \draw[thick] (8, 3) rectangle (9, 4);
+          \node at (9.1, 3.5) [right] {tmp};
+
+        \draw[-latex'] (8.5, 1.1) -- (8.5, 2.9);
+        \draw (8.6, 2) node[circle, inner sep = 0.5pt, draw, right] {\num{1}};
+
+        \draw[-latex'] (4, 0.5) -- (7, 0.5);
+          \draw (5.5, 1.15) node[circle, inner sep = 0.5pt, draw, above]
+             {\num{2}};
+
+        \draw[-latex'] (7.9, 3.5) to [in = 75, out = 180] (2.5, 1.1);
+           \draw (4, 3.3) node[circle, inner sep = 0.5pt, draw] {\num{3}};
+      \end{tikzpicture}
+    \caption{Operación del método de inserción}
+    \label{fig:insercion}
+  \end{figure}
+  Nuevamente,
+  si suponemos que el espacio vacío
+  eventualmente será ocupado por el valor temporal,
+  cada asignación elimina una inversión.
+  Esto se resume en dos asignaciones para cada elemento,
+  y una asignación adicional para cada inversión.
+
+\section{Funciones generatrices cumulativas}
+\label{sec:func-gener-cumul}
+
+  Comparar los métodos
+  es entonces esencialmente obtener el número medio de inversiones
+  en las permutaciones de \(1, \dotsc, n\).
+  Para ello recurrimos a nuestra técnica preferida,
+  funciones generatrices.
+  De manera muy similar
+  a como contabilizamos las estructuras de un tamaño dado
+  mediante funciones generatrices
+  podemos representar el total de alguna característica.
+  Dividiendo por el número de estructuras del tamaño respectivo
+  tenemos el promedio del valor de interés.
+  Véase el apéndice~\ref{apx:symbolic-method-dummies}
+  o el apunte de Fundamentos de Informática~%
+    \cite{brand17:_fundamentos_informatica}.
+
+\section{Análisis de burbuja e inserción}
+\label{sec:analisis-burbuja-insercion}
+
+  Nuestros objetos de interés son permutaciones,
+  objetos rotulados.
+  Corresponde usar funciones generatrices exponenciales.
+
+  Anotemos \(\iota(\pi)\) para el número de inversiones
+  de la permutación \(\pi\),
+  y definamos la función generatriz cumulativa:
+  \begin{equation}
+    \label{eq:I-def}
+    I(z)
+      = \sum_{\pi \in \mathscr{P}}
+          \iota(\pi) \frac{z^{\lvert \pi \rvert}}{\lvert \pi \rvert !}
+  \end{equation}
+  En particular,
+  nos interesa el número promedio de inversiones
+  para permutaciones de tamaño~\(n\).
+
+  Podemos describir permutaciones mediante la expresión simbólica:
+  \begin{equation}
+    \label{eq:P-class}
+    \mathscr{P}
+      = \mathscr{E} + \mathscr{P} \star \mathscr{Z}
+  \end{equation}
+  Vale decir,
+  una permutación es vacía
+  o es una permutación combinada con un elemento adicional.
+  Dada la permutación \(\pi\)
+  construimos permutaciones de largo \(\lvert \pi \rvert + 1\)
+  añadiendo un nuevo elemento vía la operación \(\star\).
+  Si elegimos \(j\) como nuevo último elemento,
+  habrán \(j - 1\) elementos menores que él antes,
+  o sea serán \(j - 1\) inversiones adicionales.
+  Estamos creando \(\lvert \pi \rvert + 1\) nuevas permutaciones,
+  cada una de las cuales conserva las inversiones que tiene,
+  y agrega entre \num{0} y \(\lvert \pi \rvert\) nuevas inversiones
+  dependiendo del valor elegido como último.
+  El total de inversiones en el conjunto de permutaciones así creado
+  a partir de \(\pi\) es:
+  \begin{equation}
+    \label{eq:iota-decomposed}
+    (\lvert \pi \rvert + 1) \iota(\pi)
+      + \sum_{0 \le k \le \lvert \pi \rvert} k
+      = (\lvert \pi \rvert + 1) \iota(\pi)
+          +  \frac{\lvert \pi \rvert ( \lvert \pi \rvert + 1)}{2}
+  \end{equation}
+  Con esto tenemos la descomposición para la función generatriz cumulativa
+  (la permutación de cero elementos no tiene inversiones):
+  \begin{align}
+    I(z)
+      &= \iota(\varepsilon)
+           + \sum_{\pi \in \mathscr{P}}
+               \left(
+                 (\lvert \pi \rvert + 1) \iota(\pi)
+                     +	\frac{\lvert \pi \rvert ( \lvert \pi \rvert + 1)}{2}
+               \right)
+               \frac{z^{\lvert \pi \rvert + 1}}{(\lvert \pi \rvert + 1)!}
+                   \label{eq:Inv-decomposed} \\
+      &= \sum_{\pi \in \mathscr{P}}
+           \iota(\pi) \frac{z^{\lvert \pi \rvert + 1}}{\lvert \pi \rvert !}
+           + \frac{1}{2}
+               \sum_{\pi \in \mathscr{P}}
+                 \frac{z^{\lvert \pi \rvert + 1}}{\lvert \pi \rvert !}
+                 \lvert \pi \rvert \notag \\
+   \intertext{Como hay \(k!\) permutaciones de tamaño \(k\),
+              sumando sobre tamaños resulta:}
+      &= z I(z) + \frac{1}{2} z \sum_{k \ge 0} k z^k \notag \\
+      &= z I(z) + \frac{z^2}{2 (1 - z)^2}
+  \end{align}
+  Despejando:
+  \begin{equation}
+    \label{eq:Inv-explicit}
+    I(z)
+      = \frac{1}{2} \frac{z^2}{(1 - z)^3}
+  \end{equation}
+  Obtenemos el número promedio de inversiones directamente,
+  ya que hay \(n!\) permutaciones de tamaño \(n\),
+  y el promedio casualmente es el coeficiente de \(z^n\)
+  en la función generatriz exponencial:
+  \begin{align}
+    \Exp_n[\iota]
+      &= [z^n] I(z)
+           \label{En-iota} \\
+      &= \frac{1}{2} [z^n] \frac{z^2}{(1 - z)^3} \notag \\
+      &= \frac{1}{2} [z^{n - 2}] (1 - z)^{-3} \notag \\
+      &= \frac{1}{2} \binom{-3}{n - 2} \notag \\
+      &= \frac{1}{2} \binom{n - 2 + (3 - 1)}{3 - 1} \notag \\
+      &= \frac{1}{2} \binom{n}{2}
+           \notag \\
+      &= \frac{n (n - 1)}{4}
+          \label{En-iota-explicit}
+  \end{align}
+  Podemos resumir las anteriores
+  como número asintótico de asignaciones al ordenar \(n\) elementos
+  en el cuadro~\ref{tab:bubble-insertion}.
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{l*{3}{|>{\(}c<{\)}}}
+      \multicolumn{1}{c|}{\textbf{Algoritmo}} &
+        \multicolumn{1}{c|}{\textbf{Min}} &
+        \multicolumn{1}{c|}{\textbf{Prom}} &
+        \multicolumn{1}{c}{\textbf{Máx}} \\
+       \hline
+       Burbuja	 & 0   & 3 n^2 / 4 & 3 n^2 / 2 \\
+       Inserción & 2 n & n^2 / 4   &   n^2 / 2
+      \end{tabular}
+    \caption{Comparación entre métodos de burbuja e inserción}
+    \label{tab:bubble-insertion}
+  \end{table}
+  Queda claro
+  (salvo para optimistas incurables)
+  que el método de inserción es mejor.
+
+\section{Análisis de selección}
+\label{sec:analisis-seleccion}
+
+  El método de selección tiene sentido
+  si queremos minimizar el número de copias
+  (podemos simplemente copiar y comparar claves,
+   y copiar elementos solo para ubicarlos en su lugar).
+  En tal caso interesa fundamentalmente el número de asignaciones.
+
+  Para el método de selección el número de asignaciones
+  está dado por el número de veces que hallamos un elemento mayor,
+  ver el listado~\ref{lst:maximo}.
+  \lstinputlisting[float,
+                   language=C,
+                   firstline = 6,
+                   xleftmargin=3em, numbers=left,
+                   caption={Hallar el máximo},
+                   label=lst:maximo]
+                   {code/maximum.c}
+  o sea,
+  el número de máximos de izquierda a derecha en la permutación.
+  Todas las operaciones se efectúan \(n\)~veces,
+  salvo las actualizaciones a la variable~\lstinline[language = C]!max!.
+  Es evidente que el número de veces que se actualiza
+  \lstinline[language = C]!max! es \(O(n)\),
+  pero interesa una respuesta más precisa.
+  Para obtener este valor,
+  podemos optar por funciones generatrices cumulativas
+  o bivariadas.
+  Exploraremos ambas opciones como ejemplos en lo que sigue.
+
+  Si suponemos que todos los valores son diferentes,
+  y que todas las maneras de ordenarlos son igualmente probables,
+  estamos buscando el número promedio de máximos de izquierda a derecha
+  de permutaciones.
+  Podemos describir la clase de permutaciones simbólicamente
+  como:
+  \begin{equation}
+    \label{eq:P-class-again}
+    \mathscr{P}
+      = \mathscr{E} + \mathscr{P} \star \mathscr{Z}
+  \end{equation}
+  Llamaremos \(\chi(\pi)\) al número de máximos de izquierda a derecha
+  en la permutación \(\pi\).
+
+\subsection{Función generatriz cumulativa}
+\label{sec:max-fg-cumulativa}
+
+  Definimos la función generatriz cumulativa exponencial:
+  \begin{equation}
+    \label{eq:max-fg-cum}
+    \widehat{C}(z)
+      = \sum_{\pi \in \mathscr{P}}
+          \chi(\pi) \frac{z^{\lvert \pi \rvert}}{\lvert \pi \rvert !}
+  \end{equation}
+  Como el último elemento de la permutación
+  es un máximo de izquierda a derecha
+  si es el máximo de todos ellos
+  (y los demás máximos de izquierda a derecha se mantienen al rerotular),
+  usando la convención de Iverson
+  podemos expresar el número de máximos de izquierda a derecha
+  en la permutación resultante de \(\pi \star (1)\)
+  si se asigna el rótulo \(j\) al elemento nuevo como:
+  \begin{equation}
+    \label{eq:app:chi+1}
+    \chi(\pi) + [j = \lvert \pi \rvert + 1]
+  \end{equation}
+  con lo que en total
+  para el conjunto de permutaciones \(\pi \star (1)\) es:
+  \begin{equation*}
+    \sum_{1 \le j \le \lvert \pi \rvert + 1}
+      (\chi(\pi) + [j = \lvert \pi \rvert + 1])
+      = (\lvert \pi \rvert + 1 ) \chi(\pi)
+          + 1
+  \end{equation*}
+  con lo que de~\eqref{eq:P-class-again} resulta:
+  \begin{align*}
+    \widehat{C}(z)
+      &= \chi(\varepsilon) \frac{z^0}{0!}
+           + \sum_{\pi \in \mathscr{P}}
+               ((\lvert \pi \rvert + 1) \chi(\pi) + 1)
+                 \frac{z^{\lvert \pi \rvert + 1}}{(\lvert \pi \rvert + 1)!} \\
+      &= 0
+           + z \sum_{\pi \in \mathscr{P}}
+                 \chi(\pi) \frac{z^{\lvert \pi \rvert}}{\lvert \pi \rvert !}
+           + \sum_{\pi \in \mathscr{P}}
+               \frac{z^{\lvert \pi \rvert + 1}}{(\lvert \pi \rvert + 1)!} \\
+  \intertext{Como hay \(n!\) permutaciones de largo \(n\),
+             la última suma se simplifica:}
+      &= z \widehat{C}(z)
+           + \sum_{n \ge 0} n! \frac{z^{n + 1}}{(n + 1)!} \\
+             \notag \\
+      &= z \widehat{C}(z)
+           + \sum_{n \ge 0} \frac{z^{n + 1}}{n + 1} \\
+      &= z \widehat{C}(z) + \ln \frac{1}{1 - z}
+  \end{align*}
+  Despejamos:
+  \begin{equation}
+    \label{eq:max-fg-cum-explicit}
+    \widehat{C}(z)
+      = \frac{1}{1 - z} \ln \frac{1}{1 - z}
+  \end{equation}
+  Nos interesa el coeficiente de \(z^n\) de~\eqref{eq:max-fg-cum-explicit},
+  que casualmente es directamente el valor promedio que buscamos
+  (ver por ejemplo el apunte de Fundamentos de Informática~%
+     \cite{brand17:_fundamentos_informatica}
+   para desarrollo de las funciones generatrices empleadas):
+  \begin{equation}
+    \label{eq:1}
+    [z^n] \widehat{C}(z)
+      = H_n
+  \end{equation}
+  En promedio a \lstinline[language = C]!max! se asigna un nuevo valor
+  \(H_n = \ln n + \gamma + O(1/n)\) veces
+  al buscar el máximo de \(n\) valores.
+
+\subsection{Función generatriz bivariada}
+\label{sec:max-fg-bivariada}
+
+  La función generatriz de probabilidad de que una permutación de tamaño \(n\)
+  tenga \(k\) máximos de izquierda a derecha es:
+  \begin{equation}
+    \label{eq:M-pgf}
+    M(z, u)
+      = \sum_{\pi \in \mathscr{P}}
+          \frac{z^{\lvert \pi \rvert}}{\lvert \pi \rvert !}
+            u^{\chi(\pi)}
+  \end{equation}
+  Esto casualmente es la función generatriz exponencial bivariada
+  correspondiente a la clase~\eqref{eq:P-class-again}.
+
+  Razonando como en la sección~\ref{sec:max-fg-cumulativa}
+  obtenemos:
+  \begin{align}
+    M(z, u)
+      &= \frac{z^{\lvert \varepsilon \rvert}}{\lvert \varepsilon \rvert !}
+           u^{\chi(\varepsilon)}
+           + \sum_{\pi \in \mathscr{P}}
+               \sum_{1 \le j \le \lvert \pi \rvert + 1}
+                 \frac{z^{\lvert \pi \rvert + 1}}
+                      {(\lvert \pi \rvert + 1)!}
+                   u^{\chi(\pi) + [j = \lvert \pi \rvert + 1]}
+                      \label{eq:M-decomposed} \\
+      &= \frac{z^0}{0!} u^0
+           + \sum_{\pi \in \mathscr{P}}
+               \frac{z^{\lvert \pi \rvert + 1}}{(\lvert \pi \rvert + 1)!}
+                  u^{\chi(\pi)}
+               \sum_{1 \le j \le \lvert \pi \rvert + 1}
+                 u^{[j = \lvert \pi \rvert + 1]}
+                      \notag  \\
+      &= 1
+           + \sum_{\pi \in \mathscr{P}}
+               \frac{z^{\lvert \pi \rvert + 1}}{(\lvert \pi \rvert + 1)!}
+                  u^{\chi(\pi)} (\lvert \pi \rvert + u)
+                      \label{eq:M-decomposed-result}
+  \end{align}
+  Derivando respecto de \(z\)
+  (indicamos derivadas por subíndices para simplificar notación):
+  \begin{align*}
+    M_z(z, u)
+      &= \sum_{\pi \in \mathscr{P}}
+           \frac{z^{\lvert \pi \rvert}}{\lvert \pi \rvert !}
+           u^{\chi(\pi)}
+           (\lvert \pi \rvert + u) \\
+      &= z M_z(z, u) + u M(z, u)
+  \end{align*}
+  Vale decir:
+  \begin{equation}
+    \label{eq:M-pde}
+    (1 - z) M_z(z, u) - u M(z, u)
+      = 0
+  \end{equation}
+  En~\eqref{eq:M-pde} la variable~\(u\) interviene como parámetro,
+  esta es una ecuación diferencial ordinaria.
+  Como \(M(0, u) = 1\),
+  la solución es:
+  \begin{equation*}
+    \label{eq:M-solution}
+    M(z, u)
+      = \left( \frac{1}{1 - z} \right)^u
+  \end{equation*}
+  Las derivadas de interés son:
+  \begin{align*}
+    M_u(z, u)
+      &= \frac{1}{(1 - z)^u} \ln \frac{1}{1 - z} \\
+    [z^n] M_u(z, 1)
+      &= H_n \\
+    M_{u u}(z, u)
+      &= \frac{1}{(1 - z)^u} \ln^2 \frac{1}{1 - z} \\
+    [z^n] M_{u u}(z, 1)
+      &= \sum_{1 \le k \le n} H_k \notag \\
+      &= (n + 1) H_n - n
+  \end{align*}
+  Obtenemos:
+  \begin{align}
+    \Exp[ \chi_n ]
+      &= [z^n] M_u (z, 1) \\
+      &= H_n \\
+    \var[ \chi_n ]
+      &= M_{u u} (z, 1) - \left( M_u (z, 1) \right)^2 \notag \\
+      &= ((n + 1) H_n - n) + H_n - H_n^2 \notag \\
+      &= (n + 2) H_n - n - H_n^2
+  \end{align}
+
+\subsection{Ordenamiento por selección}
+\label{sec:ordenamiento-seleccion}
+
+  Volvamos a nuestro algoritmo de ordenamiento.
+  Llamemos \(X_i\) al número de asignaciones a \lstinline[language = C]!max!
+  en las distintas rondas del algoritmo
+  (ciclo externo sobre \lstinline[language = C]!i!).
+  Nos interesan:
+  \begin{align}
+    \Exp\left[ \sum_{1 \le i \le n} X_i \right]
+      &= \sum_{1 \le i \le n} \Exp[ X_i ] \notag \\
+      &= \sum_{1 \le i \le n} H_i \notag \\
+      &= (n + 1) H_n - n
+  \end{align}
+  Vemos que los \(X_i\) son variables independientes,
+  así que:
+  \begin{align*}
+    \var\left[ \sum_{1 \le i \le n} X_i \right]
+      &= \sum_{1 \le i \le n} \var[ X_i ] \\
+      &= \sum_{1 \le i \le n} ((i + 2) H_i - i - H_i^2) \\
+      &= \sum_{1 \le i \le n} i H_i
+           + 2 \sum_{1 \le i \le n} H_i
+           - \frac{n (n + 1)}{2}
+           - \sum_{1 \le i \le n} H_i^2
+      &= \sum_{1 \le i \le n} i H_i
+           + 2 ((n + 1) H_n - n)
+           - \frac{n (n + 1)}{2}
+           - \sum_{1 \le i \le n} H_i^2
+  \end{align*}
+  Atacamos las distintas sumas:
+  \begin{align*}
+    \sum_{1 \le i \le n} i H_i
+      &= [z^n]
+           \frac{z}{1 - z} \mathrm{D} \frac{1}{1 - z} \ln \frac{1}{1 - z} \\
+      &= [z^n] \left(
+                 \frac{z}{(1 - z)^3} \ln \frac{1}{1 - z}
+                   + \frac{z}{(1 - z)^3}
+               \right) \\
+      &= [z^{n - 1}] \frac{1}{(1 - z)^3} \ln \frac{1}{1 - z}
+          + \binom{-3}{n - 1} \\
+      &= \binom{n - 1 + 2}{2} (H_{n - 1 + 2} - H_2)
+           + \binom{n - 1 + 3 - 1}{3 - 1} \\
+      &= \frac{n (n + 1)}{2} \left( H_{n + 1} - \frac{3}{2} \right)
+           + \frac{(n + 1) (n + 2)}{2} \\
+      &= \frac{n (n + 1)}{2} \left( H_{n + 1} - \frac{1}{2} \right) \\
+      &= \frac{n (n + 1)}{2} H_n - \frac{n (n - 1)}{4}
+  \end{align*}
+  La otra suma se puede resolver sumando por partes:
+    % MSE 933656
+  \begin{align*}
+    \sum_{1 \le i \le n} H_i^2
+      &= ((n + 1) H_n - n) H_n
+           - \sum_{1 \le i \le n - 1} \frac{(i + 1) H_i - i}{i + 1} \\
+      &= (n + 1) H_n^2 - n H_n
+          - (n + 1) H_n + n + H_n + (n - 1) - H_n + 1 \\
+      &= (n + 1) H_n^2 - (2 n + 1) H_n + 2 n
+  \end{align*}
+  Uniendo las piezas y simplificando:
+  \begin{equation}
+    \var\left[ \sum_{1 \le i \le n} X_i \right]
+      = \frac{n^2 + 9 n + 6}{2} H_n
+          - (n + 1) H_n^2
+          - \frac{n (3 n + 17)}{4}
+  \end{equation}
+  O sea,
+  asintóticamente el número de asignaciones
+  (recuerde que un intercambio son tres asignaciones)
+  en el método de selección
+  es mínimo \num{0}, máximo \(3 n\), promedio \(3 n \ln n\),
+  varianza \(9 n^2 \ln n / 2\).
+
+% To do: heapsort
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  cumulativas cumulativa Min Prom Máx bivariadas eq max
+% LocalWords:  rerotular class again fg cum explicit bivariada pde
+% LocalWords:  asintóticamente

@@ -1,0 +1,624 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Análisis Amortizado}
+\label{cha:analisis-amortizado}
+
+  Discutiremos una forma útil de análisis,
+  llamada \emph{análisis amortizado}.
+  Al usar una estructura de datos
+  (o sus algoritmos asociados)
+  ciertamente interesa el costo de cada operación individual,
+  pero en una perspectiva más amplia
+  interesa acotar el costo total
+  de la \emph{secuencia} de las operaciones efectuadas.
+  Acotar el peor caso puede dar una cota exageradamente pesimista
+  si los costos de las operaciones varían fuertemente,
+  en particular si una operación \textquote{cara}
+  solo es posible luego de una seguidilla de operaciones \textquote{baratas}.
+  Otro caso es el que vimos recién,
+  pagamos un costo ahora en la esperanza de ahorrar más adelante.
+  La definición es simple:
+  \begin{definition}
+    \label{def:analisis-amortizado}
+    El \emph{costo amortizado por operación}
+    en una secuencia de \(n\) operaciones es el costo total de la secuencia
+    dividido por \(n\).
+  \end{definition}
+  La definición es simple,
+  la aplicación muchas veces requiere cuidado y creatividad.
+
+  Note que esto difiere de análisis de caso promedio.
+  Por ejemplo,
+  para Quicksort derivamos un costo promedio de \(O(n \log n)\)
+  para ordenar un arreglo de \(n\) elementos,
+  pero el peor caso es \(O(n^2)\).
+  Nada garantiza que en una secuencia de \(m\) ordenamientos
+  el costo total esté acotado por \(O(m n \log n)\),
+  perfectamente podemos caer casi siempre en el peor caso,
+  dando \(O(m n^2)\).
+  Acá buscamos acotar el peor caso de la \emph{secuencia} de operaciones,
+  considerando las interacciones entre ellas.
+  No entran en el análisis
+  distribuciones de probabilidad de los datos de entrada
+  (muchas veces impracticables de obtener,
+   o al menos imposibles de tratar analíticamente,
+   terminando en modelos bastante alejados de la realidad).
+  Incluso la biblioteca estándar de plantillas de \cplusplus{}
+  (STL,
+   \emph{\foreignlanguage{english}{Standard Template Library}},
+   revisar por ejemplo el clásico de Stroustrup~%
+     \cite{stroustrup13:_C++_progr_lang},
+   o la documentación de SGI~%
+     \cite{SGI00:_STL,
+           SGI00:_STL_complexity})
+  ofrece una colección de estructuras de datos y algoritmos,
+  especificando complejidades promedio
+  y,
+  donde aplicable,
+  amortizadas para cada uno.
+
+  Hay tres métodos principales
+  (comparar con CLRS~%
+     \cite[capítulo~17]{cormen09:_CLRS}):
+  análisis agregado,
+  método de contabilidad
+  y funciones potenciales.
+  El primero suele ser más simple;
+  los dos últimos son equivalentes,
+  en el sentido que los tres pueden aplicarse a los mismos problemas
+  obteniendo los mismos resultados.
+  La ventaja de los últimos dos métodos es que permiten análisis más detallado,
+  asignando costos diferentes a operaciones distintas.
+  Claro que dependiendo del problema
+  uno puede resultar más natural que los otros.
+
+\section{Arreglo dinámico}
+\label{sec:arreglo-dinámico}
+
+  Podemos representar un \emph{\foreignlanguage{english}{stack}}
+  (\textquote{pila}, para los puristas del castellano)
+  mediante un arreglo,
+  extendiendo el arreglo si llega a llenarse.
+  Las operaciones son bastante simples,
+  ver el listado~\ref{lst:stack}.
+  Hemos omitido el verificar
+  si el \emph{\foreignlanguage{english}{stack}} contiene elementos
+  o llenó el arreglo.
+  \lstinputlisting[float,
+                   caption = {Operaciones sobre
+                              un \emph{\foreignlanguage{english}{stack}}},
+                     label = lst:stack]
+                  {code/stackops.c}
+  La pregunta es qué hacer si el arreglo se llena.
+  La biblioteca de C ofrece la opción de solicitar memoria,
+  copiar el contenido de un área al comienzo de esta y liberar el original
+  (ver \verb+realloc(3)+ en su Unix preferido
+   o refiérase a Wikipedia~%
+     \cite{wikipedia16:_c_standard_library}).
+  lo que permite completar las anteriores.
+  Supongamos que decidimos expandir el arreglo cuando se llene,
+  la pregunta es en cuánto hacerlo para mantener rendimiento aceptable.
+  Considerando el costo de un \lstinline!push! o \lstinline!pop!
+  simplemente el costo de copiar un objeto,
+  y similarmente que el costo de expandir el arreglo cuando tiene tamaño~\(n\)
+  es \(n\)
+  (en el fondo,
+   el costo es solo el copiar los objetos).
+  Si extendemos el arreglo en un elemento cada vez,
+  para llegar a tamaño \(n\) hay que hacer \(n\) operaciones \lstinline!push!
+  partiendo del \emph{\foreignlanguage{english}{stack}} vacío,
+  cuando el \emph{\foreignlanguage{english}{stack}} tiene tamaño \(k\)
+  el costo es \(k + 1\),
+  para un costo total de \(n\) operaciones:
+  \begin{equation*}
+    \sum_{0 \le k \le n - 1} (k + 1)
+      = \frac{n (n + 1)}{2}
+  \end{equation*}
+  dando un costo amortizado de \((n + 1) / 2\).
+  Para operaciones tan simples esto es inaceptable.
+
+  Si extendemos el arreglo duplicando su tamaño cada vez que se llena,
+  lo que tenemos es que el costo de las duplicaciones en \(n\) operaciones
+  está acotado por una suma de la forma:
+  \begin{equation*}
+    1 + (1 + 1) + (2 + 1) + 1 + (4 + 1) + 1 + 1 + 1
+      + \dotsb
+      + (2^k + 1) + 1
+      + \dotsb
+  \end{equation*}
+  Acá estamos copiando un elemento
+  cada vez que se efectúa un \lstinline!push!,
+  y cada vez que pasamos de una potencia de dos
+  además debemos copiar el arreglo actual.
+  O sea,
+  en total tenemos \(n\) copias por \lstinline!push!
+  y copiamos \(2^k\) elementos cada vez que pasamos de esa potencia.
+  El número total de copias es:
+  \begin{align*}
+    n + \sum_{0 \le k \le \lfloor \log_2 (n - 1) \rfloor} 2^k
+      &=   n + 2^{\lfloor \log_2 (n - 1) \rfloor + 1} - 1 \\
+      &\le n + 2^{\log_2 (n - 1) + 1} - 1 \\
+      &=   n + 2 (n - 1) - 1 \\
+      &=   3 n - 3 \\
+      &<   3 n
+  \end{align*}
+  El costo amortizado es menor a \num{3}.
+  Bastante más aceptable.
+
+  Este es un ejemplo claro de \emph{análisis agregado},
+  consideramos una secuencia de operaciones,
+  calculamos el costo de ella y dividimos por el número de operaciones.
+
+\section{Contador binario}
+\label{sec:contador-binario}
+
+  Imagine que debemos almacenar un contador binario grande
+  en un arreglo \lstinline!a!,
+  todas cuyas entradas se inician en \num{0}
+  y en cada paso el contador se incrementa en \num{1}.
+  Supongamos el modelo de costo
+  que carga una unidad cada vez que un bit cambia.
+  En una secuencia de \(n\) operaciones,
+  el peor costo es \(\lfloor \log_2 n \rfloor\),
+  el número máximo de bits que cambian de \num{1} a \num{0}.
+  Pero el costo amortizado es menor a \num{2},
+  cosa que demostraremos usando los distintos métodos.
+
+\subsection{Método contable}
+\label{sec:metodo-contable}
+
+  La idea es mantener un saldo,
+  cobramos por operaciones y ahorramos los sobrepagos,
+  pagando por operaciones caras con el saldo.
+  Hay que tener cuidado que el saldo nunca pueda hacerse negativo.
+
+  \begin{proposition}
+    El costo amortizado de la operación de incremento
+    es a lo más \num{2} cambios de bit.
+  \end{proposition}
+  \begin{proof}
+    Cargue \num{2} unidades a la operación de incremento.
+    Si cambia \(0 \to 1\),
+    gasta \num{1} en la operación y ahorra \num{1};
+    si cambia \(1 \to 0\) usa lo ahorrado
+    para pagar por los cambios adicionales.
+    Una manera de ver que nunca terminamos con saldo negativo
+    es considerar que cada bit tiene su propio saldo,
+    cuando cambia de \num{0} a \num{1} se le abona \num{1},
+    y ese se gasta al cambiar de \num{1} a \num{0}.
+    Si tenemos una secuencia de \num{1} al final,
+    e incrementamos,
+    pagamos el \num{1} ahorrado en cada bit para cambiarlo a \num{0},
+    pagamos \num{1} para cambiar el primer \num{0} a \num{1}
+    y le dejamos \num{1} de ahorro.
+    Hemos gastado \num{2}.
+
+    Como de esta forma el saldo nunca es negativo,
+    el costo de una secuencia de operaciones
+    nunca sobrepasa \num{2}~cambios de bit por incremento.
+  \end{proof}
+
+\subsection{Método agregado}
+\label{sec:metodo-agregado}
+
+  Para contraste,
+  una demostración usando el método agregado
+  (calcular directamente el costo de la secuencia de operaciones)
+  sería:
+  \begin{proof}
+    Consideremos una secuencia de incrementos,
+    y consideremos cuántas veces cambia cada bit.
+    Si el contador llega a \(n\)
+    (\(n\) operaciones)
+    el bit más alto es \(\lfloor \log_2 n \rfloor + 1\).
+    Claramente,
+    \lstinline!a[0]! cambia cada vez,
+    \lstinline!a[1]! cambia cada dos incrementos,
+    \ldots,
+    \lstinline!a[k]! cambia cada \(2^k\) incrementos,
+    y así sucesivamente.
+    El costo total de los cambios a \lstinline!a[0]! es \(n\),
+    los cambios a \lstinline!a[1]! tienen costo total el piso de \(n / 2\),
+    \ldots,
+    cambios de \lstinline!a[k]! cuestan el piso de \(n / 2^k\),
+    y así sigue.
+
+    En total,
+    el costo es:
+    \begin{align*}
+      \lfloor n \rfloor
+         + \left\lfloor \frac{n}{2} \right\rfloor
+         + \dotsb
+         + \left\lfloor
+             \frac{n}{2^{\lfloor \log_2 n \rfloor}+ 1}
+           \right\rfloor
+        &=   \sum_{0 \le k \le \log_2 n + 1}
+               \left\lfloor \frac{n}{2^k} \right\rfloor \\
+        &\le n \sum_{0 \le k \le \log_2 n + 1} 2^{-k} \\
+        &<   n \sum_{k \ge 0} 2^{-k} \\
+        &=   2 n
+    \end{align*}
+    De aquí el costo amortizado es menor a \num{2}.
+  \end{proof}
+
+\subsection{Función potencial}
+\label{sec:funcion-potencial}
+
+  En las anteriores contabilizábamos costos por operaciones individuales.
+  Una mirada alternativa es considerar que la estructura de datos
+  tiene un \emph{potencial},
+  una función \(\Phi \colon \mathscr{S} \to \mathbb{R}\)
+  de estados \(\mathscr{S}\) de la estructura a los reales.
+  Supongamos una secuencia de operaciones
+  \(\sigma_1, \sigma_2, \dotsc, \sigma_n\),
+  que llevan a la estructura del estado inicial \(s_0\)
+  sucesivamente a \(s_1, \dotsc, s_n\).
+  Sea \(c_i\) el costo real de la operación \(\sigma_i\),
+  y defina el costo amortizado \(a_i\) de \(\sigma_i\) mediante:
+  \begin{equation*}
+    a_i
+      = c_i + \Phi(s_i) - \Phi(s_{i - 1})
+  \end{equation*}
+  O sea:
+  \begin{equation*}
+    \text{(costo amortizado)}
+      = \text{(costo real)}
+          + \text{(cambio de potencial)}
+  \end{equation*}
+  Sumando sobre la secuencia de operaciones:
+  \begin{align*}
+    \sum_i a_i
+      &= \sum_i (c_i + \Phi(s_i) - \Phi(s_{i - 1})) \\
+      &= \sum_i c_i + \Phi(s_n) - \Phi(s_0)
+  \end{align*}
+  Reorganizando:
+  \begin{equation*}
+    \sum_i c_i
+      = \sum_i a_i - (\Phi(s_n) - \Phi(s_0))
+  \end{equation*}
+  Si \(\Phi(s_n) \ge \Phi(s_0)\)
+  (caso común),
+  tenemos:
+  \begin{equation*}
+    \sum_i c_i
+      \le \sum_i a_i
+  \end{equation*}
+  Acotando los costos amortizados \(a_i\),
+  acotamos el costo de cualquier secuencia de operaciones.
+
+  Es claro que esta visión es equivalente a las anteriores.
+
+  Apliquemos este método a nuestro problema ahora.
+  \begin{proof}
+    Sea el potencial \(\Phi\) el número de bits \num{1} en el arreglo,
+    y representemos el estado
+    simplemente por el número representado por el contador.
+    Vemos que \(\Phi(0) = 0\)
+    y que \(\Phi(n) \ge 0\).
+    Interesa acotar el costo amortizado de incrementos.
+
+    Considere el \(k\)\nobreakdash-ésimo incremento,
+    que cambia de \(k - 1\) a \(k\).
+    Sea \(c\) el número de \emph{\foreignlanguage{english}{carries}}
+    (número de reservas de dígitos)
+    en este incremento,
+    con lo que el costo de esta operación es \(c + 1\).
+    El cambio de potencial que produce es \(- c + 1\)
+    (hay \(c\) unos que cambian a ceros,
+     y un cero que cambia a uno).
+    El costo amortizado de la operación es:
+    \begin{align*}
+      a_k
+        &= c + 1 + (-c + 1) \\
+        &= 2
+    \end{align*}
+    Como el potencial final es mayor al inicial,
+    tenemos que:
+    \begin{align*}
+      \sum_i c_i
+        &< \sum_i a_i \\
+        &= 2 n
+    \end{align*}
+  \end{proof}
+
+  En este análisis,
+  la selección de la función potencial es crítica.
+
+\subsubsection{Diseño de una función potencial}
+\label{sec:diseno-potencial}
+
+  Esto claramente es la parte más difícil de esta técnica.
+  En el caso del método contable,
+  hay que definir un cobro adicional,
+  que también es complejo de hacer correctamente,
+  posiblemente más que lo que discutimos.
+  La discusión presente es de Belleville~%
+    \cite{belleville11:_amortized_analysis}.
+
+  Si tenemos una estructura que maneja inserciones y eliminaciones,
+  usualmente podemos construir un potencial adecuado
+  considerando el costo adicional que significa el elemento
+  una vez que se ha añadido.
+  Por ejemplo,
+  consideremos un \emph{\foreignlanguage{english}{stack}}
+  con operaciones \verb+push+, \verb+pop+ y \verb+multipop+
+  (la última elimina un número dado de objetos
+   del \emph{\foreignlanguage{english}{stack}}).
+  Una vez que un elemento se ha añadido
+  al \emph{\foreignlanguage{english}{stack}},
+  lo que queda por hacer con él es eliminarlo nuevamente,
+  lo que sugiere usar como potencial
+  el número de elementos actualmente presentes
+  (asociar un valor \num{1} a cada elemento añadido).
+  Esto sugiere:
+  \begin{equation*}
+    \Phi(D_i)
+      = \text{número de elementos en \(D_i\)}
+  \end{equation*}
+  Es fácil demostrar con esto que con esto el costo amortizado por operación
+  resulta constante.
+  En el contador binario,
+  nuestra función potencial es el número de unos,
+  debemos ahorrar cada vez que un cero pasa a uno para volverlo a cero.
+
+  En estos casos el potencial se distribuye entre los objetos de la estructura,
+  pero hay casos en que no conviene tener una asociación demasiado estrecha,
+  el potencial viene de la conformación de la estructura misma.
+
+  Como ejemplo,
+  consideremos una estructura simple
+  que soporta operaciones de inserción y búsqueda.
+  Si usamos un arreglo desordenado,
+  si hay \(n\) elementos
+  el costo de una inserción es constante
+  y el costo de una búsqueda es \(O(n)\);
+  si el arreglo se mantiene ordenado
+  la búsqueda tiene costo \(O(\log n)\)
+  mientras la inserción tiene costo \(O(n)\).
+  Buscamos una estructura simple que de mejor rendimiento amortizado.
+
+  Supongamos \(n\) elementos,
+  y sea \(k = \lceil \log_2 (n + 1) \rceil\)
+  (requerimos \(k\) bits para representar números hasta \(n\)),
+  y sea \(\langle n_{k - 1} n_{k - 2} \ldots n_0 \rangle\)
+  la representación de \(n\) en binario.
+  Usaremos \(k\) arreglos ordenados
+  \(A_0, A_1, \dotsc, A_{k - 1}\).
+  El arreglo \(A_i\) o es vacío o contiene exactamente \(2^i\) elementos,
+  dependiendo del valor de \(n_i\).
+  Aunque cada arreglo está ordenado,
+  no hay relación entre los elementos de los arreglos.
+
+  Para buscar un objeto en esta estructura,
+  buscamos en los \(k\) arreglos.
+  Hay \(O(\log n)\) arreglos,
+  la búsqueda en cada uno de ellos toma \(O(\log n)\),
+  con lo que el costo total de la búsqueda es \(O(\log^2 n)\)
+  (un análisis más fino da una cota algo mejor).
+
+  Para insertar,
+  creamos un nuevo arreglo con un único elemento,
+  y vamos intercalando sucesivamente con \(A_0\),
+  el resultado se intercala con \(A_1\) si no está vacío,
+  y así sucesivamente
+  hasta llegar a una posición vacía.
+  El algoritmo~\ref{alg:insert} da el detalle.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{insert}(x)\)}{
+      \(i \gets 0\) \;
+      \(A \gets x\) \;
+      \While{\(A_i\) not empty}{
+        \(A \gets \mathrm{merge}(A_i, A)\) \;
+        \(A_i \gets \text{empty}\) \;
+        \(i \gets i + 1\) \;
+      }
+      \(A_i \gets A\) \;
+    }
+    \caption{Inserción en la estructura propuesta}
+    \label{alg:insert}
+  \end{algorithm}
+  El peor caso de la operación \verb+insert+ es \(\Theta(n)\),
+  por ejemplo si la estructura ya contiene \(n = 2^t - 1\) elementos.
+
+  Para analizar el costo de una secuencia de \(n\) operaciones \verb+insert+
+  Definimos la función potencial:
+  \begin{equation*}
+    \Phi(D_i)
+      = \sum_{0 \le j \le k - 1} (k - j) n_j 2^j
+  \end{equation*}
+  donde \(k = \lceil \log_2 (n + 1) \rceil\)
+  y \(n_j = [ A_j \text{not empty} ]\).
+  La justificación es que los \(2^j\) elementos actualmente en el arreglo \(j\)
+  potencialmente deben participar en operaciones \verb+merge+
+  para migrar a los arreglos \(j + 1, j + 2, \dotsc, k\).
+
+  Dividimos la operación en dos partes:
+  crear el arreglo \(A\) con un elemento
+  y las operaciones \verb+merge+
+  hasta que haya un solo arreglo de tamaño \(2^j\) para cada \(j\).
+  El costo de la primera parte es constante,
+  y aumenta el potencial en \(k\).
+  Su aporte al costo amortizado es \(k + 1\).
+
+  Para las operaciones de intercalación,
+  cada vez que se invoca sobre un par de arreglos de \(2^j\) elementos
+  el costo es \(2^{j + 1}\)
+  (el tiempo por elemento es constante).
+  Como se mueven \(2^{j + 1}\) elementos de \(A_j\) a \(A_{j + 1}\),
+  el potencial disminuye en \(2^{j + 1}\).
+  El costo amortizado de cada \verb+merge+ \num{0}.
+
+  En resumen,
+  el costo amortizado de \(\mathrm{insert}\) es \(O(k + 1)\),
+  que es \(O(\log n)\).
+
+\section*{Ejercicios}
+\label{sec:ejercicios-26}
+
+\begin{enumerate}
+\item
+  Suponga una secuencia de operaciones numeradas \(1, 2, 3, \dotsc\)
+  tal que la operación \(i\) tiene costo \num{1}
+  si \(i\) no es una potencia de \num{2},
+  mientras el costo es \(i\) si \(i\) es una potencia de \num{2}.
+  ¿Cuál es una cota ajustada del costo amortizado de las operaciones?
+\item
+  Repita el análisis del arreglo extensible
+  (\emph{\foreignlanguage{english}{stack}})
+  usando el método potencial.
+\item
+  Consideremos una cola de prioridad con operaciones
+  dadas en el algoritmo~\ref{alg:monotone-priority-queue}.
+  Consideramos que inicia con todos los elementos de \num{1} a \(n\)
+  en la cola,
+  y representamos la presencia de un elemento mediante un booleano.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{Init}(n)\)}{
+      \For{\(i \gets 1\) \KwTo \(n\)}{
+        \(a[i] \gets \mathrm{true}\) \;
+      }
+    }
+    \BlankLine
+    \Procedure{\(\mathrm{Delete}(i)\)}{
+      \(a[i] \gets \mathrm{false}\) \;
+    }
+    \BlankLine
+    \Function{\(\mathrm{DeleteMin}()\)}{
+      \(i \gets 1\) \;
+      \While{\(\neg a[i]\)}{
+        \(i \gets i + 1\) \;
+      }
+      \eIf{\(i \le n\)}{
+        \(\mathrm{Delete}(i)\) \;
+        \Return \(i\) \;
+      }{
+        \Return \num{0} \;
+      }
+    }
+    \caption{Operaciones sobre la cola de prioridad}
+    \label{alg:monotone-priority-queue}
+  \end{algorithm}
+  \begin{enumerate}
+  \item
+    Analice el tiempo de ejecución de cada procedimiento.
+  \item
+    Modifique \(\mathrm{DeleteMin}\)
+    de manera que su tiempo de ejecución amortizado es \(O(1)\),
+    manteniendo los órdenes de magnitud
+    de los tiempos de las otras operaciones.
+    Especifique la función potencial que emplea en su análisis.
+  \item
+    Dé una representación diferente
+    con costos \(O(1)\) en el peor caso
+    para \(\operatorname{Delete}\) y \(\operatorname{DeleteMin}\).
+  \end{enumerate}
+\item
+  Un \emph{\foreignlanguage{english}{stack}}
+  no se usa solo para operaciones \(\operatorname{push}\),
+  puede también encogerse.
+  Sea \(k\) el número actual de elementos,
+  y \(L\) el largo del arreglo.
+  Demuestre que si se recorta el arreglo a la mitad
+  cuando se efectúa \(\mathrm{pop}\) con \(k = L / 4\),
+  el costo amortizado de las operaciones es a lo más \num{3}.
+  ¿Porqué no usar la cota más natural de ajustar el arreglo si \(k = L / 2\)?
+\item
+  Suponiendo la estructura de un contador binario como en el texto,
+  describa una secuencia de \(n\) operaciones
+  sobre un contador de \(k\) bits,
+  inicialmente \num{0},
+  de costo \(O(n k)\).
+
+  Para manejar decrementos en forma eficiente,
+  usamos \textquote{bits} que pueden tomar los valores \(-1, 0, 1\)
+  (no solo \num{0, 1}).
+  Almacenamos el contador en un arreglo \(a[k]\),
+  y \(m\) es el último \textquote{bit} no cero
+  (si todos son cero, definimos \(m = -1\)).
+  El valor del contador es:
+  \begin{equation*}
+    \mathrm{val}(a, m)
+      = \sum_{0 \le i \le m} a[i] \cdot 2^i
+  \end{equation*}
+  Note que \(\mathrm{val}(a, m) = 0\) si y solo si \(m = -1\).
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{inc}\)(\(a, m\))}{
+      \eIf{\(m = -1\)}{
+        \(a[0] \gets 1\) \;
+        \(m \gets 0\) \;
+      }{
+        \(i \gets 0\) \;
+        \While{\(a[i] = 1\)}{
+          \(a[i] \gets 0\) \;
+          \(i \gets i + 1\) \;
+        }
+        \(a[i] \gets a[i] + 1\) \;
+        \eIf{\(a[i] = 0 \wedge m = i\)}{
+          \(m \gets - 1\) \;
+        }{
+          \(m \gets \mathrm{max}(m, i)\) \;
+        }
+      }
+    }
+    \caption{Incrementar el contador}
+    \label{alg:counter-inc}
+  \end{algorithm}
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Procedure{\(\mathrm{dec}\)(\(a, m\))}{
+      \eIf{\(m = -1\)}{
+        \(a[0] \gets -1\) \;
+        \(m \gets 0\) \;
+      }{
+        \(i \gets 0\) \;
+        \While{\(a[i] = -1\)}{
+          \(a[i] \gets 0\) \;
+          \(i \gets i + 1\) \;
+        }
+        \(a[i] \gets a[i] - 1\) \;
+        \eIf{\(a[i] = 0 \wedge m = i\)}{
+          \(m \gets - 1\) \;
+        }{
+          \(m \gets \mathrm{max}(m, i)\) \;
+        }
+      }
+    }
+    \caption{Decrementar el contador}
+    \label{alg:counter-dec}
+  \end{algorithm}
+  \begin{enumerate}
+  \item
+    Dé un ejemplo de dos representaciones diferentes de un número.
+  \item
+    Demuestre que los procedimientos de los algoritmos~%
+    \ref{alg:counter-inc} y~\ref{alg:counter-dec}
+    son correctos.
+  \item
+    Usando los procedimientos de los algoritmos~%
+    \ref{alg:counter-inc} y~\ref{alg:counter-dec}
+    para incrementar y decrementar
+    (suponemos largo infinito, \(k = \infty\), para simplificar),
+    demuestre que el costo amortizado de cada operación
+    en una secuencia de \(n\) incrementos y decrementos
+    sobre un contador inicialmente cero es \(O(1)\).
+  \end{enumerate}
+\end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  Quicksort STL english Standard Template Library SGI
+% LocalWords:  CLRS stack realloc Wikipedia sobrepagos ésimo carries
+% LocalWords:  push multipop not empty insert merge

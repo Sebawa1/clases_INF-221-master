@@ -1,0 +1,643 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{listings}
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{Python}
+
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Búsqueda inteligente en grafos: \(A^*\)}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        tabsize = 4,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Situación general}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema}
+
+  \uncover<+->{
+    Es común buscar el camino más barato de un nodo origen en un grafo
+    a una meta.
+    Muchas veces no conocemos el destino,
+    pero tenemos un criterio que nos dice si un nodo es meta.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Una opción es usar el algoritmo de Dijkstra,
+    pero al entregar ese los caminos más cortos a todos los nodos,
+    puede trabajar mucho en caminos que van en la dirección equivocada.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si contamos con alguna estimación de la distancia
+    de un nodo a una meta,
+    podemos usar ésta como guía
+    para decidir qué nodo expandir a continuación.
+  }
+  \uncover<+->{
+    Debemos incluir el costo del mejor camino conocido al nodo actual
+    en la estimación,
+    nos interesa el costo mínimo del camino completo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Consideraciones}
+
+  \uncover<+->{
+    Suponemos un grafo dirigido \(G = (V, E)\),
+    una función de costo \(c \colon E \to \mathbb{R}\),
+    donde siempre es \(c(e) \ge \delta > 0\)
+    (esto evita caminos de largo infinito con costo finito),
+    un conjunto de \emph{fuentes} \(S \subset V\),
+    un conjunto de \emph{metas} \(T \subset V\)
+    y un operador \emph{sucesor} \(\Gamma \colon V \to 2^V\).
+    No suponemos que \(G\) es finito,
+    suponemos eso sí que el número de nodos vecinos (descendientes)
+    es siempre finito
+    (es \emph{localmente finito}).
+  }
+  \uncover<+->{
+    El subgrafo \(G_v\) es el nodo \(v\) junto con todos sus descendientes.
+    Dado un nodo fuente \(s \in S\)
+    nos interesa hallar en \(G_s\) el nodo \(t \in T\)
+    que minimiza el costo del camino
+    (la suma de los costos de los arcos)
+    de \(s\) a \(t\).
+  }
+  \uncover<+->{
+    Al costo mínimo de un camino de \(u\) a \(v\) lo anotaremos \(h(u, v)\),
+    para abreviar escribiremos \(h(v)\) para \(\min_{t \in T} \{ h(v, t) \}\)
+    (\(h(v)\) es el costo del camino óptimo desde \(v\) a un destino).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Consideraciones}
+
+  \uncover<+->{
+    Un algoritmo es \emph{admisible}
+    si garantiza hallar un camino óptimo de \(s\) a una meta
+    para todo grafo.
+  }
+  \uncover<+->{
+    Algoritmos admisibles podrán expandir diferentes nodos,
+    o hacerlo en distinto orden.
+  }
+  \uncover<+->{
+    Interesa que el algoritmo expanda el mínimo número de nodos.
+    Expandir nodos que se sabe que no pueden estar en un camino óptimo
+    es desperdiciar esfuerzo,
+    ignorar nodos que están en un camino óptimo
+    puede hacer que no lo encuentre y no ser admisible.
+  }
+  \uncover<+->{
+    Interesan algoritmos admisibles y eficientes.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Consideraciones}
+
+  \uncover<+->{
+    Supondremos una \emph{función de evaluación}
+    \(\widehat{f} \colon V \to \mathbb{R}\),
+    de manera de expandir a continuación
+    el nodo de mínimo valor de \(\widehat{f}\).
+  }
+  \uncover<+->{
+    Esto sugiere el algoritmo \(A^*\)
+    que contempla una cola de prioridad \(Q\).
+    Diremos que nodos en \(Q\)
+    (al igual que nodos aún no considerados)
+    están \emph{abiertos},
+    y marcaremos ciertos nodos como \emph{cerrados}
+    para no considerarlos nuevamente.
+  }
+\end{frame}
+
+\section{El algoritmo \(A^*\)}
+
+\begin{frame}
+  \frametitle{El algoritmo \(A^*\)}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Function{\(A^* (G, s, T)\)}{
+      \(\mathrm{Insert}(Q, s, \widehat{f}(s))\) \;
+      \While{\(\neg \mathrm{empty}(Q)\)}{
+        \(v \leftarrow \mathrm{DeleteMin}(Q)\) \;
+        Mark \(v\) closed \;
+        \If{\(v \in T\)}{
+          \Return \(v\) \;
+        }
+        \ForEach{\(u \in \Gamma(v)\)}{
+          \uIf{\(u \text{\ is not closed}\)}{
+            \(\mathrm{Insert}(Q, u, \widehat{f}(u))\) \;
+          }
+          \ElseIf{\(\text{new \(\widehat{f}(u)\) less than old value}\)}{
+            Remove closed mark from \(u\) \;
+            \(\mathrm{Insert}(Q, u, \widehat{f}(u))\) \;
+          }
+        }
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo \(A^*\)}
+
+  \uncover<+->{
+    En realidad nos interesa el camino de \(s\) a \(T\),
+    la modificación obvia
+    es registrar el nodo padre de \(v\) cuando lo marcamos cerrado
+    (y corregirlo al volverlo a cerrar),
+    finalmente seguimos la lista desde el nodo meta alcanzado hacia atrás
+    para reconstruir el camino buscado.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo \(A^*\)}
+
+  \uncover<+->{
+    El algoritmo
+    supone una cola de prioridad que permite modificar prioridades.
+    La mayoría de las versiones disponibles en bibliotecas
+    supone prioridades inmutables.
+  }
+  \uncover<+->{
+    En el caso que el algoritmo solicita modificar prioridades,
+    podemos simplemente insertar el nodo con la nueva prioridad.
+    Cuando nuevamente encontremos el nodo,
+    será con prioridad más alta y lo descartaremos.
+  }
+  \uncover<+->{
+    Ensucia la cola con datos inútiles,
+    pero parece no tener un impacto demasiado alto en el rendimiento,
+    como muestran experimentos.
+  }
+\end{frame}
+
+\subsection{La función de evaluación}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{La función de evaluación}
+
+  \uncover<+->{
+    Para el subgrafo \(G_s\) sea \(f(v)\) el costo óptimo
+    de un camino de \(s\) a \(T\),
+    con la restricción que el camino pase por \(v\).
+  }
+  \uncover<+->{
+    Note que \(f(s) = h(s)\),
+    que \(f(v) = f(s)\) para todo \(v\) en un camino óptimo,
+    y que \(f(v) > f(s)\) si \(v\) no está en un camino óptimo.
+    No conocemos \(f\)
+    (determinar su valor es precisamente el objetivo del ejercicio),
+    pero es razonable usar una estimación de \(f\)
+    como función de evaluación \(\widehat{f}\)
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Definiciones}
+
+  \uncover<+->{
+    Es natural descomponer \(f(v)\) en dos partes:
+    el costo óptimo para llegar de \(s\) a \(v\)
+    (le llamaremos \(g(v)\))
+    y el costo óptimo para llegar de \(v\) a una meta
+    (antes lo definimos como \(h(v)\)).
+    \begin{equation*}
+      f(v)
+        = g(v) + h(v)
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Definiciones}
+
+  \uncover<+->{
+    Buscamos una estimación \(\widehat{f}(v)\),
+    que igualmente podemos descomponer:
+    \begin{equation*}
+      \widehat{f}(v)
+        = \widehat{g}(v) + \widehat{h}(v)
+    \end{equation*}
+    Acá \(\widehat{g}(v)\) es una estimación de \(g(v)\),
+    a la mano está el mejor costo conocido.
+    Siempre será \(\widehat{g}(v) \ge g(v)\).
+
+    A su vez,
+    \(\widehat{h}(v)\) es una estimación de \(h(v)\).
+    Vemos que nos conviene \(\widehat{h}(v) \le h(v)\)
+    (buscamos subestimar \(f(v)\) para evitar descartar soluciones viables).
+  }
+\end{frame}
+
+\subsection{Algunas consecuencias}
+
+\begin{frame}
+  \frametitle{Conocemos \(g\) para un nodo en \(P\)}
+
+  \begin{lemma}
+    Para un nodo no cerrado \(v\) y un camino óptimo \(P\) de \(s\) a \(v\),
+    hay un nodo abierto \(v'\) en \(P\)
+    con \(\widehat{g}(v') = g(v')\).
+  \end{lemma}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Conocemos \(g\) para un nodo en \(P\)}
+  \framesubtitle{Demostración}
+
+  Sea \(P = \langle s = v_0, \dotsc, v_k = v \rangle\).
+  \uncover<+->{
+    Si \(s\) está abierto
+    (no se ha completado ninguna iteración),
+    tome \(s = v'\),
+    \(\widehat{g}(s) = g(s) = 0\),
+    el lema se cumple trivialmente.
+  }
+  \uncover<+->{
+    Si \(s\) está cerrado,
+    sea \(\Delta\) el conjunto de nodos cerrados \(v_i\) en \(P\)
+    para los que \(\widehat{g}(v_i) = g(v_i)\).
+  }
+  \uncover<+->{
+    Sabemos que \(\Delta \ne \varnothing\),
+    ya que \(s \in \Delta\).
+    Sea \(v^*\) el último nodo cerrado de \(P\),
+    \(v^* \ne v\) porque \(v\) está abierto.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Conocemos \(g\) para un nodo en \(P\)}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Sea \(v'\) el sucesor de \(v^*\) en \(P\).
+    Entonces:
+    \begin{align*}
+      \widehat{g}(v')
+        &\le \widehat{g}(v^*) + c(v^* v')
+          && \text{por definición de \(\widehat{g}\)} \\
+      \widehat{g}(v^*)
+        &=   g(v^*)
+          && \text{porque \(v^* \in \Delta\)} \\
+      g(v')
+        &=   g(v^*) + c(v^* v')
+          && \text{dado que \(P\) es óptimo}
+    \end{align*}
+  }
+  \uncover<+->{
+    Concluimos que \(\widehat{g}(v') \le g(v')\),
+    como \(\widehat{g}(v') \ge g(v')\) resulta \(\widehat{g}(v') = g(v')\),
+    y por la definición de \(\Delta\),
+    \(v'\) está abierto.
+    \qed
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Hay un nodo abierto
+                   con \(\widehat{f}(v') \le f(s)\) en \(P\)}
+
+  \begin{corollary}
+    Suponga que para todo \(v\) es \(\widehat{h}(v) \le h(v)\),
+    y que \(A^*\) no ha terminado.
+    Entonces para todo camino óptimo \(P\) de \(s\) a \(T\)
+    hay un nodo abierto \(v' \in P\) con \(\widehat{f}(v') \le f(s)\).
+  \end{corollary}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Hay un nodo abierto
+                   con \(\widehat{f}(v') \le f(s)\) en \(P\)}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    La demostración es por contradicción.
+  }
+  \uncover<+->{
+    Hay dos casos a considerar:
+  }
+  \begin{description}
+  \item[No termina:]
+    Sea \(t \in T\),
+    alcanzable desde \(s\) en un número finito de pasos
+    con costo mínimo \(f(s)\).
+    Como el costo de cada arco es a lo menos \(\delta\),
+    se alcanza \(t\) en a lo más \(M = f(s) / \delta\) pasos,
+    y para todos los vértices \(v\)
+    más lejos de \(s\) que \(M\) es:
+    \begin{equation*}
+      \widehat{f}(v)
+        \ge \widehat{g}(v)
+        \ge g(v)
+        \ge M \delta
+    \end{equation*}
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Hay un nodo abierto
+                   con \(\widehat{f}(v') \le f(s)\) en \(P\)}
+  \framesubtitle{Demostración}
+
+  \begin{description}
+  \item[]
+    O sea,
+    ningún nodo a distancia mayor a \(M\) de \(s\) se expande,
+    ya que por el corolario
+    habrá un nodo abierto \(v'\)en un camino óptimo
+    tal que \(\widehat{f}(v') \le f(s) < f(v)\).
+    \uncover<+->{
+      El algoritmo elegirá \(v'\) en vez de \(v\).
+      Hay un número finito de nodos a distancia a lo más \(M\),
+      cada uno de ellos puede ser reabierto solo un número finito de veces,
+      ya que hay un número finito de caminos que pasan por él,
+      y se reabre solo si calculamos un \(\widehat{g}(v)\) menor.
+    }
+  \end{description}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Hay un nodo abierto
+                   con \(\widehat{f}(v') \le f(s)\) en \(P\)}
+  \framesubtitle{Demostración}
+
+  \begin{description}
+  \item[Entrega un camino no óptimo:]
+    Supongamos que \(A^*\) termina en el nodo \(t\)
+    con \(\widehat{f}(t) = \widehat{g}(t) > f(s)\).
+    Por el corolario,
+    había un nodo abierto \(v'\) en un camino óptimo
+    con \(\widehat{f}(v') \le f(s) < \widehat{f}(t)\).
+    Se habría elegido \(v'\) para ser expandido en vez de \(t\),
+    con lo que \(A^*\) no habría terminado.
+    \qed
+  \end{description}
+\end{frame}
+
+\section{\(A^*\) es óptimo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\(A^*\) es óptimo}
+
+  \uncover<+->{
+    Hemos demostrado que si \(\widehat{h}(v) \le h(v)\),
+    \(A^*\) es admisible.
+    Una cota inferior obvia es \(\widehat{h}(v) = 0\),
+    con la que \(A^*\) es ciego
+    (el resultado es esencialmente el algoritmo de Dijkstra).
+  }
+
+  \uncover<+->{
+    En el problema original de movimiento de un robot en un área con obstáculos,
+    una cota inferior a la distancia a recorrer
+    es la distancia entre dos puntos,
+    obviando los obstáculos.
+  }
+  \uncover<+->{
+    En general,
+    si omitimos algunas de las restricciones del problema,
+    obtendremos un costo no mayor,
+    o sea un valor admisible de \(\widehat{h}(v)\).
+  }
+  \uncover<+->{
+    Resulta que \(A^*\) es óptimo,
+    en el sentido que expande el mínimo número de nodos
+    entre todos los algoritmos que usan la misma información
+    (la misma cota \(\widehat{h}\)).
+    Esto porque un algoritmo que \emph{no} expanda
+    todos los nodos con \(\widehat{f}(v) < f(s)\) para la meta \(s\)
+    puede omitir el camino óptimo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\(A^*\) es óptimo}
+
+  \uncover<+->{
+    Diremos que la estimación \(\widehat{h}\)
+    cumple la condición de \emph{monotonía} si:
+    \begin{equation*}
+      h(u, v) + \widehat{h}(u)
+        \ge \widehat{h}(v)
+    \end{equation*}
+  }
+  \uncover<+->{
+    La condición
+    expresa que la estimación \(\widehat{h}(v)\)
+    no puede mejorarse usando datos correspondientes de otros nodos.
+  }
+
+  \uncover<+->{
+    Resulta que si \(\widehat{h}\) cumple monotonía,
+    nunca se reconsideran nodos.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Consecuencias de monotonía}
+
+  \begin{lemma}
+    Suponga que se cumple
+    la condición de monotonía y que \(A^*\) cerró el nodo \(v\).
+    Entonces \(\widehat{g}(v) = g(v)\).
+  \end{lemma}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Consecuencias de monotonía}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Por contradicción.
+    Considere el subgrafo \(G_s\) justo antes de cerrar \(v\),
+    y suponga que \(\widehat{g}(v) > g(v)\).
+    Sea \(P\) un camino óptimo de \(s\) a \(v\),
+    como \(\widehat{g}(v) > g(v)\) el algoritmo no lo encontró.
+  }
+  \uncover<+->{
+    Por el lema,
+    hay un nodo abierto \(v' \in P\) con \(\widehat{g}(v') = g(v')\).
+    Por suposición,
+    \(v \ne v'\),
+    con lo que:
+    \begin{align*}
+      g(v)
+        &= g(v') + h(v', v) \\
+        &= \widehat{g}(v') + h(v', v)
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Consecuencias de monotonía}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Vale decir:
+    \begin{align*}
+      \widehat{g}(v)
+        &> \widehat{g}(v') + h(v', v) \\
+    \intertext{Sumando \(\widehat{h}\) a ambos lados:}
+      \widehat{g}(v) + \widehat{h}(v)
+        &> \widehat{g}(v') + h(v', v) + \widehat{h}(v') \\
+    \intertext{Aplicando monotonía al lado derecho:}
+      \widehat{g}(v) + \widehat{h}(v)
+        &> \widehat{g}(v') + \widehat{h}(v')
+    \end{align*}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Consecuencias de monotonía}
+  \framesubtitle{Demostración}
+
+  \uncover<+->{
+    Por la definición de \(\widehat{f}\):
+    \begin{align*}
+      \widehat{f}(v)
+        &> \widehat{f}(v')
+    \end{align*}
+  }
+  \uncover<+->{
+    Pero en tal caso \(A^*\) hubiese expandido \(v'\),
+    que estaba disponible,
+    en vez de \(v\).
+    \qed
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Describimos el algoritmo \(A^*\).
+  \item
+    Tiene el inconveniente de que exige una cola de prioridad
+    que permite modificar prioridades.
+    \uncover<+->{
+      Si no está disponible esa operación,
+      podemos simplemente reinsertar el nodo con la nueva prioridad,
+      con poco impacto en el rendimiento.
+    }
+  \item
+    Demostramos que es óptimo
+    \uncover<+->{
+      (expande el mínimo número de nodos
+       entre algoritmos que usan la misma cota).
+    }
+  \item
+    Si se cumple monotonía,
+    cuando se cierra un nodo se conoce el mínimo costo de un camino a él.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Continue continue Break old
+% LocalWords:  break KwStep step Mark closed less than value Remove
+% LocalWords:  mark from Loop loop subgrafo

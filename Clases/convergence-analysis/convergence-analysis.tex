@@ -1,0 +1,956 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Análisis de Convergencia}
+\label{cha:convergencia}
+
+  Contamos con varios métodos iterativos para hallar un cero de una función,
+  interesa compararlos según alguna medida de rendimiento.
+  Una medida clara es cuánto disminuye el error en cada iteración,
+  cosa que es relativamente sencilla de deducir.
+  Enfatizamos que en esto no consideramos errores de redondeo,
+  consideramos cálculos exactos.
+  Claro que en la práctica más nos interesa cuánto tiempo demora,
+  además de otras medidas como qué tan complicado es de programar
+  y posible información adicional que requiere
+  (por ejemplo,
+   un método que necesita derivadas es impracticable
+   cuando la función se conoce solo
+   como el resultado de un complejo cálculo,
+   no en forma explícita).
+  Otras medidas importantes son el área desde la cual el método converge
+  (si tenemos que partir muy cerca del cero de interés,
+   no tiene demasiada gracia).
+  Pero esto nos llevaría demasiado lejos,
+  ver las notas de Kahan~%
+    \cite{kahan16:_lecture_notes_real_root_finding}
+  para una discusión más detallada.
+
+\section{Orden de Convergencia}
+
+  Hemos derivado los métodos mediante consideraciones heurísticas,
+  como aproximar la función mediante una recta.
+  Interesa ahora obtener cotas asintóticas precisas para el error.
+  Note que muchas derivaciones simplemente
+  omiten los términos de error de mayor grado,
+  al considerarlos despreciables.
+  Acá buscamos justificar esto rigurosamente.
+
+  Si definimos \(e_n = x_n - x^*\),
+  se dice que un método es de \emph{orden \(p\)},
+  si para \(e_n \to 0\) es:
+  \begin{equation}
+    \lvert e_{n+1} \rvert
+      = C \lvert e_n \rvert^p + o(e_n^p)
+  \end{equation}
+  Acá \(e_n\) corresponde al error con \(n\) iteraciones.
+  Estamos usando \(o(e_n^p)\) como cota,
+  lo que interesa es que el error sea de orden menor que \(e_n^p\)
+  y no queremos comprometernos más allá
+  (como sería indicar algo como \(O(e_n^p)\)).
+  \begin{itemize}
+  \item
+    Si \(p = 1\) hablamos de convergencia lineal.
+    En este caso debe ser \(0 < C < 1\) para convergencia.
+    Bisección tiene \(C = \frac{1}{2}\).
+  \item
+    Si \(p = 2\) hablamos de convergencia cuadrática
+    (en cada paso, el error se eleva a \(p = 2\)).
+  \item
+    Si \(p = 3\) hablamos de convergencia cúbica.
+  \item
+    Si	\(p > 1\) decimos que es superlineal.
+  \end{itemize}
+  Note que mientras mayor sea el orden de convergencia \(p\),
+  más rápido
+  (en menos iteraciones)
+  encontraremos una aproximación adecuada al valor buscado.
+  Pero esto hay que balancearlo con otras consideraciones,
+  como si conocemos derivadas
+  (puede ser que la función quede definida por un procedimiento complejo,
+   que no permita obtenerlas)
+  y el trabajo extra por iteración que demande.
+
+  Una manera más representativa de la convergencia
+  es el índice de eficiencia asintótica.
+  Si en una iteración con orden de convergencia~\(p\)
+  se evalúa la función \(n\)~veces,
+  el índice es \(p^{1/n}\).
+  Esto representa el avance por evaluación de la función.
+
+\section{Análisis de las técnicas descritas}
+\label{sec:analisis-tecnicas}
+
+  En lo que sigue,
+  en la notación \(O\)
+  supondremos un rango de la forma \(\lvert e \rvert \le \varepsilon\),
+  para \(\varepsilon\) apropiado,
+  y lo omitiremos para abreviar.
+
+  Sea \(f(x)\) la función que buscamos el cero \(x^*\):
+  \begin{equation*}
+    f(x^*)
+     = 0
+  \end{equation*}
+  Suponiendo \(f(x)\) continua,
+  que puede derivarse tres veces en un entorno de \(x^*\),
+  por teorema de Taylor
+  usando la forma de Lagrange del residuo,
+  sabemos que hay \(x^* < \xi < x\)
+  (o \(x < \xi < x^*\) si \(x < x^*\))
+  tal que:
+  \begin{align}
+    f(x)
+      &= f(x^*)
+           + f'(x^*) (x - x^*)
+           + \frac{1}{2!} f''(x^*) (x - x^*)^2
+           + \frac{1}{3!} f'''(\xi) (x - x^*)^3
+              \notag \\
+  \intertext{Definiendo \(e = x - x^*\) tenemos la cota asintótica:}
+    f(x^* + e)
+      &= f'(x^*) e + \frac{1}{2!} f''(x^*) e^2 + O(e^3) \\
+      &= f'(x^*) e (1 + M e + O(e^2))
+              \label{eq:f-aproximado}
+  \end{align}
+  donde:
+  \begin{equation*}
+    M
+      = \frac{f''(x^*)}{2 f'(x^*)}
+  \end{equation*}
+
+  Llamaremos:
+  \begin{equation}
+    e_n
+      = x_n - x^*
+  \end{equation}
+  donde \(n\) es el número de la iteración correspondiente.
+  El análisis de cómo evoluciona el error al ir iterando
+  debe efectuarse por separado para cada uno de los métodos.
+
+\section{Regula Falsi}
+
+  Para \emph{\foreignlanguage{latin}{regula falsi}},
+  recordemos la ecuación~\eqref{eq:regula-falsi-iteration}:
+  \begin{equation}
+    x_{n+1}
+      = x_n - f(x_n) \cdot \frac{x_n - x_0}{f(x_n) - f(x_0)}
+  \end{equation}
+  Sea \(x^*\) el cero,
+  en términos del error \(e_n = x_n - x^*\)
+  expandiendo por Taylor alrededor del cero
+  (basta un solo término,
+   como veremos):
+  \begin{equation*}
+    f(x^* + e)
+      = f'(x^*) e + O(e^2)
+  \end{equation*}
+  \begin{align*}
+    e_{n+1}
+      &= e_n - f(x_n) \cdot \frac{e_n - e_0}{f(x_n) - f(x_0)} \\
+      &= \frac{e_n (f'(x^*) e_0 - f(x_0)) + O(e_n^2)}
+              {- f(x_0) + f'(x^*) e_n + O(e_n^2)} \\
+      &= \frac{e_n (f'(x^*) e_0 - f(x_0)) + O(e_n^2)}{-f(x_0)}
+           \cdot \left( 1 + \frac{f'(x^*)}{f(x_0)} e_n + O(e_n^2) \right) \\
+      &= \frac{e_n (f'(x^*) e_0 - f(x_0)) + O(e_n^2)}{-f(x_0)}
+           \cdot (1 + O(e_n)) \\
+      &= e_n \left(
+               1 - \frac{f'(x^*) e_0}{f(x_0)}
+                 + O(e_n)
+             \right) \\
+      &= e_n \left( 1 - \frac{f'(x^*) e_0}{f(x_0)} \right) + O(e_n^2)
+  \end{align*}
+  La convergencia es lineal.
+
+\section{Método de Newton}
+
+  Considere la figura \ref{02::newton:grafico},
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                    xmin = 0,	 xmax = 2,
+                    ymin = -0.6, ymax = 2,
+                    xtick = {0.535, 0.88375},
+                    xticklabels = {\(x_n\), \(x_{n+1}\)},
+                    ytick = {0},
+                    yticklabels = {},
+                    height = 6cm, width = 9cm
+                  ]
+        \addplot [black!70!blue!80, samples = 100, smooth, tension = 0.8]
+          coordinates {(0.3, 1.3) (0.6, 0.5) (1.3, -0.2) (1.8, -0.3)};
+        \addplot [domain = 0.2:1.1, red!80!black, samples = 100]
+          {-1.72043 * x + 1.52043};
+
+        \draw [dashed, blue] (axis cs:0.535, 0) -- (axis cs:0.535, 0.6);
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Una iteración del método de Newton.}
+    \label{02::newton:grafico}
+  \end{figure}
+  donde tomamos la tangente a la curva \(y = f(x)\) en \(x_n\),
+  hallando el intercepto de la tangente con el eje \(X\) en \(x_{n + 1}\):
+  \begin{equation}
+    x_{n+1}
+      = x_n - \frac{f(x_n)}{f'(x_n)}
+  \end{equation}
+  Considere la aproximación~\eqref{eq:f-aproximado},
+  con \(e_n = x_n - x^*\),
+  usando la serie geométrica para simplificar la dependencia del error
+  tenemos:
+  \begin{align*}
+    e_{n+1}
+      &= e_n - \frac{f(x_n)}{f'(x_n)} \\
+      &= e_n - \frac{f'(x^*) e_n (1 + M e_n) + O(e_n^3)}
+                    {f'(x^*) (1 + 2 M e_n) + O(e_n^2)} \\
+      &= e_n - e_n \frac{1 + M e_n + O(e_n^2)}{1 + 2 M e_n + O(e_n^2)} \\
+      &= e_n
+          - e_n
+              \left( 1 + M e_n + O(e_n^2) \right)
+              \left( 1 - 2 M e_n + O(e_n^2) \right) \\
+      &= e_n
+           - e_n \left(
+                   1 - M e_n - 2 M^2 e_n^2 + O(e_n^2)
+                 \right) \\
+      &= e_n
+          - e_n
+              \left( 1 - M e_n + O(e_n^2) \right) \\
+      &= M e_n^2 + O(e_n^3) \\
+      &= \frac{f''(x^*)}{2 f'(x^*)} \cdot e_n^2 + O(e_n^3)
+  \end{align*}
+  O sea,
+  el método de Newton es cuadrático si \(f'(x^*) \ne 0\).
+  En el fondo,
+  el método de Newton duplica el número de cifras correctas
+  en cada iteración.
+  Supongamos que el error cumple \(e_k / x^* = a \cdot 10^{-n}\),
+  con \(0 < \lvert a \rvert \le 1/2\),
+  o sea,
+  conocemos \(x^*\) con \(n\) cifras a la iteración \(k\).
+  Por la forma aproximada del error:
+  \begin{align*}
+    \left \lvert \frac{e_{k + 1}}{x^*} \right\rvert
+      &\approx \lvert M \rvert
+                  \cdot \left\lvert \frac{e_k^2}{x^*} \right\rvert \\
+      &=       \lvert M x^* a^2 \rvert \cdot 10^{-2 n} \\
+      &\le     \left\lvert \frac{M x^*}{4} \right\rvert \cdot 10^{-2 n} \\
+  \end{align*}
+  Esto corresponde a conocer \(x^*\) con \(2 n\) cifras
+  (siempre que \(\lvert M x^* / 4 \rvert \le 1/2\),
+   claro).
+
+  Simplificar las expresiones asintóticas es una tarea bastante ardua,
+  por suerte hay sistemas de álgebra simbólica.
+  En particular,
+  el sistema SymPy\cite{sympy22:_1.10.1} maneja series
+  y la notación \(O(\cdot)\).
+  Para indicar una expresión de orden \(x^3\) se escribe
+  \lstinline[language = Python]{O(x ** 3, x)}
+  (deben explicitarse las variables a las que aplica,
+   vea la documentación para detalles adicionales).
+  \lstinputlisting[language = Python,
+                   linerange = {5-18},
+                   caption = {An\'alisis de convergencia de Newton},
+                   label = lst:Newton-convergence]{code/Newton.py}
+  Usando estas facilidades
+  con las expansiones desarrolladas antes
+  el programa del listado~\ref{lst:Newton-convergence}
+  retorna \lstinline[language = Python]{M*e**2 + O(e**3)},
+  o sea es:
+  \begin{equation*}
+    e_{n + 1}
+      = M e_n^2 + O(e_n^3)
+  \end{equation*}
+
+\subsection{Convergencia del método de Newton}
+\label{sec:Newton-convergence}
+
+  Hay una variedad de condiciones
+  que garantizan la convergencia del método de Newton.
+  Acá consideraremos algunas simples pero útiles en la práctica,
+  dadas por Kinaid y Cheney~%
+    \cite{kincaid02:_numerical_analysis}.
+  \begin{theorem}[Convergencia del método de Newton]
+    \label{theo:Newton-convergence}
+    Sea \(f''\) continua y sea \(x^*\) un cero simple de \(f\).
+    Entonces hay un entorno alrededor de \(x^*\) y una constante \(C\)
+    tal que si se inicia en ese entorno,
+    el método de Newton converge a \(x^*\)
+    y los errores sucesivos cumplen:
+    \begin{equation*}
+      \lvert x_{n + 1} - x^* \rvert
+        \le C \lvert x_n - x^* \rvert^2
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    En términos de \(e_n = x_n - x^*\)
+    la iteración de Newton puede escribirse:
+    \begin{align*}
+      x_{n + 1}
+        &= x_n - \frac{f(x_n)}{f'(x_n)} \\
+      e_{n + 1}
+        &= e_n - \frac{f(x_n)}{f'(x_n)} \\
+        &= \frac{f'(x_n) e_n - f(x_n)}{f'(x_n)}
+    \end{align*}
+    Por el teorema de Taylor hay \(\xi_n\) entre \(x^*\) y \(x_n\) tal que::
+    \begin{align*}
+      f(x^*)
+        &= f(x_n - e_n) \\
+      0
+        &= f(x_n) - f'(x_n) e_n + \frac{1}{2}f''(\xi_n) e_n^2
+    \end{align*}
+    Reemplazando,
+    tenemos que:
+    \begin{equation}
+      \label{eq:Newton-error}
+      e_{n + 1}
+        = - \frac{f''(\xi_n)}{2 f(x_n)} e_n^2
+    \end{equation}
+    Dado \(\delta\) definamos \(c(\delta)\) mediante:
+    \begin{equation*}
+      c(\delta)
+        = \frac{1}{2}
+            \max_{\lvert x - x^* \rvert \le \delta}\{\lvert f''(x) \rvert\}
+              / \min_{\lvert x - x^* \rvert \le \delta}\{\lvert f'(x) \rvert\}
+    \end{equation*}
+    Como \(x^*\) es un cero simple,
+    \(f'(x^*) \ne 0\),
+    como \(f'(x)\) es continua
+    (porque \(f\) tiene segunda derivada continua),
+    hay \(\delta\) tal que el denominador es positivo
+    (\(f'(x) \ne 0\) en el rango).
+    Elijamos \(\delta\) suficientemente chico
+    para que \(\delta c(\delta) < 1\).
+    Entonces,
+    si \(\lvert e_n \rvert \le \delta\):
+    \begin{align*}
+      \lvert e_{n + 1} \rvert
+        &\le \left\lvert \frac{f''(\xi_n) e_n^2}{2 f'(x_n)} \right\rvert \\
+        &\le c(\delta) e_n^2 \\
+        &\le \delta c(\delta) \lvert e_n \rvert \\
+        &<   \lvert e_n \rvert
+    \end{align*}
+    Vale decir,
+    la secuencia \(\langle e_n \rangle\) converge a 0 cuando \(n \to \infty\)
+    si \(\lvert x_0 - x^* \rvert < \delta\).
+    Podemos tomar \(C = c(\delta)\).
+  \end{proof}
+  Esto es muy engorroso,
+  podemos deducir condiciones más simples de acá.
+  \begin{corollary}[Convergencia del método de Newton (práctico)]
+    \label{cor:Newton-convergence-simple}
+    Sea \(f\) una función que tiene un cero,
+    creciente,
+    convexa,
+    de segunda derivada continua.
+    Entonces \(f\) tiene un único cero
+    y el método de Newton converge desde todos los puntos de partida.
+  \end{corollary}
+  \begin{proof}
+    Si la función es creciente,
+    \(f'(x) > 0\);
+    si es convexa,
+    \(f''(x) > 0\).
+    Por~\eqref{eq:Newton-error},
+    vemos que independiente del signo de \(e_n\) es \(e_{n + 1} > 0\),
+    o sea \(x_{n + 1} > x^*\).
+    Como \(f\) es creciente,
+    \(f(x_{n + 1}) > 0\).
+    Como \(f'(x_{n + 1}) > 0\)
+    (la función es creciente),
+    \(0 < e_{n + 2} < e_{n + 1}\).
+    Concluimos que la secuencia \(\langle e_n \rangle\) converge a cero.
+  \end{proof}
+
+\section{Método de la Secante}
+
+  Considere la figura \ref{02::secante:grafico},
+  \begin{figure}[ht]
+    \centering
+    % The function interpolates:
+    % 0.05  0.80
+    % 0.15  0.40
+    % 0.30  0.15
+    % 0.40  0.00
+    % 0.80 -0.30
+    % See ../zero-finding/function.mc
+    \begin{tikzpicture}
+      \begin{axis}[
+                    axis lines = center,
+                    xlabel = {\(x\)},
+                    ylabel = {\(y\)},
+                    every axis y
+                      label/.style = {at = (current axis.above origin),
+                        anchor = south},
+                    every axis x
+                      label/.style = {at = (current axis.right of origin),
+                        anchor = west},
+                    xmin = 0,	 xmax = 0.5,
+                    ymin = -0.6, ymax = 1.2,
+                    xtick = {1/20, 3/10, 93/260},
+                    xticklabels = {\small \(x_0\),
+                                   \small \(x_1\),
+                                   \small \(x_2\)},
+                    ytick = {0},
+                    yticklabels = {},
+                    height = 6cm, width = 9cm
+                  ]
+        \addplot [black!70!blue!80, samples = 100, smooth, tension = 0.8]
+           {(93 - 260 * x) / 100};
+        \addplot [domain = 0.01:0.5, red!80!black, samples = 100]
+           {(4740000 * x^4 - 7646000 * x^3 + 4231950 * x^2
+              - 1167595 * x + 157926) / 136500};
+
+        \draw [dashed, blue] (axis cs:1/20, 0) -- (axis cs:1/20, 4/5);
+        \draw [dashed, blue] (axis cs:3/10, 0) -- (axis cs:3/10, 3/20);
+      \end{axis}
+    \end{tikzpicture}
+    \caption{Una iteración del método de la secante.}
+    \label{02::secante:grafico}
+  \end{figure}
+  donde interpolamos linealmente
+  entre los puntos \((x_n, y_n)\) y \((x_{n + 1}, y_{n + 1}\)
+  y hallamos el intercepto en el eje \(X\)
+  de la recta resultante en  \(x_{n + 2}\)::
+  \begin{equation}
+    x_{n+2}
+      = x_{n+1} - f(x_{n+1)} \cdot \frac{x_{n+1} - x_n}{f(x_{n+1)} - f(x_n)}
+  \end{equation}
+  Considere nuevamente la aproximación~\eqref{eq:f-aproximado}:
+  \begin{align*}
+    x_{n+2}
+      &= x_{n + 1} - f(x_{n + 1}) \frac{x_{n + 1} - x_n}
+                                       {f(x_{n + 1}) - f(x_n)} \\
+    e_{n + 2}
+      &= e_{n + 1} - f(x_{n + 1})
+          \frac{e_{n + 1} - e_n}{f(x_{n + 1}) - f(x_n)} \\
+      &= \frac{e_n f(x_{n + 1}) - e_{n + 1} f(x_n)}
+              {f(x_{n + 1}) - f(x_n)} \\
+      &= \frac{e_{n + 1} \left(
+                           f'(x^*) e_n (1 + M e_n + O(e_n^2))
+                         \right)
+                 - e_n \left(
+                          f'(x^*) e_{n + 1} (1 + M e_{n + 1} + O(e_{n + 1}^2))
+                        \right)}
+              {f'(x^*) e_n (1 + M e_n + O(e_n^2))
+                 - f'(x^*) e_{n + 1} (1 + M e_{n + 1} + O(e_{n + 1}^2))} \\
+      &= \frac{M e_n e_{n + 1} f'(x^*)
+                 (e_n - e_{n + 1} + O(e_n^2 + e_{n + 1}^2))}
+              {f'(x^*) (e_n - e_{n + 1} + O(e_n^2) + O(e_{n + 1}^2))} \\
+      &= M e_n e_{n + 1}
+           \frac{1 + O(e_n + e_{n + 1})}{1 + O(e_n + e_{n + 1})} \\
+      &= M e_n e_{n + 1} \left( 1 + O(e_n + e_{n + 1}) \right)
+  \end{align*}
+  Suponemos que \(e_{n + 1} = O(e_n)\)
+  (los errores disminuyen),
+  con lo que:
+  \begin{equation}
+    \label{eq:secant-error}
+    e_{n + 2}
+      = M e_n e_{n + 1} \left( 1 + O(e_n) \right)
+  \end{equation}
+  Si suponemos:
+  \begin{equation*}
+    e_{n + 1}
+      = c e_n^p \left( 1 + O(e_n) \right)
+  \end{equation*}
+  tenemos:
+  \begin{align*}
+    e_{n + 2}
+      &= c e_{n + 1} \left( 1 + O(e_{n + 1}) \right) \\
+      &= c \left( c e_n^p \left( 1 + O(e_n) \right) \right)^p
+           \left( 1 + O(e_{n + 1}) \right) \\
+      &= c^{p + 1} e_n^{p^2}
+           \left( 1 + O(e_n) \right)
+           \left( 1 + O(e_{n + 1}) \right) \\
+      &= c^{p + 1} e_n^{p^2}
+           \left( 1 + O(e_n) \right)
+  \end{align*}
+  De~\eqref{eq:secant-error} tenemos entonces:
+  \begin{align*}
+    c^{p + 1} e_n^{p^2} \left( 1 + O(e_n) \right)
+      &= c \cdot c e_n^p \left( 1 + O(e_n) \right)
+           e_n \left( 1 + O(e_n) \right) \\
+    c^{p + 1} e_n^{p^2}
+      &= c^2 e_n^{p + 1} \left( 1 + O(e_n) \right)
+  \end{align*}
+  Comparando las potencias de \(e_n\):
+  \begin{equation*}
+    p^2
+      = p + 1
+  \end{equation*}
+  De acá,
+  dado que \(p > 0\):
+  \begin{equation*}
+    p
+      = \tau
+      = \frac{1 + \sqrt{5}}{2}
+      \approx 1,618
+  \end{equation*}
+  Por lo tanto,
+  el método de la secante es \emph{superlineal}.
+  Tiene la ventaja de ser simple y rápido,
+  y no requiere derivadas
+  (en muchos casos la función no se conoce explícitamente,
+   es el resultado de un proceso complejo).
+
+\section{Iteración de punto fijo}
+\label{sec:FPI}
+
+  El método de iteración de punto fijo es simple,
+  y adecuado en muchas situaciones.
+  Más aún,
+  todos los métodos iterativos vistos son de la forma:
+  \begin{equation*}
+    x_{n + 1}
+      = g(x_n)
+  \end{equation*}
+  con lo que estudiar sus propiedades en mayor detalle
+  ilumina los métodos más complejos.
+
+  \begin{definition}
+    Sea \(g(x)\) una función.
+    Un \emph{punto fijo} de \(g\) es \(x^*\) tal que \(x^* = g(x^*)\).
+  \end{definition}
+  \begin{theorem}[Punto fijo de Brouwer, una dimensión]
+    Sea \(g \colon [a, b] \to [a, b]\) una función continua.
+    Entonces \(g\) tiene \emph{al menos} un punto fijo en \([a, b]\).
+  \end{theorem}
+  \begin{proof}
+    Por definición de \(g\),
+    sabemos:
+    \begin{equation*}
+      a \le g(x) \le b
+    \end{equation*}
+    En particular,
+    \(a \le g(a) \le b\) y \(a \le g(b) \le b\).
+    Si alguna de las dos se cumple con igualdad estamos listos.
+
+    Consideremos entonces \(a < g(a) < b\) y \(a < g(b) < b\),
+    sea \(f(x) = g(x) - x\).
+    Vemos que \(f\) es continua,
+    con \(f(a) = g(a) - a > 0\)
+    y \(f(b) = g(b) - b <0\).
+    Por el teorema del valor intermedio,
+    hay \(x^* \in [a, b]\) tal que \(f(x^*) = 0\),
+    o sea, \(x^* = g(x^*)\).
+  \end{proof}
+  \begin{definition}
+    Sea \(g \colon [a, b] \to [a, b]\).
+    Se dice que \(g\) es una \emph{contracción}
+    si existe \(L\), \(0 < L < 1\),
+    tal que para todo \(x, y \in [a, b]\) es:
+    \begin{equation}
+      \lvert g(x) - g(y) \rvert
+        \le L \lvert x - y \rvert
+    \end{equation}
+    (condición de Lipschitz,
+     \(L\) es la constante de Lipschitz).
+  \end{definition}
+  \begin{theorem}[Contraction Mapping]
+    Suponga que \(g \colon [a, b] \to [a, b]\) es continua
+    y cumple la condición de Lipschitz.
+    Entonces tiene un único punto fijo en \([a, b]\).
+  \end{theorem}
+  \begin{proof}
+    Por el teorema de Brouwer,
+    \(g\) tiene al menos un punto fijo.
+    Para demostrar que es único,
+    supongamos puntos fijos \(c_1\), \(c_2\):
+    \begin{equation}
+      \lvert c_1 - c_2 \rvert
+        =   \lvert g(c_1) - g(c_2) \rvert
+        \le L \lvert c_1 - c_2 \rvert
+    \end{equation}
+    Como \(0 < L < 1\),
+    esto es posible solo si \(c_1 = c_2\).
+  \end{proof}
+  Esto es algo bastante obvio,
+  ya que en el fondo tomamos un área más grande
+  y en cada iteración la vamos reduciendo hasta tal punto que \(c_1 = c_2\)
+  (figura \ref{03::ContractionMapping}).
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+      \draw plot [smooth, tension=0.8, smooth cycle]
+        coordinates {(0.8, -1) (1.5, -1.3) (2.1, -1.2) (2.4, -1)
+                     (2.5, -0.4) (2.4, 0.4) (2.5, 1) (2.3, 1.4)
+                     (1.6, 1.3) (1, 1) (0.6, 0.7) (0.9, 0)};
+
+      \draw plot [smooth, tension=0.8, smooth cycle]
+        coordinates {(0.5+4, -1) (1.5+4, -1.3) (2.1+4, -1.2)
+                     (2.4+4, -1) (2.5+4, -0.4) (2.4+4, 0.4) (2.5+4, 1)
+                     (2.3+4, 1.4) (1.6+4, 1.3) (1+4, 1) (0.6+4, 0.9)
+                     (0.6+4, 0)};
+
+      \draw [red!90!black!90] plot [smooth, tension = 0.8, smooth cycle]
+        coordinates {(4.7, 0) (5.0, 0.5) (5.6, 0.6) (6.1, 0.6)
+                     (6.3, -0.5) (5.9, -0.7) (5.6, -0.5) (5.2, -0.7)};
+
+      \node at (1.4, 0.5) (x1) {\color{blue}\(c_1\)};
+
+      \node at (1.6, -0.9) (x2) {\color{blue}\(c_2\)};
+
+      \node at (1.8+4, -0.3) (x3) {\(g(c_2)\)};
+
+      \node at (1.3+4, .20) (x4) {\(g(c_1)\)};
+
+      \draw [-latex', blue] plot [smooth, tension = 0.8]
+        coordinates {(1.6, 0.55) (3.7, 0.7) (0.95+4, .22)}
+          node [yshift = 20pt, xshift = -50pt] (g1) {\(g\)};
+
+      \draw [-latex', blue] plot [smooth, tension = 0.8]
+        coordinates {(1.8, -0.85) (4, -0.9) (1.4+4, -0.35)}
+          node [yshift = -25pt, xshift = -60pt] (g1) {\(g\)};
+    \end{tikzpicture}
+    \caption{Acotamos el área hasta converger en un punto.}
+     \label{03::ContractionMapping}
+   \end{figure}
+  Definamos la secuencia:
+  \begin{equation}
+    x_{n+1}
+      = g(x_n)
+  \end{equation}
+  Si \(g\) es una contracción en \([a, b]\),
+  la secuencia converge al punto fijo \(x^*\) de \(g\) en \([a, b]\).
+
+  De partida,
+  si
+  \begin{equation*}
+    \lim_{n\rightarrow \infty} x_n
+      = x^*
+  \end{equation*}
+  existe,
+  es un punto fijo de \(g\).
+  Si \(x_0 \in [a, b]\),
+  consideremos:
+  \begin{align}
+    \lvert x_{n+1} - x^* \rvert
+      &= \lvert g(x_n) - g(x^*) \rvert \\
+      &\le L \lvert x_n - x^* \rvert
+           \label{03::DesigualdadContractionInitial} \\
+      &\le \ldots \\
+      &\le L^{n+1} \lvert x_0 - x^* \rvert
+           \label{03::DesigualdadContraction}
+  \end{align}
+  Como \(\lvert L \rvert < 1\),
+  \(L^n \to 0\),
+  y el lado izquierdo también tiende a \num{0}
+  (para llegar a \eqref{03::DesigualdadContraction}
+   solo tenemos que desarrollar
+   paso a paso~\eqref{03::DesigualdadContractionInitial}).
+
+  Supongamos que queremos llegar a \(\lvert x_n-x^* \rvert\le \varepsilon\).
+  Sabemos que \(\lvert x_n - x^* \rvert \le L^{n} \lvert x_0 - x^* \rvert\).
+  Queremos deshacernos del \(x^*\) desconocido al lado derecho:
+  \begin{align*}
+    \lvert x_0 - x^* \rvert
+      &=   \lvert (x_0-x_1) + (x_1-x^*) \rvert \\
+      &\le \lvert x_0 - x_1 \rvert + \lvert x_1 - x^* \rvert \\
+      &\le \lvert x_0 - x_1 \rvert +L \lvert x_0 - x^* \rvert \\
+    (1 - L) \lvert x_0 - x^* \rvert
+      &\le \lvert x_1 - x_0 \rvert \\
+    \lvert x_0 - x^* \rvert
+      &\le \frac{\lvert x_1-x_0 \rvert}{1 - L}
+  \end{align*}
+  O sea:
+  \begin{equation}
+    \lvert x_n - x^* \rvert
+      \le \frac{L^n}{1 - L} \lvert x_1 - x_0 \rvert
+  \end{equation}
+  Queremos \(\lvert x_n - x^* \rvert \le \varepsilon\):
+  \begin{align*}
+    \varepsilon
+      &\le \frac{L^n}{1 - L} \lvert x_1 - x_0 \rvert \\
+    L^n
+      &\ge \frac{\varepsilon(1 - L)}{\lvert x_1 - x_0 \rvert} \\
+    n
+      &\ge \frac{1}{\ln L}
+              \cdot \ln \frac{\varepsilon(1 - L)}{\lvert x_1 - x_0 \rvert}
+  \end{align*}
+  No hemos supuesto \(g\) diferenciable,
+  pero en casos de interés lo es.
+
+  La condición de Lipschitz es:
+  \begin{align*}
+    \frac{\lvert g(x) - g(y) \rvert}{\lvert x - y \rvert}
+       & \le L \\
+    \left\lvert \frac{g(x) - g(y)}{x - y} \right\rvert
+       & \le L
+  \end{align*}
+  Por el teorema del valor intermedio
+  (ver por ejemplo las notas de Chen~%
+    \cite{chen08:_first_year_calculus}):
+  \begin{equation}
+    \frac{g(x) - g(y)}{x - y}
+      = g'(\zeta),
+           \qquad x \le \zeta \le y
+  \end{equation}
+  por lo tanto,
+  \(\lvert g'(\zeta) \rvert \le L\) para \(\zeta \in [a, b]\)
+  es condición suficiente para Lipschitz,
+  se aplica el teorema de contraction mapping
+  y hay un único punto fijo en \([a, b]\) y \(x_{n+1} = g(x_n)\) converge.
+
+  No buscamos encontrar \(\zeta\),
+  solo demostrar que existe.
+  Y por favor, \(\zeta\) se lee \textquote{zeta}.
+
+\subsection{Análisis de convergencia}
+\label{sec:FPI-convergence}
+
+  Igual que antes,
+  nos interesa analizar la convergencia de esta técnica.
+  Usamos nuevamente series de Taylor:
+  \begin{align}
+    g(x)
+      &= g(x^*) + g'(x^*) (x - x^*) + O((x - x^*)^2) \notag \\
+      &= x^* + g'(x^*) (x - x^*) + O((x - x^*)^2)
+           \label{eq:g-approx-FPI}
+  \end{align}
+  Igual que antes,
+  con \(e_n = x_n - x^*\) obtenemos:
+  \begin{align*}
+    x_{n + 1}
+      &= g(x_n) \\
+      &= x^* + g'(x^*) (x_n - x^*) + O((x_n - x^*)^2) \\
+    e_{n + 1}
+      &= g'(x^*) e_n + O(e_n^2)
+  \end{align*}
+  Vemos que la convergencia es lineal si \(g'(x^*) \ne 0\),
+  y en particular que converge solo si \(\lvert g'(x^*) \rvert < 1\).
+
+  Más generalmente,
+  si las primeras \(p - 1\)~derivadas de \(g\) se anulan en \(x^*\),
+  pero la \(p\)\nobreakdash-ésima no,
+  de la misma serie de Taylor tenemos:
+  \begin{equation*}
+    e_{n + 1}
+      = \frac{1}{p!} g^{(p)}(x^*) e_n^p + O(e_n^{p + 1})
+  \end{equation*}
+  La convergencia es de orden~\(p\).
+
+\section{El proceso de extrapolación de Aitken}
+\label{sec:Aitken}
+
+  Supongamos que tenemos una secuencia \(\langle x_k \rangle\)
+  que converge a \(x^*\) de orden \(p\),
+  vale decir existe una constante \(A \ne 0\) tal que:
+  \begin{equation}
+    \label{eq:linear-limit}
+    \lim_{n \to \infty} \frac{x_{n + 1} - x^*}{(x_n - x^*)^p}
+      = A
+  \end{equation}
+  Esto significa que la fracción indicada
+  para \(n\) suficientemente grande es aproximadamente el límite.
+  Podemos plantear para una aproximación \(x_n^+\) a \(x^*\):
+  \begin{equation}
+    \label{eq:Aitken-x+-equation}
+    \frac{x_{n + 2} - x_n^+}{x_{n + 1} - x_n^+}
+      = A
+      = \frac{x_{n + 1} - x_n^+}{x_n - x_n^+}
+  \end{equation}
+  Resolviendo la ecuación~\eqref{eq:Aitken-x+-equation}
+  para \(x_n^+\) obtenemos:
+  \begin{align}
+    x_n^+
+      &= \frac{x_{n + 2} x_n - x_{n + 1}^2}{x_{n + 2} - 2 x_{n + 1} + x_n}
+            \notag \\
+      &= x_n - \frac{(\Delta x_n)^2}{\Delta^2 x_n}
+            \label{eq:Aitken-x+}
+  \end{align}
+  La primera versión es muy inestable numéricamente
+  (se restan entre sí valores muy parecidos,
+   y el valor se obtiene directamente de estas restas),
+  por lo que reordenamos para dar la segunda.
+  En la ecuación~\eqref{eq:Aitken-x+} usamos la definición de diferencias:
+  \begin{align*}
+    \Delta x_n
+      &= x_{n + 1} - x_n \\
+    \Delta^2 x_n
+      &= \Delta x_{n + 1} - \Delta x_n \\
+      &= x_{n + 2} - 2 x_{n + 1} + x_n
+  \end{align*}
+  Por la fórmula~\eqref{eq:Aitken-x+}
+  se le llama \emph{proceso delta cuadrado de Aitken}~%
+    \cite{aitken27:_delta_squared}.
+
+  Para análisis de convergencia
+  veamos qué ocurre si:
+  \begin{equation*}
+    g(x)
+      = g(x^*)
+         + g'(x^*) (x - x^*)
+         + \frac{1}{2} g''(x^*) (x - x^*)^2 + O((x - x^*)^3)
+  \end{equation*}
+  Reemplazando \(e = x - x^*\) en~\eqref{eq:Aitken-x+}
+  y expandiendo en serie de Taylor alrededor de \(e_n = 0\),
+  cortesía de Maxima~%
+    \cite{maxima20:_5.44.0},
+  vemos que:
+  \begin{equation*}
+    e_n^+
+      = \frac{g'(x^*) g''(x^*)}{2 g'(x^*) - 2} e_n^2 + O(e_n^3)
+  \end{equation*}
+  Vale decir,
+  si la iteración original converge linealmente
+  la iteración resultante converge cuadráticamente.
+  Note que si \(g'(x^*) = 1\) la iteración original no converge
+  y tampoco converge esto;
+  si \(g'(x^*) = -1\) esto converge cuadráticamente,
+  aunque la iteración original no converge.
+
+  Igual resulta de interés ver qué pasa si se aplica a una secuencia
+  con orden de convergencia mayor.
+  Supongamos convergencia de orden \(p\):
+  \begin{equation*}
+    g(x)
+      = g(x^*) + c (x - x^*)^p + o((x - x^*)^p)
+  \end{equation*}
+  O sea,
+  es:
+  \begin{align*}
+    e_{n + 1}
+       &= c e_n^p (1 + o(1)) \\
+    e_{n + 2}
+       &= c e_{n + 1}^p (1 + o(1)) \\
+       &= c^{p + 1} e_n^{p^2} (1 + o(1))
+  \end{align*}
+  Substituyendo y simplificando:
+  \begin{align*}
+    e_n^+
+      &= \frac{e_{n + 2} e_n - e_{n + 1}^2}
+              {e_{n + 2} - 2 e_{n + 1} + e_n} \\
+      &= \frac{c^{p + 1} e_n^{p^2} (1 + o(1)) \cdot e_n
+                 - c^2 e_n^{2 p} (1 + o(1))}
+              {c^{p + 1} e_n^{p^2} (1 + o(1))
+                 - 2 c e_n^p + e_n} \\
+      &= - \frac{(c^2 e_n^{2 p} - c^{p + 1} e_n^{p^2 + 1}) (1 + o(1))}
+                {(e_n - 2 c e_n^p + c^{p + 1} e_n^{p^2}) (1 + o(1))} \\
+      &= -c e_n^{2 p - 1} (1 + o(1))
+  \end{align*}
+  El orden aumenta,
+  a pesar que el método no fue diseñado para este caso.
+
+  El algoritmo del caso es~\ref{alg:Aitken}.
+  \begin{algorithm}[ht]
+    \DontPrintSemicolon\Indp
+
+    \Function{\(\mathrm{Aitken}(g, x_0, \varepsilon)\)}{
+      \Repeat{\(\lvert x_0 - x_s \rvert \le \varepsilon\)}{
+        \(x_s \gets x_0\) \;
+        \(x_1 \gets g(x_0)\) \;
+        \(x_2 \gets g(x_1)\) \;
+        \(\displaystyle
+          x_0 \gets x_0 - \frac{(x_1 - x_0)^2}{x_2 - 2 x_1 + x_0}\) \;
+      }
+      \Return \(x_0\)
+    }
+    \caption{Iteración de punto fijo con aceleración de Aitken}
+    \label{alg:Aitken}
+  \end{algorithm}
+
+\section{Comentarios finales}
+\label{sec:02-final-comments}
+
+  Una discusión accesible de los problemas
+  a resolver para construir una rutina \textquote{para uso general}
+  es la de Kahan~\cite{kahan79:_calculator_solve_key}.
+  El algoritmo de Brent~%
+    \cite{brent71:_algor_guaran_conver_findin_zero_funct}
+  es un desarrollo cuidadoso de una rutina robusta para uso general.
+  Kahan~%
+    \cite{kahan16:_lecture_notes_real_root_finding}
+  revisa la teoría que sustenta búsqueda de ceros
+  sin suponer que estamos \textquote{muy cerca}.
+
+\section*{Ejercicios}
+\label{sec:exercises-02}
+
+  \begin{enumerate}
+  \item
+    Sea \(g(x)\) con un punto fijo \(x^*\),
+    donde \(g'(x^*) \ne 1\).
+    Defina:
+    \begin{equation*}
+      G(x)
+        = \frac{x g'(x) - g(x)}{g'(x) - 1}
+    \end{equation*}
+    \begin{enumerate}
+    \item
+      Demuestre que la iteración \(x_{n + 1} = G(x_n)\)
+      converge cerca de \(x^*\)
+    \item
+      ¿Cuál es el orden de convergencia de este método?
+    \end{enumerate}
+  \item
+    Computadores tempranos tenían operaciones de multiplicación,
+    pero no división.
+    Plantee un algoritmo para calcular \(a^{-1}\)
+    sin usar divisiones.
+  \item
+    El método de Olver para hallar ceros de \(f(x)\) es la iteración:
+    \begin{equation*}
+      x_{n + 1}
+        = x_n - \frac{f(x_n)^2 f''(x_n) + 2 f(x_n) f'(x_n)^2}{2 f'(x_n)^2}
+    \end{equation*}
+    ¿Cuál es el orden de convergencia de este método?
+  \item
+    El método de Halley puede expresarse:
+    \begin{align*}
+      x_{n + 1}
+        &= x_n
+            - \frac{2 f(x_n) f'(x_n)}
+                   {2 (f'(x_n))^2 - f(x_n) f''(x_n)} \\
+        &= x_n - \frac{f(x_n)}{f'(x_n)}
+                   \left(
+                     1 - \frac{f(x_n)}{f'(x_n)}
+                           \cdot \frac{f''(x_n)}{2 f'(x_n)}
+                   \right)^{-1}
+    \end{align*}
+    Es particularmente útil si pueden simplificarse \(f(x) / f'(x)\)
+    o \(f'(x) / f''(x)\).
+    Tiene la ventaja de que hace pocos cálculos por iteración,
+    lo que lo hace atractivo para polinomios
+    en conjunto con el método de Horner
+    (que permite calcular derivadas
+     casi como subproducto de calcular \(f(x\))).
+    ¿Cuál es el orden de convergencia de este método?
+  \item
+    El método de Steffensen es la iteración:
+    \begin{align*}
+      x_{n + 1}
+        &= x_n - \frac{f(x_n)}{g(x_n)} \\
+      g(x)
+        &= \frac{f(x + f(x))}{f(x)} - 1
+    \end{align*}
+    ¿Cuál es el orden de este método?
+  \item
+    Es claro que para el método de Newton
+    el corolario~\ref{cor:Newton-convergence-simple}
+    del teorema~\ref{theo:Newton-convergence}
+    tiene similares para casos en que \(f\) es decreciente y/o cóncava.
+    Plantéelos y demuéstrelos.
+    ¿Pueden resumirse en un solo enunciado simple?
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  heurísticas Bisección superlineal latin falsi Mapping
+% LocalWords:  Contraction diferenciable contraction mapping ésima em
+% LocalWords:  extrapolación reordenamos Maxima cuadráticamente ht eq
+% LocalWords:  Plantéelos demuéstrelos iteration secant equation
+% LocalWords:  SymPy explicitarse

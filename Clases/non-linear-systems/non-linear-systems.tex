@@ -1,0 +1,406 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Sistemas de ecuaciones no lineales}
+\label{cha:sistemas-ecuaciones}
+
+  Hay situaciones en que estamos interesados
+  en resolver sistemas de ecuaciones,
+  tanto lineales como no lineales.
+  La solución de sistemas lineales ya se vio en el colegio,
+  y se profundizará bastante en ramos posteriores.
+  Hay una muy linda teoría al respecto
+  (el álgebra lineal,
+   ver por ejemplo a Treil~%
+     \cite{treil17:_linear_algeb_done_wrong}),
+  y un conjunto fascinante de algoritmos al efecto.
+  Acá nos interesan sistemas no lineales,
+  en los cuales al menos una variable aparece en una dependencia no lineal.
+
+\section{Iteración de punto fijo}
+\label{sec:FPI-multiple}
+
+  Nuestro problema es el siguiente:
+  hallar el vector \(\mathbf{x}\) tal que se cumple:
+  \begin{equation}
+    \label{eq:nonlinear-system}
+    \mathbf{f}(\mathbf{x})
+      = \mathbf{0}
+  \end{equation}
+  Claramente,
+  las dimensiones de \(\mathbf{x}\) y de \(\mathbf{f}\)
+  deben ser iguales.
+  En forma explícita nuestro problema es:
+  \begin{align*}
+      f_1(x_1, x_2, \dotsc, x_n)
+        &= 0 \\
+      f_2(x_1, x_2, \dotsc, x_n)
+        &= 0 \\
+        &\vdots \\
+      f_n(x_1, x_2, \dotsc, x_n)
+        &= 0
+  \end{align*}
+  Formalmente la ecuación~\eqref{eq:nonlinear-system}
+  es idéntica al problema tratado en la sección~\ref{sec:FPI},
+  nuevamente podremos escribir:
+  \begin{equation*}
+    \mathbf{x}
+      = \mathbf{g}(\mathbf{x})
+  \end{equation*}
+  (siempre funciona la transformación
+    \(\mathbf{g}(\mathbf{x})
+         = \mathbf{x} + \mathbf{A}\mathbf{f}(\mathbf{x})\)
+   para una matriz \(\mathbf{A}\) no singular)
+  y nos interesa un punto fijo \(\mathbf{x^*}\) de \(\mathbf{g}\).
+
+\section{Métodos de Newton y cuasi-Newton}
+\label{sec:cuasi-Newton}
+
+  Sistemas de ecuaciones pueden expresarse:
+  \begin{equation*}
+    \mathbf{f}(\mathbf{x})
+      = \mathbf{0}
+  \end{equation*}
+  Muchas veces las funciones no están dadas explícitamente,
+  pueden ser el resultado de un complicado cálculo
+  o incluso ser el resultado de un experimento.
+
+  Usando la versión multivariable del teorema de Taylor,
+  podemos aproximar:
+  \begin{equation}
+    \label{eq:Taylor-multi}
+    \mathbf{f}(\mathbf{x})
+      = \mathbf{f}(\mathbf{x}^*)
+          + \mathbf{f}'(\mathbf{x}^*) (\mathbf{x} - \mathbf{x}^*)
+          + \dotsb
+  \end{equation}
+  Acá \(\mathbf{f}'(\mathbf{x})\) es la matriz jacobiana:
+  \begin{equation}
+    \label{eq:Newton-multi}
+    \mathbf{f}'(\mathbf{x})
+      = \begin{pmatrix}
+          \frac{\partial f_i}{\partial x_j}
+        \end{pmatrix}
+  \end{equation}
+  Como el método de Newton en una dimensión,
+  esto sugiere la iteración:
+  \begin{equation*}
+    \mathbf{x}_{k + 1}
+      = \mathbf{x}_k
+          - (\mathbf{f}'(\mathbf{x}_k))^{-1} \mathbf{f}(\mathbf{x}_k)
+  \end{equation*}
+  En forma muy similar al caso en una dimensión,
+  puede demostrarse que el método converge en forma cuadrática:
+  \begin{equation*}
+    \lVert \mathbf{x}_{k + 1} - \mathbf{x}^* \rVert
+      \le \alpha \lVert \mathbf{x}_k - \mathbf{x}^* \rVert^2
+  \end{equation*}
+  Lo malo es que~\eqref{eq:Newton-multi} en cada iteración
+  requiere calcular \(n^2\) derivadas
+  si \(\mathbf{f}\) y \(\mathbf{x}\) son de dimensión \(n\),
+  y resolver el sistema de ecuaciones implícito en esto
+  requiere \(O(n^3)\) operaciones.
+  Nos interesa deducir un método similar al de la secante,
+  menos costoso.
+  Hay una variedad de técnicas,
+  que en su conjunto se conocen como \emph{métodos cuasi-Newton}.
+  Denis y Moré~%
+   \cite{dennis77:_quasi_newton_methods}
+  y Martínez~%
+    \cite{martinez00:_pract_quasi_newton_method_solving_nonlin_system}
+  discuten la teoría y exploran variantes.
+  Una técnica reciente en esta línea es la de Klement~%
+    \cite{klement14:_using_quasi_newton_algor}.
+  Acá consideraremos el primero y más simple de ellos,
+  el método de Broyden~%
+    \cite{broyden65:_solving_nonlin_simul_equat}.
+
+  La idea base
+  es aproximar la matriz jacobiana \(\mathbf{f}'(\mathbf{x}_k)\)
+  mediante una matriz \(\mathbf{B}_k\),
+  calculada
+  usando \(\mathbf{f}(\mathbf{x}_k)\) y \(\mathbf{f}(\mathbf{x}_{k - 1})\)
+  junto con \(\mathbf{B}_{k - 1}\).
+  En vista de~\eqref{eq:Taylor-multi},
+  es razonable exigir:
+  \begin{equation*}
+    \mathbf{f}(\mathbf{x}_k)
+      = \mathbf{f}(\mathbf{x}_{k - 1})
+          + \mathbf{B}_k (\mathbf{x}_k - \mathbf{x}_{k - 1})
+  \end{equation*}
+  Para simplificar notación,
+  llamamos:
+  \begin{align*}
+    \mathbf{s}_k
+      &= \mathbf{x}_k - \mathbf{x}_{k - 1} \\
+    \mathbf{y}_k
+      &= \mathbf{f}(\mathbf{x}_k) - \mathbf{f}(\mathbf{x}_{k - 1})
+  \end{align*}
+  y escribimos:
+  \begin{equation}
+    \label{eq:quasi-Newton-condition}
+    \mathbf{B}_k \mathbf{s}_k
+      = \mathbf{y}_k
+  \end{equation}
+  Si \(n = 1\)
+  (el número de ecuaciones,
+   y la dimensión de las matrices \(\mathbf{B}_k\)),
+  la ecuación~\eqref{eq:quasi-Newton-condition}
+  define \(\mathbf{B}_k\) en forma única,
+  es el método de secante.
+  Si \(n > 1\),
+  podemos argüir que solo conocemos la variación de \(\mathbf{f}\)
+  a lo largo de \(\mathbf{s}_k\);
+  si tenemos una aproximación previa \(\mathbf{B}_{k - 1}\),
+  el cambio no aporta nueva información
+  en direcciones ortogonales a \(\mathbf{s}_k\),
+  vale decir debiéramos exigir:
+  \begin{equation}
+    \label{eq:Broyden-condition}
+    \mathbf{B}_k \mathbf{z}
+      = \mathbf{B}_{k - 1} \mathbf{z}
+      \quad\text{si \(\langle \mathbf{s}_k, \mathbf{z} \rangle = 0\)}
+  \end{equation}
+  Resulta que~\eqref{eq:quasi-Newton-condition} y~\eqref{eq:Broyden-condition}
+  determinan \(\mathbf{B}_k\) en forma única.
+  Llamemos \(\mathbf{B}_k = \mathbf{B}_{k - 1} + \mathbf{X}\),
+  en esos términos~\eqref{eq:Broyden-condition}
+  dice que cada fila de \(\mathbf{X}\) es un múltiplo de \(\mathbf{s}_k^T\).
+  Para simplificar notación,
+  temporalmente anotemos:
+  \begin{align*}
+    \overline{\mathbf{B}}
+      &= \mathbf{B}_k \\
+    \mathbf{B}
+      &= \mathbf{B}_{k - 1} \\
+    \mathbf{s}
+      &= \mathbf{s}_k \\
+    \mathbf{y}
+      &= \mathbf{y}_k
+  \end{align*}
+  La observación anterior dice que:
+  \begin{equation*}
+    \mathbf{X}
+      = \mathbf{v} \, \mathbf{s}^T
+  \end{equation*}
+  o sea:
+  \begin{align*}
+    \overline{\mathbf{B}} \, \mathbf{s}
+      &= \mathbf{y} \\
+    (\mathbf{B} + \mathbf{v} \, \mathbf{s}^T) \mathbf{s}
+      &= \mathbf{y} \\
+    (\mathbf{v} \, \mathbf{s}^T) \, \mathbf{s}
+      &= \mathbf{y} - \mathbf{B} \, \mathbf{s} \\
+    \mathbf{v}
+      &= \frac{\mathbf{y} - \mathbf{B} \, \mathbf{s}}
+              {\mathbf{s}^T \, \mathbf{s}}
+  \end{align*}
+  Como \(\mathbf{s}^T \, \mathbf{s} = \langle \mathbf{s}, \mathbf{s} \rangle\),
+  en términos de la notación original:
+  \begin{equation}
+    \label{eq:quasi-Newton-equation}
+    \mathbf{B}_k
+      = \mathbf{B}_{k - 1}
+          + \frac{
+              (\mathbf{y}_k
+                 - \mathbf{B}_{k - 1} \mathbf{s}_k) \mathbf{s}_k^T
+            }
+            {
+              \langle \mathbf{s}_k, \mathbf{s}_k \rangle
+            }
+  \end{equation}
+  Sigue pendiente el problema de resolver:
+  \begin{equation*}
+    \mathbf{x}_{k + 1}
+      = \mathbf{x}_k - \mathbf{B}_k^{-1} \mathbf{f}(\mathbf{x}_k)
+  \end{equation*}
+  Un lema muestra cómo hacerlo con mínimo costo.
+  El resultado se atribuye a Sherman y Morrison~%
+    \cite{sherman49:_adjust_inverse_matrix_col_row,
+          sherman50:_adjust_inverse_matrix_change},
+  lo que citamos es la forma de Bartlett~%
+    \cite{bartlett51:_inverse_matrix_adjustment}.
+  Como es tradicional,
+  Hager~%
+    \cite{hager89:_updating_inverse_matrix}
+  al discutir la historia y aplicaciones halla que el resultado es anterior.
+  \begin{lemma}[Fórmula de Sherman-Morrison]
+    \label{lem:Sherman-Morrison}
+    Sea \(\mathbf{A}\) una matriz no singular,
+    y sean \(\mathbf{u}\), \(\mathbf{v}\) vectores.
+    Entonces \(\mathbf{A} + \mathbf{u} \, \mathbf{v}^T\) es no singular
+    si y solo si
+      \(\sigma
+          = 1 + \langle \mathbf{v}, \mathbf{A}^{-1} \mathbf{u} \rangle \ne 0\).
+    Si \(\sigma \ne 0\),
+    es:
+    \begin{equation*}
+      \label{eq:Sherman-Morrison}
+      (\mathbf{A} + \mathbf{u} \, \mathbf{v}^T)^{-1}
+        = \mathbf{A}^{-1}
+            - \frac{1}{\sigma}
+                 \mathbf{A}^{-1} \mathbf{u} \, \mathbf{v}^T \mathbf{A}^{-1}
+    \end{equation*}
+  \end{lemma}
+  \begin{proof}
+    Siempre que \(\mathbf{A}\) no sea singular,
+    podemos expresar:
+    \begin{equation*}
+      \mathbf{A} + \mathbf{u} \mathbf{v}^T
+        = \mathbf{A} (\mathbf{I} + \mathbf{A}^{-1} \mathbf{u} \, \mathbf{v}^T)
+    \end{equation*}
+    Consideremos entonces la matriz siguiente
+    para vectores \(\mathbf{x}\) e \(\mathbf{y}\):
+    \begin{equation*}
+      \mathbf{I} + \mathbf{x} \, \mathbf{y}^T
+    \end{equation*}
+    Sospechamos que su inversa es de la forma siguiente,
+    para un escalar \(\alpha\):
+    \begin{equation*}
+      \mathbf{I} + \alpha \mathbf{x} \, \mathbf{y}^T
+    \end{equation*}
+    Multiplicando por la inversa propuesta,
+    como \(\mathbf{y} \, \mathbf{x} = \langle \mathbf{x}, \mathbf{y} \rangle\)
+    es un escalar:
+    \begin{align*}
+      (\mathbf{I} + \mathbf{x} \, \mathbf{y}^T)
+        \cdot (\mathbf{I} + \alpha \mathbf{x} \, \mathbf{y}^T)
+        &= \mathbf{I}
+             + \mathbf{x} \, \mathbf{y}^T
+             + \alpha \mathbf{x} \, \mathbf{y}^T
+             + \alpha \mathbf{x} \, \mathbf{y}^T \mathbf{x} \, \mathbf{y}^T \\
+         &= \mathbf{I}
+              + (1 + \alpha + \alpha \langle \mathbf{x}, \mathbf{y} \rangle)
+                  \mathbf{x} \, \mathbf{y}^T
+    \end{align*}
+    Esto debe ser \(\mathbf{I}\),
+    el escalar del segundo término es \num{0},
+    de donde despejamos:
+    \begin{equation*}
+      \alpha
+        = - \frac{1}{1 + \langle \mathbf{x}, \mathbf{y} \rangle}
+    \end{equation*}
+    De la misma forma vemos que:
+    \begin{equation*}
+       (\mathbf{I} + \alpha \mathbf{x} \, \mathbf{y}^T)
+          \cdot (\mathbf{I} + \mathbf{x} \, \mathbf{y}^T)
+          = \mathbf{I}
+    \end{equation*}
+    y realmente es inversa.
+
+    Con \(\mathbf{x} = \mathbf{A}^{-1} \mathbf{u}\),
+    \(\mathbf{y} = \mathbf{v}\)
+    tenemos así la inversa para:
+    \begin{align*}
+      (\mathbf{A} + \mathbf{u} \, \mathbf{v}^T)^{-1}
+        &= (\mathbf{A}
+              (\mathbf{I}
+                 + \mathbf{A}^{-1} \mathbf{u} \, \mathbf{v}^T))^{-1} \\
+        &= (\mathbf{I} + \mathbf{A}^{-1} \mathbf{u} \, \mathbf{v}^T)^{-1}
+              \mathbf{A}^{-1} \\
+        &= (\mathbf{I}
+              - \frac{1}{\sigma} \mathbf{A}^{-1} \mathbf{u} \, \mathbf{v}^T)
+              \mathbf{A}^{-1} \\
+        &= \mathbf{A}^{-1}
+             - \frac{1}{\sigma}
+                  \mathbf{A}^{-1} \mathbf{u} \, \mathbf{v}^T \mathbf{A}^{-1}
+    \end{align*}
+    Es claro que si \(\sigma = 0\),
+    no hay inversa.
+  \end{proof}
+  El algoritmo parte entonces con una estimación inicial \(\mathbf{x}_0\),
+  y una estimación inicial  \(\widetilde{\mathbf{J}}\)
+  de la matriz jacobiana en ese punto
+  (por ejemplo,
+   estimando las derivadas mediante diferencias en cada dimensión)
+  y calculamos una aproximación inicial
+    \(\mathbf{H}_0 = \widetilde{\mathbf{J}}^{-1}\).
+  De allí la iteración procede usando la fórmula de Sherman-Morrison
+  para actualizar la inversa.
+  Usamos las abreviaturas
+  \(\Delta \mathbf{x}_k = \mathbf{x}_{k + 1} - \mathbf{x}_k\)
+  y \(\Delta \mathbf{f}(\mathbf{x}_k)
+        = \mathbf{f}(\mathbf{x}_{k + 1}) - \mathbf{f}(\mathbf{x}_k)\):
+  \begin{align*}
+    \mathbf{x}_{n + 1}
+      &= \mathbf{x}_n - \mathbf{H}_n \mathbf{f}(\mathbf{x}_n) \\
+    \mathbf{H}_{n + 1}
+      &= \mathbf{H}_n
+           + \frac{\Delta \mathbf{x}_{n + 1}
+                     - \mathbf{H}_n \Delta \mathbf{f}(\mathbf{x}_{n + 1})}
+                  {\Delta \mathbf{x}_{n + 1}^T
+                     \mathbf{H}_n \Delta \mathbf{f}(\mathbf{x}_{n + 1})}
+                \Delta \mathbf{f}^T(\mathbf{x}_{n + 1})
+  \end{align*}
+  Condiciones de término apropiadas
+  pueden ser \(\lVert \mathbf{x}_{n + 1} - \mathbf{x}_n \rVert \le \varepsilon\),
+  o una variante relativa de esta,
+  como
+  \(\lVert \mathbf{x}_{n + 1} - \mathbf{x}_n \rVert
+      / \lVert \mathbf{x}_{n + 1} \rVert \le \varepsilon\);
+  o \(\lVert \mathbf{f}(\mathbf{x}_{n + 1}) \rVert \le \varepsilon\).
+
+\section*{Ejercicios}
+\label{sec:ejercicios-03-seq}
+
+  \begin{enumerate}
+  \item
+    \label{ex:03-seq:Broyden}
+    En su publicación,
+    Broyden~%
+      \cite{broyden65:_solving_nonlin_simul_equat}
+    prueba su método con varios sistemas de ecuaciones.
+    Uno es:
+    \begin{align*}
+      f_1
+        &= -(3 + \alpha x_1) x_1 + 2 x_2 - \beta \\
+      f_i
+        &= x_{i - 1} - (3 + \alpha x_i) x_i - 2 x_{i + 1} - \beta
+          && i = 2, 3, \dotsc, n - 1 \\
+      f_n
+        &= x_n - (3 + \alpha x_n) x_n - \beta
+    \end{align*}
+    Valores de los parámetros usados
+    están dados en el cuadro~\ref{tab:ex:03-seq:Broyden},
+    valores iniciales son siempre \(x_i = 1,0\).
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{>{\(}r<{\)}D{.}{,}{1}D{.}{,}{1}}
+        \multicolumn{1}{c}{\boldmath\(n\)\unboldmath} &
+          \multicolumn{1}{c}{\boldmath\(\alpha\)\unboldmath} &
+          \multicolumn{1}{c}{\boldmath\(\beta\)\unboldmath} \\
+        \hline
+         5 & -0,1 & 1,0 \\
+         5 & -0,5 & 1,0 \\
+        10 & -0,5 & 1,0 \\
+        20 & -0,5 & 1,0 \\
+      \end{tabular}
+      \caption{Parámetros para ejercicio~\ref{ex:03-seq:Broyden}}
+      \label{tab:ex:03-seq:Broyden}
+    \end{table}
+    Experimente con el método de Newton y el de Broyden con algunas de estas,
+    o con parámetros diferentes.
+    Compare número de evaluaciones de las funciones y el tiempo total
+    para obtener las soluciones con cinco cifras.
+  \item
+    Una propuesta para evitar el cálculo inicial de la matriz jacobiana
+    en el método de Broyden
+    es partir con una matriz inicial \(\mathbf{H}\) arbitraria,
+    por ejemplo \(\mathbf{I}\).
+    Experimente con esto en el ejercicio~\ref{ex:03-seq:Broyden}.
+  \item
+    Otra opción sería ordenar \(\mathbf{f}\)
+    de forma que la derivada de \(f_i\) respecto de \(x_i\) inicial sea máxima,
+    y aproximar la matriz jacobiana inicial
+    por la matriz diagonal con estas entradas.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  eq nonlinear system cuasi jacobiana multi quasi
+% LocalWords:  condition

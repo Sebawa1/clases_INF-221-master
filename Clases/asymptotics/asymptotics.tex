@@ -1,0 +1,1132 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Breve introducción a asintóticas}
+\label{apx:asymptotics}
+
+  Mucho de las matemáticas de pregrado
+  se concentran en hallar cantidades exactas:
+  aprendemos a obtener las raíces exactas de la ecuación,
+  nos enseñan cómo obtener fórmulas
+  (en términos de \textquote{funciones elementales})
+  para el valor de las integrales de ciertas clases de funciones,
+  una fórmula cerrada para una suma
+  o la solución de una recurrencia,
+  el número de subconjuntos de un conjunto dado
+  o el número de árboles binarios de \(n\)~nodos.
+
+  Sin embargo,
+  en el mundo real las situaciones en las que hay solución exacta
+  o hay una fórmula son la excepción,
+  no la regla general.
+  Hay muchos problemas en combinatoria,
+  probabilidades,
+  y otras áreas,
+  donde son de interés cantidades (funciones) que nacen naturalmente,
+  pero para las cuales no se conocen fórmulas exactas (simples),
+  y es probable que tales fórmulas no existan.
+  Por ejemplo,
+  hay un resultado notable,
+  el teorema de Risch,
+  que muestra que ciertas integrales
+  no pueden expresarse en términos de funciones elementales,
+  entre las que se cuentan
+  las integrales de \(\ln^{-1} x\) y \(\mathrm{e}^{-x^2}\),
+  de importancia en teoría de números y probabilidades respectivamente.
+
+  Lo que se puede hacer en estos casos
+  es derivar \emph{estimaciones asintóticas} para estas cantidades,
+  aproximaciones \textquote{simples}
+  que muestran cómo estas cantidades se comportan asintóticamente
+  (vale decir,
+   cuando un argumento \(x\) o \(n\) tiende a infinito).
+  En muchas aplicaciones estas estimaciones
+  son tanto o más útiles que valores exactos.
+
+  El análisis asintótico,
+  o asintótica para abreviar,
+  se preocupa de hallar estas estimaciones asintóticas.
+  Provee un conjunto de herramientas y técnicas útiles para este propósito.
+  En algunos casos obtener la estimación es rutinario,
+  otros requieren creatividad y métodos \emph{\foreignlanguage{latin}{ad hoc}}.
+  Buena parte de este apéndice se adapta de un curso corto de Hildebrand~%
+    \cite{hildebrand15:_short_course_asymptotics},
+  una magistral introducción general.
+  Una discusión más detallada,
+  que no usa matemáticas demasiado sofisticadas,
+  con muchos ejemplos importantes
+  da Spencer~%
+    \cite{spencer14:_asymptopia}.
+  Más detalle de aplicaciones combinatorias
+  dan Flajolet y Sedgewick~%
+    \cite{flajolet09:_analy_combin},
+  aplicaciones concretas al análisis de algoritmos
+  se hallan en el texto de Sedgewick y Flajolet~%
+    \cite{sedgewick13:_introd_anal_algor}.
+  Las notaciones que usaremos fueron popularizadas por Knuth~%
+    \cite{knuth76:_big_omicron_big_omega_big_theta},
+  quien introdujo la notación \(\Theta(\cdot)\).
+
+\section{Muestras de aplicaciones}
+\label{sec:aplications-asymptotics}
+
+  Tal vez la mejor respuesta a las preguntas
+  \textquote{¿Qué es asintóticas?}
+  y \textquote{¿Para qué sirve?}
+  es dar algunos ejemplos de las muchas áreas
+  en que estos métodos se han aplicado exitosamente.
+  Hildebrand~%
+    \cite{hildebrand15:_short_course_asymptotics}
+  usa estos ejemplos
+  (y otros más)
+  como ilustración de las técnicas más comunes.
+  Desarrollaremos algunos de ellos luego.
+
+\subsection{Combinatoria:
+                Estimar factoriales}
+\label{sec:combinatorics:factorials}
+
+  Es fácil ver que \(n!\) crece más rápido que \(a^n\) para todo \(a\),
+  pero a su vez crece más lento que \(n^n\).
+  La pregunta es cuán rápido crece \emph{realmente}.
+  La respuesta la da la \emph{fórmula de Stirling},
+  \(n! \sim (n / \mathrm{e})^n \sqrt{2 \pi n}\).
+  Esta es una de las estimaciones asintóticas más famosas,
+  y la base de muchas otras.
+
+\subsection{Probabilidades:
+                La paradoja de los cumpleaños}
+\label{sec:probability:birthday-paradox}
+
+  La famosa \textquote{paradoja del cumpleaños}
+  dice que la probabilidad
+  de hallar un par de personas con el mismo cumpleaños
+  en un grupo de \num{23} es más de \SI{50}{\percent}.
+  La fórmula para la probabilidad
+  de una coincidencia en un grupo de \(n\) personas
+  puede escribirse explícitamente,
+  pero es engorrosa y no ayuda a entender el fenómeno.
+  En particular,
+  ¿porqué es tan pequeño el punto de corte \num{23}
+  frente al número \num{365} de días en el año?
+  Técnicas asintóticas dan aproximaciones simples
+  que muestran claramente cómo se comportan las probabilidades
+  en términos del tamaño del grupo y el largo del año,
+  y permiten calcular valores de corte apropiados fácilmente.
+
+\subsection{Combinatoria/probabilidades:
+                Estimaciones de números harmónicos}
+\label{sec:combinatorics:harmonic-numbers}
+
+  Los números harmónicos:
+  \begin{equation*}
+    H_n
+      = \sum_{1 \le k \le n} \frac{1}{k}
+  \end{equation*}
+  aparecen naturalmente en muchos problemas combinatorios,
+  y por tanto son frecuentes en probabilidades y análisis de algoritmos.
+  No hay fórmulas exactas para esta suma,
+  pero métodos asintóticos dan aproximaciones notablemente precisas.
+
+\subsection{Análisis/probabilidades:
+                La función error}
+\label{sec:analysis:error-function}
+
+  La integral:
+  \begin{equation*}
+    E(t)
+      = \int_x^\infty \mathrm{e}^{-t^2} \, \mathrm{d} t
+  \end{equation*}
+  representa
+  (dentro de un factor constante)
+  la probabilidad de la cola de la distribución normal
+  (se le llama \textquote{normal} precisamente
+   porque aparece tan frecuentemente en aplicaciones).
+  No se puede evaluar en forma exacta,
+  análisis asintótico da aproximaciones bastante precisas
+  en términos de funciones elementales.
+
+\subsection{Teoría de números:
+                La integral logarítmicas}
+\label{sec:number-theory:li}
+
+  La función:
+  \begin{equation*}
+    \mathrm{Li}(x)
+      = \int_2^x \frac{\mathrm{d} t}{\ln t}
+  \end{equation*}
+  aparece en teoría de números como la \textquote{mejor} aproximación
+  a la función \(\pi(x)\) que cuenta el número de primos hasta \(x\).
+  La integral no puede expresarse en funciones elementales,
+  aproximaciones asintóticas describen su comportamiento.
+
+\subsection{Análisis:
+                La función \(W\) de Lambert}
+\label{sec:analisis:W}
+
+  Resolver la ecuación:
+  \begin{equation*}
+    w \mathrm{e}^w
+      = x
+  \end{equation*}
+  para \(x\) real
+  define una función \(w = W(x)\),
+  que aparece en varios contextos.
+  La referencia estándar es de Corless, Gonnet, Hare, Jeffrey y Knuth~%
+    \cite{corless96:_Lambert_W_function}.
+  Por ejemplo,
+  la solución a:
+  \begin{equation*}
+    x^x
+      = y
+  \end{equation*}
+  está dada por:
+  \begin{equation*}
+    x
+      = \mathrm{e}^{W(\ln y)}
+  \end{equation*}
+  La ecuación no tiene solución exacta en funciones elementales,
+  métodos asintóticos dan buenas aproximaciones,
+  como:
+  \begin{equation*}
+    W(x)
+      = \ln x - \ln \ln x + O\left( \frac{\ln \ln x}{\ln x} \right)
+  \end{equation*}
+
+\section{Notaciones asintóticas}
+\label{sec:asymptotic-notations}
+
+  Hay una variedad de notaciones asintóticas en uso razonablemente común,
+  definiremos las más importantes.
+
+\subsection{O mayúscula}
+\label{sec:big-oh}
+
+  Esta es la más común y la más importante.
+  En la mayoría de las aplicaciones interesa
+  el comportamiento de funciones de una variable real o entera
+  que tiende a infinito.
+  Dadas dos funciones \(f(x)\) y \(g(x)\),
+  definidas para valores suficientemente grandes de \(x\),
+  anotamos:
+  \begin{equation}
+    \label{eq:big-oh}
+    f(x)
+      = O(g(x))
+  \end{equation}
+  si hay constantes \(x_0\) y \(c\) tales que:
+  \begin{equation}
+    \label{eq:big-oh-definitition}
+    \lvert f(x) \rvert
+      \le c \lvert g(x) \rvert
+      \quad (x \ge x_0)
+  \end{equation}
+  En este caso decimos que \emph{\(f(x)\) es de orden \(O(g(x))\)},
+  y llamamos a~\eqref{eq:big-oh-definitition}
+  una \emph{estimación O-mayúscula}
+  (en inglés \emph{\foreignlanguage{english}{big-Oh estimate}}).
+  La constante \(c\) es \emph{la constante de O},
+  y el rango \(x \ge x_0\) es el \emph{rango de validez} de la estimación.
+  Ocasionalmente se da un rango,
+  en cuyo caso se entiende que la estimación vale en ese rango:
+  \begin{equation*}
+    f(x)
+      = O(g(x))
+      \quad (x_0 \le x \le x_1)
+  \end{equation*}
+  significa que existe \(c > 0\)
+  tal que en el rango indicado:
+  \begin{equation}
+    \label{eq:big-oh-range}
+    \lvert f(x) \rvert
+      \le c \lvert g(x) \rvert
+      \quad (x_0 \le x \le x_1)
+  \end{equation}
+
+  En la mayor parte de las aplicaciones interesan estimaciones válidas
+  para valores grandes de \(x\),
+  o cuando \(x\) tiende a infinito.
+  Usamos la convención que si no se indica un rango,
+  se subentiende que vale en algún rango de la forma \(x \ge x_0\)
+  para un \(x_0\) apropiado.
+
+  Las constantes involucradas en la definición~\eqref{eq:big-oh-range}
+  generalmente dependerán de parámetros propios de la función.
+  Por ejemplo,
+  para explicitar dependencia del parámetro \(\alpha\),
+  ocasionalmente se anota \(f(\alpha, x) = O_\alpha (x)\).
+
+  En una ecuación,
+  un término \(O(\ldots)\) debe interpretarse como
+  \blockquote{en el rango de interés,
+    hay una función que,
+    en valor absoluto,
+    está acotada por una constante veces \ldots}.
+  Por ejemplo:
+  \begin{equation*}
+    \ln (1 + x)
+      = x + O(x^2)
+      \quad (\lvert x \rvert \le 1/2)
+  \end{equation*}
+  se traduce en:
+  \blockquote{\(\ln (1 + x) = x + f(x)\),
+    donde la función \(f(x)\) satisface \(\lvert f(x) \rvert \le c x^2\)
+    para una constante \(c\)
+    y todo \(x\) en el rango \(\lvert x \rvert \le 1/2\)}.
+  Se ve que es una abreviatura útil.
+
+  La igualdad es notación cómoda,
+  pero fundamentalmente incorrecta.
+  Se deben interpretar expresiones que contienen \(O(\cdot)\)
+  como un conjunto de funciones,
+  y el signo igual
+  realmente dice que el conjunto de funciones a la izquierda
+  es un subconjunto del conjunto del lado derecho.
+  Si no hay \(O(\cdot)\),
+  es simplemente el conjunto de esa única función.
+  Informalmente,
+  el lado derecho es menos preciso que el izquierdo.
+  La notación de igualdad es demasiado cómoda y ampliamente usada;
+  han habido heroicos esfuerzos de cambiarla por algo más descriptivo,
+  sin real efecto.
+
+  La \textquote{igualdad} así definida
+  ni siquiera es una relación de equivalencia.
+  Es reflexiva y transitiva,
+  pero no simétrica.
+  Por ejemplo,
+  de \(x = O(x^2)\) no podemos concluir que \(O(x^2) = x\)
+  ni \(x^2 = O(x)\).
+
+  Como \(O\) mayúscula da una cota superior,
+  \(\Omega\) indica una cota inferior:
+  \begin{equation}
+    \label{eq:big-omega}
+    f(x)
+      = \Omega(g(x))
+  \end{equation}
+  si hay constantes \(x_0\) y \(c > 0\) tales que:
+  \begin{equation}
+    \label{eq:big-omega-definitition}
+    \lvert f(x) \rvert
+      \ge c \lvert g(x) \rvert
+      \quad (x \ge x_0)
+  \end{equation}
+  Finalmente,
+  frecuentemente queremos indicar que la misma función
+  da una cota superior e inferior:
+  \begin{equation}
+    \label{eq:big-theta}
+    f(x)
+      = \Theta(g(x))
+  \end{equation}
+  si se cumplen \(f(x) = O(g(x))\) y \(f(x) = \Omega(g(x))\).
+
+  También anotamos:
+  \begin{equation}
+    \label{eq:small-oh}
+    f(x)
+      = o(g(x))
+  \end{equation}
+  si para \(x\) suficientemente grande \(g(x) \ne 0\)
+  y tenemos:
+  \begin{equation}
+    \label{eq:small-oh-definition}
+    \lim_{x \to \infty} \frac{f(x)}{g(x)}
+      = 0
+  \end{equation}
+  Si es así decimos que \(f(x)\) es \emph{de orden menor} que \(g(x)\).
+  Este es el caso en que es de interés \(x \to \infty\),
+  si interesa la situación \(x \to a\)
+  (caso común es \(x \to 0\))
+  exigiremos que en un entorno de \(a\) es \(g(x) \ne 0\).
+  Esto es mucho más fuerte que \(f(x) = O(g(x))\).
+
+  Una definición alternativa es:
+  \begin{equation}
+    \label{eq:small-oh}
+    f(x)
+      = o(g(x))
+  \end{equation}
+  si para todo \(c > 0\) hay \(x_0\) tal que si \(x > x_0\)
+  es:
+  \begin{equation}
+    \label{eq:small-oh-definition-alt}
+    \lvert f(x) \rvert \le c \lvert g(x) \rvert
+  \end{equation}
+  Esto cubre el caso \(x \to \infty\),
+  si interesa la situación \(x \to a\)
+  exigiremos que para todo \(c > 0\)
+  hay un entorno de \(a\)
+  en el que se cumple~\eqref{eq:small-oh-definition-alt}.
+
+  Afín es:
+  \begin{equation}
+    \label{eq:small-omega}
+    f(x)
+      = \omega(g(x))
+  \end{equation}
+  si para todo \(c > 0\) hay \(x_0\) tal que:
+  \begin{equation}
+    \label{eq:small-omega-definition}
+    \lvert f(x) \rvert
+      \ge c \lvert g(x) \rvert
+  \end{equation}
+  Alternativamente:
+  \begin{equation}
+    \label{eq:small-omega-definition-alt}
+    \lim_{x \to \infty} \frac{f(x)}{g(x)}
+      = \pm\infty
+  \end{equation}
+
+  Otra notación común es:
+  \begin{equation*}
+    f(x)
+      \sim g(x)
+  \end{equation*}
+  que significa que para \(x\) suficientemente grande \(g(x) \ne 0\)
+  y es:
+  \begin{equation*}
+    \lim_{x \to \infty} \frac{f(x)}{g(x)}
+      = 1
+  \end{equation*}
+  Decimos que \(f(x)\) y \(g(x)\) son \emph{asintóticas}
+  o \emph{asintóticamente equivalentes}.
+  Llamamos \emph{fórmula asintótica} para \(f(x)\)
+  a una relación \(f(x) \sim g(x)\), donde \(g(x)\)
+  es una función \textquote{simple}.
+
+  Algunos ejemplos de la notación \(O\) mayúscula,
+  con demostraciones,
+  son:
+  \begin{enumerate}
+  \item
+    \label{enum:x=O(e^x)}
+    \(x = O(\mathrm{e}^x)\)
+  \item
+    \label{enum:log(x^2+1)=O(logx)}
+    \(\log (x^2 + 1) = O(\log x)\)
+  \item
+    \label{enum:log(1+x)}
+    \(\ln (1 + x) = x - x^2 / 2 + O(x^3)\) para \(\lvert x \rvert \le 1/2\).
+    Más en general,
+    esto vale para \(\lvert x \rvert \le c\) si \(c < 1\),
+    con la constante \(O\) dependiendo de \(c\).
+    En realidad,
+    sabemos que:
+    \begin{equation*}
+      \frac{1}{1 - x}
+        = \sum_{0 \le k \le n} x^n + \frac{x^{n + 1}}{1 - x}
+    \end{equation*}
+    Esto es exacto para todo \(x \ne 1\).
+  \item
+    \label{enum:1/(1+x)}
+    \(1 / (1 + x) = 1 - x + O(x^2)\) para \(\lvert x \rvert \le 1/2\).
+    Nuevamente,
+    esto vale para \(\lvert x \rvert \le c\) si \(c < 1\),
+    con la constante \(O\) dependiendo de \(c\).
+  \item
+    \label{enum:logx}
+    \(\ln x = O_\epsilon(x^\epsilon)\)
+  \end{enumerate}
+  La demostración de tales estimaciones
+  suele ser aplicación directa del cálculo.
+  Ilustraremos las demostraciones de~\ref{enum:x=O(e^x)} y~\ref{enum:log(1+x)},
+  dando valores explícitos de las constantes.
+
+  Para~\ref{enum:x=O(e^x)},
+  por la definición de una estimación \(O\),
+  debemos demostrar que hay \(c\) y \(x_0\) tales que \(x \le c \mathrm{e}^x\)
+  siempre que \(x \ge x_0\).
+  Equivalentemente:
+  \begin{equation*}
+    \sup_{x \ge x_0} \frac{x}{\mathrm{e}^x} \le c
+  \end{equation*}
+  Consideremos la función \(q(x) = x \mathrm{e}^{-x}\).
+  Vemos que:
+  \begin{equation*}
+    q'(x)
+      = \mathrm{e}^{-x} (1 - x)
+  \end{equation*}
+  Esto es positivo para \(x < 1\) y negativo para \(x > 1\),
+  o sea \(q(x)\) tiene un máximo en \(x = 1\).
+  Allí es \(q(x) = \mathrm{e}^{-1}\),
+  y:
+  \begin{align*}
+    \frac{x}{\mathrm{e}^{-x}}
+      &\le \mathrm{e}^{-1} \\
+    x
+      &\le \mathrm{e}^{-1} \cdot \mathrm{e}^x
+  \end{align*}
+  Esto es válido para todo \(x\),
+  podemos tomar arbitrariamente \(x_0 = 0\).
+
+  Para demostrar~\ref{enum:log(1+x)},
+  partimos de la expansión de Taylor,
+  válida siempre que \(\lvert x \rvert < 1\):
+  \begin{equation*}
+    \ln(1 + x)
+      = \sum_{n \ge 1} \frac{(-1)^{n + 1} x^n}{n}
+  \end{equation*}
+  Bajo el supuesto \(\lvert x \rvert \le 1 / 2\):
+  \begin{align*}
+    \left\lvert \ln (1 + x) - x + \frac{x^2}{2} \right\rvert
+      &\le \sum_{n \ge 3} \frac{\lvert x \rvert^n}{n} \\
+      &\le \frac{1}{3} \sum_{n \ge 3} \lvert x \rvert^n \\
+      &=   \frac{\lvert x \rvert^3}{3 (1 - \lvert x \rvert)} \\
+      &\le \frac{\lvert x \rvert^3}{3 (1 - 1/2)} \\
+      &=   \frac{2}{3} \lvert x \rvert^3
+  \end{align*}
+  que es equivalente a:
+  \begin{equation*}
+    \ln(1 + x)
+      = x - \frac{x^2}{2} + O(\lvert x \rvert^3)
+  \end{equation*}
+
+  Es común las serie harmónica:
+  \begin{equation*}
+    H_n
+      = \sum_{ 1 \le k \le n} \frac{1}{k}
+  \end{equation*}
+  Podemos hallar cotas simples
+  considerando la serie como el área de rectángulos de base \num{1}
+  y altura \(1 / k\).
+  Esta área podemos acotarla por curvas,
+  como muestra la figura~\ref{fig:harmonic-areas}.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[yscale = 5]
+      \draw[->] (0, 0) -- (11,0) node[right] {\(x\)};
+      \draw[->] (0, 0) -- (0,1.1) node[above] {\(y\)};
+      \draw[domain = 1:10, smooth, variable = \x, red]
+         plot ({\x}, {1 / \x});
+      \draw[domain = 0:9, smooth, variable = \x, blue]
+         plot ({\x}, {1 / (\x + 1)});
+      \draw (0, 1) -- +(1, 0)
+              -- (1, 1/2)  -- +(1, 0)
+              -- (2, 1/3)  -- +(1, 0)
+              -- (3, 1/4)  -- +(1, 0)
+              -- (4, 1/5)  -- +(1, 0)
+              -- (5, 1/6)  -- +(1, 0)
+              -- (6, 1/7)  -- +(1, 0)
+              -- (7, 1/8)  -- +(1, 0)
+              -- (8, 1/9)  -- +(1, 0)
+              -- (9, 1/10) -- +(1, 0);
+    \end{tikzpicture}
+    \caption{Ilustración de la serie harmónica}
+    \label{fig:harmonic-areas}
+  \end{figure}
+  Una cota inferior al área de los rectángulos
+  está dada por la curva inferior,
+  \(1 / x + 1\)
+  en el rango \(0 \le x \le n - 1\);
+  una cota superior por la curva superior,
+  \(1 / x\) en el rango \(1 \le x \le n\),
+  a la que debemos sumar el primer rectángulo.
+  O sea:
+  \begin{align*}
+    \int_0^{n - 1} \frac{\mathrm{d} x}{x + 1}
+      &\le H_n
+       \le 1 + \int_1^n \frac{\mathrm{d} x}{x} \\
+    \ln n
+      &\le H_n
+       \le \ln n + 1
+  \end{align*}
+  Una aproximación resulta de promediar las cotas:
+  \begin{equation*}
+    H_n
+      = \ln n + \frac{1}{2}
+  \end{equation*}
+  Resulta que esto es bastante cercano.
+
+  Podemos acotar factoriales en forma simple.
+  De partida,
+  es claro que \(n! \le n^n\)
+  (cada factor del lado derecho
+   es mayor o igual al respectivo del lado izquierdo).
+  De la misma forma,
+  es \(2^{n - 1} \le n!\).
+
+  Por el otro lado,
+  tomando logaritmos:
+  \begin{align*}
+    \ln n!
+      &=    \sum_{1 \le k \le n} \ln k \\
+      &\ge  \sum_{1 \le k \le n / 2} \ln n / 2 \\
+      &=    \frac{n}{2} \ln \frac{n}{2}
+  \end{align*}
+  Simplemente descartamos la primera mitad de la suma,
+  y acotamos los términos restantes por el primero de estos.
+  Obtenemos:
+  \begin{align*}
+    n!
+      &\ge \left( \frac{n}{2} \right)^{n / 2}
+  \end{align*}
+
+  Note que estas dos cotas se resumen en:
+  \begin{align*}
+    \ln n!
+      &= O(n \log n) \\
+    \ln n!
+      &= \Omega(n \log n)
+  \end{align*}
+  O sea:
+  \begin{equation*}
+    \ln n!
+      = \Theta(n \log n)
+  \end{equation*}
+
+\subsection{Trabajando con estimaciones asintóticas}
+\label{sec:asymptotics-use}
+
+  Partimos con algunas estimaciones útiles.
+  Acá \(\alpha\) es una constante real arbitraria,
+  y \(C\) un número real positivo cualquiera.
+  La constante \(1/2\) en los rangos \(\lvert z \rvert \le 1/2\)
+  puede reemplazarse por \(c < 1\)
+  (en cuyo caso,
+   la constante de \(O\) dependerá de \(c\)).
+  \begin{alignat*}{3}
+    \frac{1}{1 + z}
+       &= 1 + O(\lvert z \rvert)
+       &&\qquad& (\lvert z \rvert \le 1/2) \\
+    (1 + z)^\alpha
+       &= 1 + O_\alpha(\lvert z \rvert)
+       &&& (\lvert z \rvert \le 1/2) \\
+    (1 + z)^\alpha
+       &= 1 + \alpha z + O_\alpha(\lvert z \rvert^2)
+       &&& (\lvert z \rvert \le 1/2) \\
+    \ln (1 + z)
+       &= O(\lvert z \rvert)
+       &&& (\lvert z \rvert \le 1/2) \\
+    \ln (1 + z)
+       &= z + O(\lvert z \rvert^2)
+       &&& (\lvert z \rvert \le 1/2) \\
+    \ln (1 + z)
+       &= z - \frac{z^2}{2} + O(\lvert z \rvert^3)
+       &&& (\lvert z \rvert \le 1/2) \\
+    \mathrm{e}^z
+       &= 1 + O_C (\lvert z \rvert)
+       &&& (\lvert z \rvert \le C) \\
+    \mathrm{e}^z
+       &= 1 + z + O_C (\lvert z \rvert^2)
+       &&& (\lvert z \rvert \le C) \\
+    \mathrm{e}^z
+       &= 1 + z + \frac{z^2}{2} + O_C (\lvert z \rvert^3)
+       &&& (\lvert z \rvert \le C)
+  \end{alignat*}
+
+\subsubsection{Propiedades de estimaciones \(O\)}
+\label{sec:properties-O}
+
+  Algunas propiedades básicas ayudan al manipular estimaciones.
+  Sus demostraciones son aplicaciones simples de la definición.
+
+  \begin{description}
+  \item[\boldmath Constantes dentro de términos \(O\)\unboldmath:]
+    Si \(C\) es una constante positiva,
+    la estimación \(f(x) = O(C g(x))\) es equivalente a \(f(x) = O(g(x))\).
+    En particular,
+    la estimación \(f(x) = O(C)\) es equivalente a \(f(x) = O(1)\).
+    No tiene sentido tener constantes dentro de términos \(O\).
+  \item[Absorber términos:]
+    La estimación \(f(x) = c g(x) + O(g(x))\) para \(c\) constante
+    es equivalente a \(f(x) = O(g(x))\)
+    (considere la definición de \(O\)).
+    En general,
+    es claro que para \(c\) constante es \(c f(x) = O(f(x))\).
+    De igual forma,
+    pueden absorberse términos menores.
+  \item[\boldmath Sumas y productos de términos \(O\)\unboldmath:]
+    Estimaciones \(O\) pueden sumarse y multiplicarse en el sentido siguiente:
+    si \(f_1(x) = O(g_1(x))\) y \(f_2(x) = O(g_2(x))\),
+    entonces
+     \(f_1(x) + f_2(x) = O(\lvert g_1(x) \rvert + \lvert g_2(x) \rvert)\)
+    y
+     \(f_1(x) \cdot f_2(x) = O(\lvert g_1(x) g_2(x) \rvert)\).
+    Relaciones afines
+    valen para cualquier número \emph{fijo} de términos o factores \(O\).
+  \item[\boldmath Diferencias de términos \(O\)\unboldmath:]
+    Si es \(f_1(x) = O(g_1(x))\) y \(f_2(x) = O(g_2(x))\),
+    entonces la diferencia cumple
+     \(f_1(x) - f_2(x) = O(\lvert g_1(x) \rvert + \lvert g_2(x) \rvert)\).
+    Note que al lado derecho tenemos la \emph{suma}
+    (no la diferencia)
+    de los valores absolutos de las funciones cota.
+    En particular,
+    términos \(O\) nunca se cancelan.
+  \item[\boldmath Sumas de un número arbitrario de términos \(O\)\unboldmath:]
+    La propiedad de suma se extiende a un número arbitrario
+    o infinito de términos \(O\)
+    si las estimaciones individuales valen \emph{uniformemente},
+    vale decir,
+    con los mismos valores de \(c\) y \(x_0\).
+    O sea,
+    si para todo \(n\) vale \(f_n(x) \le c g_n(x)\) si \(x \ge x_0\),
+    entonces también:
+    \begin{align*}
+      \sum_n f_n(x)
+        &= \sum_n O(\lvert g_n(x) \rvert) \\
+        &= O\left( \sum_n \lvert g_n(x) \rvert \right)
+    \end{align*}
+  \item[\boldmath Distribuyendo términos \(O\)\unboldmath:]
+    Si \(f_1(x) = O(g_1(x))\) y \(f_2(x) = O(g_2(x))\),
+    para cualquier función \(h(x)\) tenemos que
+    \(h(x) (f_1(x) + f_2(x))
+        = O(\lvert h(x) \rvert
+             \cdot (\lvert g_1(x) \rvert + \lvert g_2(x) \rvert))\).
+    Esto se extiende en forma obvia
+    a cualquier número \emph{fijo} de términos.
+
+    Puede ser útil aplicarlo en reversa,
+    como \(O(g(x) h(x)) = g(x) O(h(x))\).
+    Esto permite factorizar,
+    por ejemplo si \(f(x) = x + O(x / \log x)\),
+    entonces \(f(x) = x + x O(1 / \log x) = x (1 + O(1 / \log x))\).
+  \end{description}
+
+  Como aplicación de las propiedades,
+  demostraremos:
+  \begin{equation}
+    \label{eq:asymptotics-square}
+    \left( 1 + \frac{1}{x} + O\left( \frac{1}{x^2} \right) \right)^2
+      = 1 + \frac{2}{x} + O\left( \frac{1}{x^2} \right)
+  \end{equation}
+  La interpretación correcta
+  de una ecuación como~\eqref{eq:asymptotics-square}
+  es que
+  \emph{toda función estimada por el lado izquierdo
+        también es estimada por el lado derecho};
+  más precisamente,
+  \emph{el lado derecho es una cota menos ajustada que el lado izquierdo}.
+
+  Para demostrar~\eqref{eq:asymptotics-square},
+  comenzamos con el lado derecho,
+  y usamos las propiedades repetidas veces:
+  \begin{align*}
+    \left( 1 + \frac{1}{x} + O\left( \frac{1}{x^2} \right) \right)^2
+      &= 1 + \frac{1}{x} + O\left( \frac{1}{x^2} \right)
+           + \frac{1}{x}
+                 \left(
+                   1 + \frac{1}{x} + O\left( \frac{1}{x^2} \right)
+                 \right)
+           + O\left( \frac{1}{x^2} \right)
+                 \left(
+                   1 + \frac{1}{x} + O\left( \frac{1}{x^2} \right)
+                 \right) \\
+      &= 1 + \frac{2}{x}
+           + O\left( \frac{1}{x^2} \right)
+           + O\left( \frac{1}{x^3} \right)
+           + O\left( \frac{1}{x^4} \right) \\
+      &= 1 + \frac{2}{x} + O\left( \frac{1}{x^2} \right)
+  \end{align*}
+
+\subsubsection{Trucos asintóticos}
+\label{sec:asymptotic-tricks}
+
+  Concluimos con algunos trucos útiles al manipular expresiones asintóticas.
+  \begin{description}
+  \item[El truco del logaritmo:]
+    Enfrentados a productos de muchos factores o altas potencias,
+    muchas veces ayuda considerar el logaritmo de la expresión.
+    El resultado se manipula siguiendo las propiedades mencionadas arriba,
+    para finalmente exponenciar y simplificar el resultado.
+    Para esto las estimaciones de \(\ln (1 + z)\) y \(\mathrm{e}^z\)
+    son útiles.
+  \item[El truco del factor:]
+    Otro truco útil es identificar la contribución dominante en la expresión,
+    extraer este como factor
+    para obtener una expresión de la forma \(f(x) (1 + e(x))\),
+    donde \(f(x)\) es el factor dominante y \(e(x)\) es el error relativo.
+    Por ejemplo,
+    al estimar \((x + 1/x + 1/x^2)^x\),
+    un primer paso natural es factorizar el término \(x\) del paréntesis,
+    para obtener \(x^x (1 + 1/x^2 + 1/x^3)^x\),
+    y tratar el segundo término usando por ejemplo el truco del logaritmo.
+  \item[El truco del máximo término:]
+    Una cota simple a una suma de un número finito de términos
+    es el número de términos veces el máximo término.
+    Esto puede dar estimaciones útiles con poco esfuerzo.
+    Por ejemplo,
+    así tenemos:
+    \begin{equation*}
+      \sum_{1 \le k \le n} \sqrt{\ln k}
+        = O(n \sqrt{\ln n})
+    \end{equation*}
+  \item[El truco del término único:]
+    La suma de términos no negativos está acotada por abajo
+    por cualquiera de los términos,
+    en particular el mayor.
+    Esta es otra observación trivial que resulta sorprendentemente efectiva.
+    Por ejemplo:
+    \begin{equation*}
+      \sum_{1 \le k \le n} k^k
+        \ge n^n
+    \end{equation*}
+    Puede demostrarse que esta simple cota inferior es cercana a mejor posible,
+    los términos crecen muy rápidamente.
+  \end{description}
+
+\subsection[Un caso de estudio:
+            convergencia a \boldmath\(\mathrm{e}\)\unboldmath]
+           {Un caso de estudio:
+                comparar \boldmath\((1 + 1/n)^n\)
+                con \(\mathrm{e}\)\unboldmath}
+\label{sec:case-study-e}
+
+  Es sabido que \((1 + 1/n)^n\) converge a \(\mathrm{e}\)
+  cuando \(n \to \infty\).
+  ¿Qué tan rápido converge?
+  Por ejemplo,
+  ¿converge lo suficientemente rápido para que la diferencia:
+  \begin{equation*}
+    \epsilon_n
+      = \mathrm{e} - \left( 1 + \frac{1}{n} \right)^n
+  \end{equation*}
+  se acerque tan rápido a \num{0}
+  como para que converja \(\sum \epsilon_n\)?
+
+  Podemos obtener estimaciones suficientemente precisas de \(\epsilon_n\)
+  para responder a preguntas como esta.
+  Específicamente:
+  \begin{equation}
+    \label{eq:e-approx}
+    \left( 1 + \frac{1}{n} \right)^n
+      = \mathrm{e} - \frac{\mathrm{e}}{2 n} + O\left( \frac{1}{n^2} \right)
+      \qquad (n \ge 2)
+  \end{equation}
+  Como consecuencia de~\eqref{eq:e-approx}:
+  \begin{equation*}
+    \sum_{n \ge 2} \epsilon_n
+      = \sum_{n \ge 2}
+          \left(
+            \frac{\mathrm{e}}{2 n} + O\left( \frac{1}{n^2} \right)
+          \right)
+  \end{equation*}
+  Como la suma harmónica diverge,
+  diverge esta suma.
+
+  Para demostrar~\eqref{eq:e-approx}
+  usamos logaritmos para estimar la expresión del lado izquierdo,
+  y exponenciamos el resultado.
+
+  Sea \(n \ge 2\).
+  Aplicando la estimación \(\ln (1 + z) = z - z^2/2 + O(\lvert z \rvert^3)\)
+  para \(\lvert z \rvert \le 1/2\) con \(z = 1/n\) obtenemos:
+  \begin{align*}
+    \ln \left( 1 + \frac{1}{n} \right)^n
+      &= n \ln \left( 1 + \frac{1}{n} \right) \\
+      &= n \left(
+             \frac{1}{n} - \frac{1}{2 n^2} + O\left( \frac{1}{n^3} \right)
+           \right) \\
+      &= 1 - \frac{1}{2 n} + O\left( \frac{1}{n^2} \right)
+  \end{align*}
+  Exponenciando:
+  \begin{align*}
+    \left( 1 + \frac{1}{n} \right)^n
+      &= \exp\left(
+               1 - \frac{1}{2 n} + O\left( \frac{1}{n^2} \right)
+             \right) \\
+      &= \mathrm{e}
+           \cdot \mathrm{e}^{-1 / (2 n)}
+           \cdot \mathrm{e}^{O(1 / n^2)}
+  \end{align*}
+  Podemos simplificar estas dos exponenciales
+  con las estimaciones \(\mathrm{e}^z = 1 + z + O(\lvert z \rvert^2)\)
+  y \(\mathrm{e}^z = 1 + O(z)\),
+  respectivamente:
+  \begin{align*}
+    \mathrm{e}^{-1 / (2 n)}
+      &= 1 - \frac{1}{2 n} + O\left( \frac{1}{(2 n)^2} \right) \\
+    \mathrm{e}^{O(1 / n^2)}
+      &= 1 + O\left( \frac{1}{n^2} \right)
+  \end{align*}
+  Substituyendo estas estimaciones y simplificando:
+  \begin{align*}
+    \left( 1 + \frac{1}{n} \right)^n
+      &= \mathrm{e}
+           \left(
+             1 - \frac{1}{2 n} + O\left( \frac{1}{(2 n)^2} \right)
+           \right)
+           \left(
+             1 + O\left( \frac{1}{n^2} \right)
+           \right) \\
+      &= \mathrm{e}
+           \left(
+             1 - \frac{1}{2 n} + O\left( \frac{1}{n^2} \right)
+           \right)
+  \end{align*}
+  Pueden construirse aproximaciones mejores usando más términos
+  en las estimaciones usadas.
+  Note también que tuvimos cuidado de no expandir a términos
+  que finalmente iban a ser absorbidos.
+
+\section{El problema de los cumpleaños}
+\label{sec:birthday-problem}
+
+  El problema del cumpleaños trata la probabilidad
+  de que en un grupo de \(k\) hayan dos personas con el mismo cumpleaños.
+  Resulta que es mucho mayor de lo que uno ingenuamente piensa,
+  para un grupo de \num{23} personas ya es mayor a \SI{50}{\percent}.
+  Para verlo,
+  en un grupo de \(k\) personas
+  (suponiendo \num{365}~días en el año,
+   con cumpleaños distribuidos uniformemente)
+  la probabilidad que el cumpleaños de la segunda persona
+  no coincida con el de la primera es
+  (\(1 - 1 / 365\)),
+  el de la tercera no coincida con ninguna de las dos anteriores es
+  (\(1 - 2 / 365\)),
+  \ldots,
+  y finalmente la \(k\)\nobreakdash-ésima
+  no coincida con ninguna de las \(k - 1\) anteriores es
+  ((\(1 - (k - 1) / 365\)).
+  O sea,
+  la probabilidad que no hayan cumpleaños repetidos
+  está dada por el producto:
+  \begin{equation*}
+    \left( 1 - \frac{1}{365} \right)
+      \cdot \left( 1 - \frac{2}{365} \right)
+      \cdot \left( 1 - \frac{3}{365} \right)
+      \dotsm \left( 1 - \frac{k - 1}{365} \right)
+      = \frac{365 \cdot 364 \cdot \dotsm (365 - k + 1)}{365^k}
+  \end{equation*}
+  (hemos agregado un factor \(365/365 = 1\) para simplificar).
+  Generalizando,
+  si son \(n\)~días:
+  \begin{align*}
+    P(n, k)
+      &= \frac{n (n - 1) \dotsm (n - k + 1)}{n^k} \\
+      &= \prod_{0 \le i < k} \left( 1 - \frac{i}{n} \right)
+  \end{align*}
+  Una generalización obvia del problema original
+  es preguntar por el mínimo valor de \(k\) tal que \(P(n, k) <0,5\),
+  que llamaremos \(k^*(n)\).
+  ¿Cómo se comporta \(k^*\) al crecer \(n\)?
+  Desarrollaremos una estimación de \(P(n, k)\)
+  que permita responder tales preguntas.
+  \begin{proposition}
+    \label{prop:birthday-probability}
+    Suponiendo que los cumpleaños se distribuyen uniformemente,
+    para \(k \le n / 2\):
+    \begin{equation}
+      \label{eq:birthday-probability}
+      P(n, k)
+        = \exp \left(
+                 - \frac{k^2}{2 n}
+                   + O\left( \frac{k}{n} \right)
+                   + O\left( \frac{k^3}{n^2} \right)
+               \right)
+    \end{equation}
+  \end{proposition}
+  Note que tenemos dos términos \(O\),
+  las variables \(n\) y \(k\) inciden en forma separada.
+  En particular,
+  la aproximación~\eqref{eq:birthday-probability}
+  da \(k^*(n) \approx \sqrt{2 \ln 2 \cdot n}\);
+  para el caso de cumpleaños da \num{22,494},
+  cuando el valor correcto es \(k^*(365) = 23\).
+  \begin{proof}
+    Para \(k \le n / 2\) tenemos:
+    \begin{align*}
+      \ln P(n, k)
+        &= \sum_{0 \le i < k} \ln \left( 1 - \frac{i}{n} \right) \\
+        &= \sum_{0 \le i < k}
+             \left(
+               - \frac{i}{n} + O\left( \frac{i^2}{n^2} \right)
+             \right) \\
+        &= \frac{1}{n} \cdot \frac{k (k - 1)}{2}
+             + O\left( k \cdot \frac{k^2}{n^2} \right) \\
+        &= - \frac{k^2}{2 n}
+             + O\left( \frac{k}{n} \right)
+             + O\left( \frac{k^3}{n^2} \right)
+    \end{align*}
+    Exponenciar da la estimación~\eqref{eq:birthday-probability}.
+  \end{proof}
+  Se ve que son manipulaciones bastante rutinarias.
+
+\section{La integral error}
+\label{sec:error-integral}
+
+
+  Un ejemplo instructivo es la integral error:
+  \begin{equation*}
+    E(x)
+      = \int_x^\infty \mathrm{e}^{-t^2} \, \mathrm{d} t
+  \end{equation*}
+  Esta representa
+  (dentro de un factor de escala)
+  la probabilidad de la cola de una distribución Gaussiana.
+  Esta función no puede expresarse en términos de funciones elementales,
+  se requieren métodos numéricos o asintóticos para evaluarla.
+
+  Nos interesa \(E(x)\) para valores grandes de \(x\).
+  Demostraremos:
+  \begin{theorem}
+    \label{theo:error-integral}
+    \begin{equation}
+      \label{eq:error-integral}
+      E(x)
+        = \mathrm{e}^{-x^2}
+            \left(
+              \frac{1}{2 x} + O\left( \frac{1}{x^3} \right)
+            \right)
+    \end{equation}
+  \end{theorem}
+  \begin{proof}
+    Observe que el integrando \(\mathrm{e}^{-t^2}\)
+    toma su máximo valor en \(t = x\),
+    y después decae muy rápidamente.
+    Esperamos que la mayor contribución al valor de la integral
+    venga de una pequeña vecindad al comienzo del rango.
+    Efectuemos el cambio de variables \(t = x + s\)
+    y expresemos el integrando como su valor máximo por un factor:
+    \begin{equation*}
+      \mathrm{e}^{-t^2}
+        = \mathrm{e}^{-x^2}
+            \cdot \mathrm{e}^{- 2 s x - s^2}
+    \end{equation*}
+    Nuestra integral queda:
+    \begin{equation*}
+      E(x)
+        = \mathrm{e}^{-x^2}
+            \int_0^\infty
+              \mathrm{e}^{- 2 s x} \mathrm{e}^{- s^2} \, \mathrm{d} s
+        = \mathrm{e}^{-x^2} I(x)
+    \end{equation*}
+   Para deducir la estimación,
+   debemos demostrar que \(I(x)\) cumple:
+   \begin{equation}
+     \label{eq:I(x)}
+     I(x)
+       = \frac{1}{2 x} + O\left( \frac{1}{x^3} \right)
+   \end{equation}
+   Una estimación simple resulta
+   de descartar el factor \(\mathrm{e}^{-s^2} \le 1\),
+   que deja:
+   \begin{align*}
+     I(x)
+       &\le \int_0^\infty \mathrm{e}^{- 2 s x} \, \mathrm{d} s \\
+       &= \frac{1}{2 x}
+   \end{align*}
+   Mejorar esta estimación requiere estimar el error cometido
+   al descartar este factor.
+   Para ello dividimos el rango de integración en \(s = 1\):
+   \begin{equation*}
+     I(x)
+       = \int_0^1 \mathrm{e}^{- 2 s x} \mathrm{e}^{-s^2} \, \mathrm{d} s
+           + \int_1^\infty
+               \mathrm{e}^{- 2 s x} \mathrm{e}^{-s^2} \, \mathrm{d} s
+       = I_1(x) + I_2(x)
+   \end{equation*}
+   Este tipo de división se ve motivado
+   porque el factor \(\mathrm{e}^{-2 s x}\)
+   decae muy rápidamente para \(x\) grande,
+   con lo que la contribución vendrá de valores cercanos al límite inferior.
+   Esperamos que \(I_1(x)\) dé el término principal de~\eqref{eq:I(x)}.
+
+   En la integral \(I_1(x)\) usamos la estimación
+   \(\mathrm{e}^{-s^2} = 1 + O(s^2)\) válida para \(0 \le s \le 1\),
+   con lo que:
+   \begin{equation*}
+     I_1(x)
+       = \int_0^1 \mathrm{e}^{- 2 s x} \mathrm{e}^{-s^2} \, \mathrm{d} s
+       = \int_0^1 \mathrm{e}^{- 2 s x} ( 1 + O(s^2) ) \, \mathrm{d} s
+   \end{equation*}
+   Con el cambio de variables \(u = 2 s x\) obtenemos:
+   \begin{align*}
+     I_1(x)
+       &= \frac{1}{2 x}
+            \int_0^{2 x}
+              \mathrm{e}^{-u}
+                \left(
+                  1 + O\left( \frac{u^2}{x^2} \right)
+                \right) \, \mathrm{d} u \\
+       &= \frac{1}{2 x}
+            \left(
+               (1 - \mathrm{e}^{- 2 x})
+                  + O\left(
+                       \frac{1}{x^2}
+                         \int_0^\infty u^2 \mathrm{e}^{-u}  \, \mathrm{d} u
+                     \right)
+            \right) \\
+       &= \frac{1}{2 x} + O\left( \frac{1}{x^3} \right)
+   \end{align*}
+   Resta demostrar que \(I_2(x)\) es despreciable.
+   Basta una cota superior bastante burda:
+   \begin{align*}
+     I_2(x)
+       &=   \int_1^\infty
+              \mathrm{e}^{- 2 s x} \mathrm{e}^{-s^2} \, \mathrm{d} s \\
+       &\le \int_1^\infty
+              \mathrm{e}^{- 2 s x} \, \mathrm{d} s \\
+       &=   \frac{\mathrm{e}^{-2 x}}{2 x} \\
+       &=   O\left( \frac{1}{x^3} \right)
+   \end{align*}
+   Esto último se cumple con soltura,
+   ya que para todo \(A > 0\):
+   \begin{equation*}
+     \mathrm{e}^{-x}
+       = O(x^{-A})
+   \end{equation*}
+   Combinando estas estimaciones da lo prometido.
+  \end{proof}
+
+\section*{Ejercicios}
+\label{sec:ex-asymptotics}
+
+  \begin{enumerate}
+  \item
+    Demuestre que nuestras definiciones alternativas de \(o(\cdot)\),
+    ecuaciones~\eqref{eq:small-oh-definition}
+    y~\eqref{eq:small-oh-definition-alt} son equivalentes.
+  \item
+    Demuestre que nuestras definiciones alternativas de \(\omega(\cdot)\),
+    ecuaciones~\eqref{eq:small-omega-definition}
+    y~\eqref{eq:small-omega-definition-alt} son equivalentes.
+  \item
+    Demuestre que nuestras notaciones asintóticas
+    pueden resumirse mediante el siguiente cuadro:
+    \begin{center}
+      \begin{tabular}{|>{\(}c<{\)}||*{3}{>{\(}c<{\)}|}}
+        \hline
+        \multicolumn{1}{|c||}{\rule[-0.7em]{0pt}{2.2em}\textbf{Definición}} &
+          \multicolumn{1}{c|}{\boldmath\(\fbox{?} \; c > 0\)\unboldmath} &
+          \multicolumn{1}{c|}{\boldmath\(\fbox{?} \; x_0\)\unboldmath} &
+          \multicolumn{1}{c|}{\boldmath
+                    \(\lvert f(x) \rvert
+                         \mathrel{\fbox{?}} c \cdot \lvert g(x)\rvert\)
+                              \unboldmath} \\
+        \hline\hline
+        O()	 & \exists & \exists & \le \\
+        o()	 & \forall & \exists & <   \\
+        \Omega() & \exists & \exists & \ge \\
+        \omega() & \forall & \exists & > \\
+        \hline
+      \end{tabular}
+    \end{center}
+  \item
+    Demuestre las estimaciones~\ref{enum:log(x^2+1)=O(logx)},
+    \ref{enum:1/(1+x)} y~\ref{enum:logx}
+    de la sección~\ref{sec:asymptotic-notations}.
+  \item
+    Demuestre las estimaciones asintóticas básicas
+    de la sección~\ref{sec:asymptotics-use}.
+  \item
+    Demuestre las propiedades dadas en la sección~\ref{sec:properties-O}.
+  \item
+    Complete la estimación de \((x + 1/x + 1/x^2)^x\) hasta \(O(x^{-2})\).
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  pregrado asintóticamente latin ad hoc Li eq big ésima
+% LocalWords:  english estimate exponenciar exponenciamos range small
+% LocalWords:  Exponenciando definitition asymptotics square alt
+% LocalWords:  Gaussiana definition approx birthday probability
+% LocalWords:  factorizar

@@ -1,0 +1,215 @@
+\documentclass[english, spanish, fleqn%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+\usepackage{ifpdf}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{babel}
+\mode<article>{\usepackage[colorlinks, urlcolor = blue]{hyperref}}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Algoritmos y Complejidad}
+\subtitle{INF-221}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Preliminares}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Preliminares}
+
+  \begin{itemize}
+  \item
+    Medio de comunicación es \href{http://aula.usm.cl}{Aula}.
+    Anuncios importantes se harán en el foro del caso,
+    hay espacio para discusión y aportes de alumnos.
+  \item
+    En el aula está publicado el apunte del ramo
+    junto a las transparencias,
+    en formato PDF.
+    El apunte cubre bastante más que la materia del semestre,
+    y profundiza mucho más ciertos aspectos.
+    Los fuentes \LaTeX{} están en un repositorio
+    \href{https://gitlab.labcomp.cl/vonbrand/clases_INF-221}{git},
+    al que tienen acceso con su cuenta de Informática.
+  \end{itemize}
+\end{frame}
+
+\section{Evaluación}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Evaluación}
+
+  \uncover<+->{
+    La evaluación del ramo se compone de dos certámenes,
+    quizzes y tareas.
+    No hay examen.
+  }
+
+  \uncover<+->{
+    El primer certamen cubre la materia hasta la primera prueba,
+    con peso \SI{30}{\percent},
+    el segundo cubre toda la materia
+    (la segunda parte construye sobre la primera),
+    con peso \SI{35}{\percent}.
+  }
+
+  \uncover<+->{
+    El \SI{35}{\percent} restante es nota de ayudantía,
+   \SI{10}{\percent} por quizzes/evaluación de ayudantías
+    y \SI{25}{\percent} de tareas.
+  }
+
+  \uncover<+->{
+    Únicamente para quienes hayan faltado a una evaluación
+    hay un certamen recuperativo final,
+    sobre toda la materia,
+    que substituye la nota faltante.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Evaluación}
+
+  \uncover<+->{
+    Certámenes generalmente tienen 125 puntos sobre 100,
+    habrá temas más allá de lo exigido en el ramo
+    que dan opción de nota extra.
+  }
+  \uncover<+->{
+    (Si alguien termina con nota final mayor a 100,
+     puede abonar el sobrante la próxima vez que tome el ramo.)
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Nota extra}
+
+  \uncover<+->{
+    El apunte y demás material del ramo es trabajo en curso,
+    seguramente contiene errores,
+    partes incomprensibles,
+    áreas susceptibles de mejora.
+    Aportes en forma de reportes de errores
+    (de tipeo,
+     gramática,
+     matemáticos,
+     algoritmos o programas,
+     \ldots)
+    tienen un premio de 5~puntos en la nota final
+    (divididos entre los autores).
+  }
+  \uncover<+->{
+    Asimismo,
+    soluciones particularmente ingeniosas o elegantes en certámenes o tareas
+    pueden reportar puntos adicionales.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Nota extra}
+
+  \uncover<+->{
+    A veces se reescribe un capítulo del apunte,
+    aparece un tema nuevo de gran interés,
+    se profundiza algún tema ya tratado.
+    Irregularmente se publicarán \emph{actividades extra},
+    voluntarias.
+    Participando en actividades extra
+    opta a 10 puntos adicionales en la nota final.
+  }
+\end{frame}
+
+\section{Temas a tratar}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Advertencia previa}
+
+  \uncover<+->{
+    Haremos uso libremente de resultados de matemáticas
+    (manipulaciones algebraicas y trigonométricas,
+     series de potencias).
+  }
+
+  \uncover<+->{
+    Usaremos específicamente resultados sobre solución de recurrencias,
+    muchos algoritmos ameritan demostración de que son correctos
+    (refiérase a \emph{Estructuras Discretas}, INF-152)
+    y complejidad de algoritmos
+    (vea \emph{Informática Teórica}, INF-155).
+    Obviamente escribiremos programas,
+    usando una diversidad de lenguajes
+    (relevantes son \emph{Programación}, IWI-131
+     y \emph{Lenguajes de Programación}, INF-253).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Temática}
+
+  \begin{description}
+  \item[Revisión de asintóticas:]
+    Hablaremos de tasas de crecimiento de tiempos de ejecución
+    al crecer el tamaño del problema,
+    la rapidez con la cual un método converge
+    y otras cantidades difíciles de precisar.
+    Análisis asintótico permite expresar y manipular
+    las anteriores en forma simple.
+  \item[Análisis numérico:]
+    Una corta introducción a la temática básica.
+    Cubriremos nociones preliminares,
+    técnicas de búsqueda de ceros de funciones,
+    interpolación y cuadratura.
+  \item[Algoritmos combinatorios:]
+    El fuerte del curso.
+    Discutiremos técnicas para diseñar algoritmos eficientes
+    en una variedad de áreas,
+    mostrando cómo podemos estimar su rendimiento
+    y compararlos.
+  \end{description}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode presentation PDF git quizzes faltante
+% LocalWords:  tipeo INF IWI

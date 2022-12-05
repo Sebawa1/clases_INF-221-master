@@ -1,0 +1,140 @@
+\section{La desigualdad de Kraft-McMillan}
+\label{sec:Kraft-McMillan}
+
+  La desigualdad de Kraft~%
+    \cite{kraft49:_coding}
+  limita los largos de los códigos en un código prefijo.
+  A su vez,
+  McMillan~%
+    \cite{mcmillan56:_two_inequalities}
+  demostró que si un código no cumple la desigualdad de Kraft
+  no puede decodificarse en forma única.
+
+  Demostraremos ambas.
+  \begin{theorem}
+    Sean los símbolos del alfabeto \(\Sigma = \{a_1, a_2, \dotsc, a_n\}\)
+    codificados mediante un código decodificable de forma única
+    sobre un alfabeto de tamaño \(r\),
+    con palabras de código respectivamente \(\ell_1, \ell_2, \ldots, \ell_n\).
+    Entonces:
+    \begin{equation}
+      \label{eq:Kraft-inequality}
+      \sum_{1 \le k \le n} r^{\ell_k}
+        \le 1
+    \end{equation}
+    Por el contrario,
+    para un conjunto de números naturales \(\ell_1, \ell_2, \ldots, \ell_n\)
+    que cumplen la desigualdad indicada hay un código con  palabras de código
+    de los respectivos largos que es decodificable en forma única.
+  \end{theorem}
+  \begin{proof}
+    Primero demostraremos que la desigualdad de Kraft~\ref{eq:Kraft-inequality}
+    se cumple para códigos prefijo
+    y que hay un código prefijo con esos largos si se cumple la desigualdad.
+    Sin pérdida de generalidad,
+    suponemos \(\ell_1 \le \ell_2  \le \dotsb \le \ell_n\).
+    Sea \(A\) el árbol \(r\)\nobreakdash-ario completo de altura \(\ell_n\),
+    con lo que podemos considerar las palabras del código prefijo
+    como nodos de \(A\).
+    Sea \(A_k\) el conjunto de hojas del subárbol que tiene el nodo \(v_k\)
+    (correspondiente al código de \(a_k\))
+    de \(A\) como raíz.
+    Como la altura del subárbol con raíz \(v_k\) es \(\ell_n - \ell_k\),
+    tiene \(\lvert A_k \rvert = r^{\ell_n - \ell_k}\) hojas.
+    Como es un código prefijo,
+    sabemos que \(A_r \cap A_s = \varnothing\) si \(r \ne s\).
+    Como el total de hojas de \(A\) es \(r^{\ell_n}\),
+    concluimos que:
+    \begin{equation*}
+      \left\lvert \bigcup_{1 \le k \le n} A_k \right\rvert
+        =   \sum_{1 \le k \le n} \lvert A_k \rvert
+        =   \sum_{1 \le k \le n} r^{\ell_n - \ell_k}
+        \le r^{\ell_n}
+    \end{equation*}
+    de donde sigue la desigualdad~\ref{eq:Kraft-inequality}.
+
+    Para el recíproco,
+    dada una secuencia de enteros \(\ell_1 \le \ell_2 \le \dotsb \le \ell_n\)
+    que cumplen la desigualdad~\ref{eq:Kraft-inequality},
+    podemos construir un código prefijo con códigos de esos largos.
+    La idea es elegir arbitrariamente
+    un código de largo \(\ell_1\) para \(a_1\).
+    En el árbol \(A\)
+    esto corresponde a eliminar como posibles códigos
+    los prefijos de ese código.
+    También elimina los descendientes del vértice \(v_i\),
+    en particular las hojas \(A_1\),
+    que son \(r^{\ell_n - \ell_1}\).
+    Podemos elegir del resto del árbol algún código de largo \(\ell_2\),
+    lo que elimina \(r^{\ell_n - \ell_2}\) hojas adicionales.
+
+    Siguiendo de esta forma,
+    si se cumple la desigualdad vemos que esto es posible en cada paso,
+    construimos un código prefijo con los largos prescritos.
+    Como \(\ell_{k + 1} \ge \ell_k\),
+    por la forma de los subárboles
+    no podemos quedar con un conjunto de hojas que no tienen ascendente común,
+    hay cómo elegir cada uno de los códigos.
+
+    Ahora demostraremos que si el código se puede decodificar en forma única,
+    entonces cumple la desigualdad de Kraft.
+    El recíproco de esto ya lo demostramos,
+    un código prefijo obviamente se puede decodificar en forma única.
+
+    Sea:
+    \begin{equation*}
+      C
+        = \sum_{1 \le k \le n} r^{-\ell_k}
+    \end{equation*}
+    La idea es acotar \(C^m\) para \(m \in \mathbb{N}\)
+    y demostrar que la cota solo es posible para todo \(m\) si \(C \le 1\).
+    Escribimos:
+    \begin{align*}
+      C^m
+        &= \left( \sum_{1 \le k \le n} r^{-\ell_k} \right)^m \\
+        &= \sum_{1 \le r_1 \le n}
+             \sum_{1 \le r_2 \le n} \cdots \sum_{1 \le r_n \le n}
+               r^{-\ell_{r_1} - \ell_{r_2} - \dotsm - \ell_{r_n}}
+    \end{align*}
+    Considere ahora todas las palabras en \(\Sigma^m\),
+    si las codificamos con el código supuesto todos los códigos serán distintos.
+    Esto se traduce en que cada término de la suma
+    corresponde a una palabra en \(\Sigma^m\).
+    Si llamamos \(q_\ell\)
+    el número de codificaciones de \(\Sigma^m\) de largo \(\ell\),
+    resultando:
+    \begin{equation*}
+      C^m
+        = \sum_{\ell \ge 1} q_\ell r^{-\ell}
+    \end{equation*}
+    Para un alfabeto de \(r\) símbolos
+    hay solo \(r^\ell\) códigos de largo \(\ell\),
+    con lo que tenemos la cota simple \(q_\ell \le r^\ell\).
+    Si \(\ell_{\mathtt{max}}\)
+    es el largo máximo de un código
+    esto da la cota:
+    \begin{align*}
+      C^m
+        &\le \sum_{1 \le \ell \le m \ell_{\mathtt{max}}} r^{\ell} r^{-\ell} \\
+        &=   m \ell_{\mathtt{max}} \\
+      C
+        &\le \left( m \ell_{\mathtt{max}} \right)^{1 / m}
+    \end{align*}
+    Esto debe cumpĺirse para todo \(m\).
+    Pero:
+    \begin{equation*}
+      \lim_{m \to \infty} \left( m \ell_{\mathtt{max}} \right)^{1 / m}
+        = 1
+    \end{equation*}
+    O sea,
+    debe ser \(C \le 1\),
+    de lo contrario la desigualdad
+    se violaría para \(m\) suficientemente grande.
+  \end{proof}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% End:
+
+% LocalWords:  decodificable max

@@ -1,0 +1,645 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Código Huffman}
+\label{cha:Huffman}
+
+  El código Huffman~%
+    \cite{huffman52:_method_const_minim_redun_codes}
+  es una aplicación muy importante de algoritmo voraz.
+  Lo desarrolló como estudiante de pregrado,
+  cuando se presentó la alternativa de dar un examen final
+  o escribir un trabajo sobre la optimalidad de ciertos códigos
+  en su ramo de teoría de comunicaciones.
+  Vio que no podría resolver el problema planteado,
+  y estaba a punto de abandonar cuando se le ocurrió la idea de este algoritmo,
+  demostrando que es óptimo.
+  En esto le ganó a sus profesores,
+  que estaban desarrollando el código Shannon-Fano que resulta no ser óptimo.
+
+  Dado un texto,
+  formado por símbolos,
+  buscamos codificarlo eficientemente.
+  Si cada símbolo se codifica en \(k\) bits
+  (total \(2^k\) símbolos posibles),
+  de texto de largo \(n\) usa \(n k\) bits.
+  En texto,
+  las frecuencias son \emph{muy} desiguales.
+  Por ejemplo,
+  en la novela Moby Dick
+  aparece~\num{117\,194} veces la letra~'e',
+  y~\num{640} veces la~'z'.
+  Nuestro principal objetivo es asignarle códigos cortos
+  a los símbolos que más se repiten,
+  a costa de codificaciones largas para símbolos poco frecuentes.
+
+  Pero hay que tener cuidado:
+  \begin{align*}
+    a &\mapsto 0 \\
+    b &\mapsto 1 \\
+    c &\mapsto 01
+  \end{align*}
+  Con esta codificación escribimos:
+  \begin{equation}
+    \label{09::PrimerCodigo}
+    a b a b c \rightsquigarrow 010101
+  \end{equation}
+  Pero también:
+  \begin{equation}
+    \label{09::SegundoCodigo}
+    c c c \rightsquigarrow 010101
+  \end{equation}
+  ¡Se produce ambigüedad entre~\eqref{09::PrimerCodigo}
+  y~\eqref{09::SegundoCodigo}!
+
+  Obviamente nos interesan códigos que tengan decodificación única.
+  Condición suficiente para evitar ambigüedades es que
+  ningún código sea prefijo de otro
+  (\textquote{\emph{\foreignlanguage{english}{prefix-free code}}}
+   o \textquote{\emph{\foreignlanguage{english}{prefix code}}}).
+  La desigualdad de Kraft\nobreakdash-McMillan~%
+    \cite{kraft49:_coding, mcmillan56:_two_inequalities}
+  muestra que si un código puede decodificarse en forma única,
+  hay un código prefijo con códigos del mismo largo para cada símbolo.
+  Esto es importante porque hace eficiente el decodificar.
+
+  Podemos describir un código prefijo binario como un árbol binario,
+  las hojas son los símbolos y el camino desde la raíz a la hoja es el código
+  (por ejemplo,
+   ir al hijo izquierdo es 0,
+   ir al derecho 1).
+  Dadas las frecuencias con que aparecen los símbolos en las hojas,
+  podemos asignar frecuencias a nodos internos del árbol
+  como la suma de las frecuencias de todas las hojas descendientes
+  (o sea,
+   la suma de la frecuencia de los hijos
+   en los nodos internos).
+  Un ejemplo es la figura~\ref{09::EjemploArbolHuffman},
+  el código representado es el del cuadro~\ref{tab:EjemploArbolHuffman}.
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[scale = 0.75]
+      \coordinate (r)	 at (3, 3);
+      \coordinate (0)	 at (0, 2);
+      \coordinate (1)	 at (6, 2);
+      \coordinate (10)	 at (4, 1);
+      \coordinate (100)	 at (3, 0);
+      \coordinate (101)	 at (5, 0);
+      \coordinate (11)	 at (8, 1);
+
+      \draw (r)	 -- node [above] {\num{0}} (0);
+      \draw (r)	 -- node [above] {\num{1}} (1);
+      \draw (1)	 -- node [above] {\num{0}} (10);
+      \draw (1)	 -- node [above] {\num{1}} (11);
+      \draw (10) -- node [above left] {\num{0}} (100);
+      \draw (10) -- node [above right] {\num{1}} (101);
+
+      \draw [fill] (r)	 circle [radius = 3pt];
+      \draw [fill] (1)	 circle [radius = 3pt];
+      \draw [fill] (10)	 circle [radius = 3pt];
+
+      \node [below = 0.1 of 0]	 {\(a\)};
+      \node [below = 0.1 of 100] {\(b\)};
+      \node [below = 0.1 of 101] {\(d\)};
+      \node [below = 0.1 of 11]	 {\(c\)};
+    \end{tikzpicture}
+    \caption{Ejemplo de código prefijo como árbol}
+    \label{09::EjemploArbolHuffman}
+  \end{figure}
+  \begin{table}[ht]
+    \centering
+    \begin{tabular}{>{\(}c<{\)}>{\(}l<{\)}}
+      \multicolumn{1}{c}{\textbf{Símbolo}} &
+        \multicolumn{1}{c}{\textbf{Código}} \\
+      \hline
+        a & 0	\\
+        b & 100 \\
+        c & 11	\\
+        d & 101
+    \end{tabular}
+    \caption{Código representado en la figura~\ref{09::EjemploArbolHuffman}}
+    \label{tab:EjemploArbolHuffman}
+  \end{table}
+  Queremos nodos caros
+  (alta frecuencia)
+  cerca de la raíz,
+  nodos baratos
+  (bajas frecuencias)
+  lejos.
+  Una idea es agrupar desde las hojas,
+  partiendo con los nodos más baratos,
+  considerando igualmente nodos internos resultantes en iteraciones sucesivas.
+
+\section{Descripción del problema}
+
+  Para atacar el problema,
+  y finalmente demostrar que el algoritmo esbozado da un óptimo,
+  hay que describirlo formalmente.
+
+  Dada una secuencia \(T\) sobre \(\Sigma = \{x_1, \ldots, x_n\}\),
+  donde \(x_i\) aparece con frecuencia \(f_i\),
+  construir una función de codificación
+    \(C \colon \Sigma \rightarrow \text{cadenas de bits}\),
+  tal que \(C\) es un código prefijo
+  y el número total de bits para representar \(T\) se minimiza.
+  \begin{definition}
+    La \emph{profundidad} de la hoja \(\ell _i\),
+    anotada \(d(\ell _i)\),
+    es el largo del camino de la raíz a esa hoja.
+  \end{definition}
+  En el código descrito por el árbol \(R\)
+  el símbolo \(x_i\) queda codificado por \(d(x_i)\) bits,
+  el texto completo queda representado por el siguiente número de bits:
+  \begin{equation*}
+    B(R)
+      = \sum_i f_i d(x_i)
+  \end{equation*}
+  Observamanos que:
+  \begin{itemize}
+  \item
+    Si \(R\) es óptimo,
+    todo nodo interno tiene dos hijos.
+
+    Si hubiese un nodo interno con un único hijo,
+    podríamos acortar los caminos
+    (códigos)
+    de descendientes de su hijo
+    haciéndolos depender directamente del nodo.
+  \item
+    Hay dos hojas \(x_a\), \(x_b\)
+    a la profundidad máxima que son hermanos.
+
+    Por el punto anterior,
+    no pueden haber nodos internos con un único hijo,
+    toda hoja tiene un hermano.
+  \end{itemize}
+  Intuitivamente,
+  buscamos letras poco frecuentes a altas profundidades,
+  frecuentes a profundidades bajas.
+  Lo que hace el algoritmo de Huffman
+  es asignar desde los símbolos menos frecuentes,
+  agrupando colecciones de símbolos.
+  Sea \(L = (\ell_1, \ldots, \ell_n)\) el conjunto de hojas
+  para todos los símbolos,
+  y sea \(f_i\) la frecuencia de la letra \(x_i\).
+  Hallar las dos letras de frecuencia mínima,
+  digamos \(x_a\) y \(x_b\) con frecuencias \(f_a\) y \(f_b\).
+  Unir sus hojas en la hoja \(\ell_{a }\) con frecuencia \(f_a+f_b\)
+  dando un árbol \(R_{a b}\)
+  (figura~\ref{09::RabTree}):
+  \begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+          [every state/.style = {draw = black,
+                                 fill = black,
+                                 minimum size = 2mm}
+          ]
+      \node [state] (d0) {};
+      \node [above of = d0, yshift = -42] (dummy:ce) {\(x_{ab}\)};
+      \node [below left of = d0] (xa) {\(x_a\)};
+      \node [below right of = d0] (xb) {\(x_b\)};
+      \path (d0) edge node [above left] {\num{0}} (xa)
+      edge node [above right] {\num{1}} (xb);
+    \end{tikzpicture}
+    \caption{El nodo \(x_{a b}\) es la unión entre \(x_a\) y \(x_b\).}
+    \label{09::RabTree}
+  \end{figure}
+  Recursivamente resolver el problema con:
+  \begin{equation}
+    L
+      = \{ \ell _1, \ldots, \ell _n \}
+           \smallsetminus \{ \ell _a, \ell _b \} \cup \{ \ell _{a b}\}
+  \end{equation}
+  y frecuencias ajustadas (\(\ell_{a b}\rightsquigarrow f_a+f_b\))
+  \begin{ejemplo}
+    Considere el cuadro~\ref{09::CuadroEjemplo1}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{>{\(}c<{\)}|c}
+        \multicolumn{1}{c|}{\textbf{Símbolo}}
+            & \textbf{Frecuencia} \\
+        \hline
+        a & \phantom{0}9 \\
+        b & \phantom{0}4 \\
+        c & \phantom{0}2 \\
+        d & 15 \\
+        e & \phantom{0}3 \\
+        f & 17
+      \end{tabular}
+      \caption{Frecuencias de los símbolos \(a, b, c, d, e, f\).}
+      \label{09::CuadroEjemplo1}
+    \end{table}
+    El algoritmo de Huffman
+    encuentra los dos símbolos de menor frecuencia
+    y crea un subárbol con ellos.
+    En el cuadro~\ref{09::CuadroEjemplo1},
+    se tiene que los símbolos \(c\) y \(e\)
+    son los de menor frecuencia.
+    Luego,
+    formamos un subárbol con ellos
+    (figura~\ref{09::EjemploArbol1}).
+    \begin{figure}[ht]
+      \centering
+      \begin{tikzpicture}
+          [every state/.style = {draw = black,
+                                 fill = black,
+                                 minimum size = 2mm}
+          ]
+        \node [state] (ce) {};
+        \node [above of = ce, yshift = -42] (dummy:ce) {\(c e\)};
+        \node [below left of = ce] (c) {\(c\)};
+        \node [below right of = ce] (e) {\(e\)};
+        \path (ce) edge node [above left] {\num{0}} (c)
+           edge node [above right] {\num{1}} (e);
+      \end{tikzpicture}
+      \caption{Hojas son los símbolos que menos se repiten.}
+      \label{09::EjemploArbol1}
+    \end{figure}
+    Agregamos este \textquote{nodo conjunto} al cuadro~\ref{09::CuadroEjemplo1},
+    cuya frecuencia es equivalente
+    al peso del árbol de la figura~\ref{09::EjemploArbol1}
+    (suma de las frecuencias de \(c\) y \(e\)).
+    El resultado se aprecia en el cuadro~\ref{09::CuadroEjemplo2}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{>{\(}c<{\)}|c}
+        \multicolumn{1}{c|}{\textbf{Símbolo}} & \textbf{Frecuencia} \\
+        \hline
+          a   & \phantom{0}9 \\
+          b   & \phantom{0}4 \\
+          d   & 15 \\
+          f   & 17 \\
+          c e & \phantom{0}5
+      \end{tabular}
+      \caption{Nodo conjunto \(c e\)
+               con frecuencia la suma de las de \(c\) y \(e\).}
+      \label{09::CuadroEjemplo2}
+    \end{table}
+    Repetimos el proceso,
+    es decir,
+    escogemos dos símbolos del cuadro~\ref{09::CuadroEjemplo2}
+    que tienen menor frecuencia
+    y creamos un nuevo subárbol.
+    Estos símbolos son \(c e\) y \(b\).
+    La figura~\ref{09::EjemploArbol2} muestra el árbol resultante.
+    \begin{figure}[ht]
+      \centering
+      \begin{tikzpicture}
+          [every state/.style = {draw = black,
+                                 fill = black,
+                                 minimum size = 2mm}
+          ]
+        \node [state] (ce) {};
+        \node [above of = ce, yshift = -42] (dummy:ce) {\(c e\)};
+        \node [below left of = ce] (c) {\(c\)};
+        \node [below right of = ce] (e) {\(e\)};
+        \path (ce) edge node [above left] {\num{0}} (c)
+          edge node [above right] {\num{1}} (e);
+
+        \node [above left of = ce, state] (bce) {};
+        \node [below left of = bce] (b) {\(b\)};
+        \node [above of = bce, yshift = -42] (dummy:bce) {\(b c e\)};
+        \path (bce) edge node [above left] {\num{0}} (b)
+          edge node [above right] {\num{1}} (ce);
+      \end{tikzpicture}
+      \caption{Hojas son los símbolos que menos se repiten.}
+      \label{09::EjemploArbol2}
+    \end{figure}
+    Reemplazamos los símbolos \(b\) y \(c e\)
+    del cuadro~\ref{09::CuadroEjemplo2}
+    con \(b c e\) de frecuencia \(f_{bce} = 9\).
+    El resultado queda en el cuadro~\ref{09::CuadroEjemplo3}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{>{\(}c<{\)}|c}
+        \multicolumn{1}{c|}{\textbf{Símbolo}} & \textbf{Frecuencia} \\
+        \hline
+          a	& \phantom{0}9 \\
+          d	& 15 \\
+          f	& 17 \\
+          b c e & \phantom{0}9
+      \end{tabular}
+      \caption{Reemplazando los símbolos \(b\) y \(c e\)
+               del cuadro~\ref{09::CuadroEjemplo2}.}
+      \label{09::CuadroEjemplo3}
+    \end{table}
+    Iteramos nuevamente.
+    En el cuadro~\ref{09::CuadroEjemplo3}
+    se tiene que los dos símbolos con menor frecuencia
+    son \(b c e\) y \(a\).
+    El árbol resultante es el de la figura~\ref{09::EjemploArbol3}.
+    \begin{figure}[ht]
+      \centering
+      \begin{tikzpicture}
+          [every state/.style = {draw = black,
+                                 fill = black,
+                                 minimum size = 2mm}
+          ]
+        \node [state] (ce) {};
+        \node [above of = ce, yshift = -42] (dummy:ce) {\(c e\)};
+        \node [below left of = ce] (c) {\(c\)};
+        \node [below right of = ce] (e) {\(e\)};
+        \path (ce) edge node [above left] {\num{0}} (c)
+          edge node [above right] {\num{1}} (e);
+
+        \node [above left of = ce, state] (bce) {};
+        \node [below left of = bce] (b) {\(b\)};
+        \node [above of = bce, yshift = -42, xshift = 5] (dummy:bce)
+          {\(b c e\)};
+        \path (bce) edge node [above left] {\num{0}} (b)
+          edge node [above right] {\num{1}} (ce);
+
+        \node [state, above left of = bce] (abce) {};
+        \node [below left of = abce] (a) {\(a\)};
+        \node [above of = abce, yshift = -42] (dummy:abce)
+          {\(a b c e\)};
+
+        \path (abce) edge node [above right] {\num{1}} (bce)
+          edge node [above left] {\num{0}} (a);
+      \end{tikzpicture}
+      \caption{Árbol con peso de \(f_{bce}+f_a = 18\).}
+      \label{09::EjemploArbol3}
+    \end{figure}
+    Quitamos estos símbolos del cuadro~\ref{09::CuadroEjemplo3}
+    y los reemplazamos por \(a b c e\).
+    El resultado es el cuadro~\ref{09::CuadroEjemplo4}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{>{\(}c<{\)}|c}
+        \multicolumn{1}{c|}{\textbf{Símbolo}} & \textbf{Frecuencia} \\
+        \hline
+        d	& 15 \\
+        f	& 17 \\
+        a b c e & 18
+      \end{tabular}
+      \caption{Reemplazando los símbolos \(b c e\) y \(a\)
+               del cuadro~\ref{09::CuadroEjemplo3}.}
+      \label{09::CuadroEjemplo4}
+    \end{table}
+    En el cuadro~\ref{09::CuadroEjemplo4}
+    vemos que los símbolos con menor frecuencia son \(d\) y \(f\).
+    Tomamos estos dos símbolos
+    y creamos un nuevo árbol que los tenga como hojas
+    (figura~\ref{09::EjemploArbol4}).
+    \begin{figure}[ht]
+      \centering
+      \begin{tikzpicture}
+          [every state/.style = {draw = black,
+                                 fill = black,
+                                 minimum size = 2mm}
+          ]
+        \node [state] (df) {};
+        \node [below left of = df] (d) {\(d\)};
+        \node [below right of = df] (f) {\(f\)};
+        \node [above of = df, yshift = -42] (dummy:df) {\(df\)};
+        \path (df) edge node [above left] {\num{0}} (d)
+          edge node [above right] {\num{1}} (f);
+      \end{tikzpicture}
+      \caption{Hojas son los símbolos de menor frecuencia
+               del cuadro~\ref{09::CuadroEjemplo4}.}
+      \label{09::EjemploArbol4}
+    \end{figure}
+    Sacamos esos símbolos
+    y los reemplazamos por \(d f\),
+    dando el cuadro~\ref{09::CuadroEjemplo5}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{c|c}
+        \multicolumn{1}{c|}{\textbf{Símbolo}} & \textbf{Frecuencia} \\
+        \hline
+          d f	  & 32\\
+          a b c e & 18
+      \end{tabular}
+      \caption{Reemplazando \(d\) y \(f\)
+               del cuadro~\ref{09::CuadroEjemplo4}.}
+      \label{09::CuadroEjemplo5}
+    \end{table}
+    Tomamos los dos últimos símbolos
+    y creamos el árbol final
+    de la figura~\ref{09::EjemploArbol5}.
+    \begin{figure}[ht]
+      \centering
+      \begin{tikzpicture}
+          [every state/.style = {draw = black,
+                                 fill = black,
+                                 minimum size = 2mm}
+          ]
+        \node [state] (ce) {};
+        \node [above of = ce, yshift = -42] (dummy:ce) {\(c e\)};
+        \node [below left of = ce] (c) {\(c\)};
+        \node [below right of = ce] (e) {\(e\)};
+        \path (ce) edge node [above left] {\num{0}} (c)
+          edge node [above right] {\num{1}} (e);
+
+        \node [above left of = ce, state] (bce) {};
+        \node [below left of = bce] (b) {\(b\)};
+        \node [above of = bce, yshift = -42, xshift = 5] (dummy:bce)
+          {\(b c e\)};
+        \path (bce) edge node [above left] {\num{0}} (b)
+          edge node [above right] {\num{1}} (ce);
+
+        \node [state, above left of = bce] (abce) {};
+        \node [below left of = abce] (a) {\(a\)};
+        \node [above of = abce, yshift = -42, xshift = 10] (dummy:abce)
+          {\(a b c e\)};
+
+        \path (abce) edge node [above right] {\num{1}} (bce)
+          edge node [above left] {\num{0}} (a);
+
+        \node [state, above left of = abce, xshift = -20, yshift = -10]
+          (final) {};
+
+        \node [state, below left of = final, yshift = 10, xshift = -10] (df) {};
+        \node [below left of = df] (d) {\(d\)};
+        \node [below right of = df] (f) {\(f\)};
+        \node [above of = df, yshift = -42, xshift = -5] (dummy:df) {\(df\)};
+        \path (df) edge node [above left] {\num{0}} (d)
+          edge node [above right] {\num{1}} (f);
+
+        \path (final) edge node [above left] {\num{0}} (df)
+          edge node [above right] {\num{1}} (abce);
+
+      \end{tikzpicture}
+      \caption{Este árbol tiene un peso de \(f_{bce} + f_a = 18\).}
+      \label{09::EjemploArbol5}
+    \end{figure}
+    La codificación resultante
+    se lee directamente del árbol,
+    es la del cuadro~\ref{tab:huffman-example-code}.
+    \begin{table}[ht]
+      \centering
+      \begin{tabular}{>{\(}c<{\)}|r|l}
+        \multicolumn{1}{c|}{\textbf{Símbolo}}
+          & \multicolumn{1}{c|}{\textbf{Freq}}
+          & \multicolumn{1}{c}{\textbf{Código}} \\
+        \hline
+        a &  9 & 10   \\
+        b &  4 & 110  \\
+        c &  2 & 1110 \\
+        d & 15 & 00   \\
+        e &  3 & 1111 \\
+        f & 17 & 01
+        \end{tabular}
+      \caption{Codificación del ejemplo}
+      \label{tab:huffman-example-code}
+    \end{table}
+    Si usáramos un código de largo fijo,
+    requeriríamos \(\lceil \log_2 6 \rceil = 3\) bits por símbolo.
+    Nuestro código da \num{2,28}~bits en promedio.
+  \end{ejemplo}
+
+\section{Algoritmo}
+
+  Sucesivamente:
+  \begin{enumerate}
+  \item
+    Tome los dos símbolos con menos frecuencia de su tabla
+    y reemplácelos por un nuevo símbolo que representa a ambos.
+    Supongamos que estos símbolos son \(x_a\) y \(x_b\),
+    entonces el nuevo símbolo es \(x_{a b}\).
+    La frecuencia de este símbolo conjunto
+    será la suma de la frecuencia de \(x_a\) y \(x_b\).
+  \item
+    Cree un árbol que tenga como raíz
+    al símbolo conjunto \(x_{a b}\) con \(x_{a}\) y \(x_{b}\) como hijos.
+  \item
+    Volver al paso 1 hasta que nuestra tabla esté formada
+    por solo un símbolo conjunto,
+    que representará a todos los símbolos de \(\Sigma\).
+  \end{enumerate}
+  Llegamos a la parte entretenida:
+  demostrar que el algoritmo de Huffman halla un árbol óptimo.
+  \begin{proof}
+    Para demostrar que da un óptimo,
+    usamos el teorema~\ref{theo:esquema-voraz}.
+    \begin{description}
+    \item[Elección Voraz:]
+      Sea \(L\) la instancia original
+      (o sea, el texto completo,
+      con la frecuencia de cada símbolo respectivo),
+      sean \(\ell_a\) y \(\ell_b\) las hojas menos frecuentes.
+      Entonces hay un árbol óptimo que incluye \(R_{a b}\).
+
+      Sea \(R\) un árbol óptimo para \(L\).
+      Si \(R_{a b}\) es parte de \(R\),
+      salimos a carretear.
+      Si el árbol \(R_{a b}\) \emph{no} es parte de \(R\),
+      sean \(\ell_x\), \(\ell_y\) dos hojas en \(R\) con padre común
+      (hermanos),
+      con \(\delta = d(\ell _x) = d(\ell_y)\) máximo.
+
+      Claramente,
+      \(a\) o \(b\) pueden coincidir con \(x\) o \(y\).
+      Consideraremos el caso en que son diferentes,
+      la situación en que alguno coincide es similar.
+
+      Obtenga \(R^*\)
+      intercambiando \(x\leftrightarrow a\), \(y\leftrightarrow b\),
+      \(R^*\) contiene \(R_{a b}\).
+      Sea \(B(R)\) el número de bits usados por el árbol \(R\)
+      (la profundidad \(d\) hace referencia al árbol original \(R\)).
+       En el árbol \(R^*\):
+       \begin{align*}
+         B(R^*)
+           &= B(R) - (f_x + f_y) \delta
+                   - f_a d(\ell_a)
+                   - f_b d(\ell_b)
+                   + (f_a + f_b) \delta
+                   + f_x d(\ell_a) + f_y d(\ell_b) \\
+           &= B(R) - \underbrace{(f_x-f_a)}_{> 0}
+                     \underbrace{(\delta +d(\ell_a)}_{> 0}
+                   - \underbrace{(f_y - f_b)}_{> 0}
+                     \underbrace{(\delta + d(\ell_b))}_{> 0}
+       \end{align*}
+       Pero \(R\) es óptimo.
+       Hemos llegado a una contradicción.
+    \item[Estructura inductiva:]
+      Elegir un (sub)árbol no interfiere con los demás.
+    \item[Subestructura óptima:]
+      Sean \(x, y\) los símbolos menos frecuentes,
+      con frecuencias \(f_x\) y \(f_y\),
+      respectivamente.
+      Sea \(R'\) el árbol óptimo para el problema con el \textquote{símbolo}
+      \(x y\) con frecuencia \(f_x + f_y\).
+      Debemos demostrar que el árbol \(R\),
+      con \(x y\) reemplazado por el subárbol respectivo con \(x\) e \(y\)
+      es óptimo.
+      Usaremos primas para distinguir valores en \(R'\) de valores en \(R\).
+      Primeramente:
+      \begin{align*}
+        B(R)
+          &= \sum_{s \in \Sigma} f_s d(s) \\
+          &= \sum_{s \in \Sigma \smallsetminus \{ x, y \}} f_s d(s)
+               + f_x d(x) + f_y d(y) \\
+          &= \sum_{s \in \Sigma \smallsetminus \{ x, y \}} f_s d(s)
+               + (f_x + f_y) (d'(x y) + 1) \\
+          &= \sum_{s \in \Sigma \smallsetminus \{ x, y \}} f_s d(s)
+               + f'_{x y} d'(x y) + f_x + f_y \\
+          &= B(R') + f_x + f_y
+      \end{align*}
+      Para llegar a una contradicción,
+      suponga que \(R\) no es óptimo,
+      y sea \(T\) un árbol óptimo con \(x\) e \(y\) de hojas hermanas
+      (sabemos que existe por lo anterior).
+      Sea \(T'\) el árbol que resulta de eliminar \(x\) e \(y\).
+      Podemos ver \(T'\) como un árbol
+      para el alfabeto \(\Sigma \smallsetminus \{ x, y \} \cup \{ x y \}\)
+      (agrupa \(x\) con \(y\)).
+      Podemos repetir el cálculo anterior para obtener
+      \(B(T) = B(T') + f_x + f_y\).
+      O sea:
+      \begin{align*}
+        B(R')
+          &= B(R) - f_x - f_y \\
+          &> B(T) - f_x - f_y \\
+          &= B(T')
+      \end{align*}
+      Pero supusimos que \(R'\) era óptimo.
+    \end{description}
+  \end{proof}
+% To do:
+% - Own (Python) programs
+% - Apply to a (Spanish?) text, compute savings
+
+\section{Comentarios finales}
+\label{sec:Huffman-comments}
+
+  Este esquema es óptimo bajo el supuesto que los símbolos aparecen al azar.
+  Pero sabemos que esto no es así,
+  por ejemplo,
+  ciertas combinaciones están prohibidas en castellano.
+  En un texto particular habrán palabras que se repiten con frecuencia,
+  aprovechar estas particularidades es otro problema.
+  Los algoritmos de compresión de datos que se usan hoy aprovechan esto,
+  pero en algún nivel usan código Huffman por ser simple y eficiente.
+  Discusión del ubicuo formato Zip
+  y un programa ejemplo
+  (que muestra cómo la teoría precedente
+   --- junto con otras técnicas de compresión de datos ---
+   se puede llevar a código práctico)
+  ofrece Wennborg~%
+    \cite{wennborg20:_zip_files}.
+
+\input{Huffman-code/Kraft-McMillan}    
+
+\section*{Ejercicios}
+\label{sec:ejercicios-09}
+
+  \begin{enumerate}
+  \item
+    Escriba un programa que lea las frecuencias de un conjunto de símbolos
+    (para simplificar,
+     considere caracteres ASCII únicamente)
+    con sus frecuencias,
+    y retorne una codificación de Huffman para ellos.
+  \end{enumerate}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  pregrado optimalidad Moby Dick english prefix free sub
+% LocalWords:  code Observamanos Freq Zip

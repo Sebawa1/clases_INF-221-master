@@ -1,0 +1,342 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Cuadraura de Gauß}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Mejores cuadraturas}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Elegir nodos}
+
+  \uncover<+->{
+    Si \emph{elegimos} los \(n + 1\) puntos \(x_0, \dotsc, x_n\)
+    en vez de aceptar los dados,
+    tenemos \(2 n + 2\)~variables,
+    con las que podemos cumplir \(2 n + 2\)~condiciones,
+    como hacer que la regla sea exacta para polinomios de grado \(2 n + 1\).
+  }
+  \\ \medskip
+  \uncover<+->{
+    La forma obvia es plantear el sistema de ecuaciones
+    (no lineal)\ldots
+  }
+  \uncover<+->{
+    Daremos un desvío.
+  }
+\end{frame}
+
+\section{Polinomios ortogonales}
+
+\begin{frame}
+  \frametitle{Norma de funciones}
+
+  \begin{definition}
+    Sea el intervalo \([a, b]\)
+    (los extremos pueden ser infinitos),
+    y una función peso \(w \colon [a, b] \to \mathbb{R}\),
+    continua y positiva.
+    Dadas funciones \(f\) y \(g\),
+    continuas sobre el intervalo,
+    su \emph{producto interno}
+    (sobre \([a, b]\) respecto de \(w\)) es:
+    \begin{equation*}
+      \langle f, g \rangle_w
+        = \int_a^b w(x) f(x) g(x) \mathrm{d} x
+    \end{equation*}
+  \end{definition}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Norma de funciones}
+
+  \begin{definition}[cont]
+    La \emph{norma}
+    (sobre \([a, b]\) respecto de \(w\)) de \(f\) es:
+    \begin{equation*}
+      \lVert f \rVert_w
+        = \sqrt{\langle f, f \rangle_w}
+    \end{equation*}
+
+    Decimos que \(f\) y \(g\) son \emph{ortogonales}
+    (sobre \([a, b]\) con peso \(w\))
+    si \(\langle f, g \rangle_w = 0\).
+    Decimos que \(f\) está \emph{normalizada}
+    (sobre \([a, b]\) con peso \(w\))
+    si \(\lVert f \rVert_w = 1\)
+  \end{definition}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Espacio normado}
+
+  \uncover<+->{
+    Con la definición anterior las funciones continuas sobre \([a, b]\)
+    y las definiciones obvias de suma de funciones
+    y multiplicación por un escalar
+    forman un espacio vectorial normado.
+  }
+
+  \uncover<+->{
+    Nos interesa particularmente el conjunto de polinomios.
+    Llamaremos \(\Pi_n\) al conjunto de polinomios de grado a lo más \(n\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Polinomios ortogonales}
+
+  \begin{definition}<+->
+    Sea \(w\) una función de peso sobre \([a, b]\).
+    Diremos que la secuencia de polinomios \(p_n(x)\),
+    donde \(p_n\) es de grado~\(n\),
+    es \emph{ortogonal} si para \(i \ne j\)
+    es \(\langle p_i, p_j \rangle_w = 0\).
+    Son \emph{ortonormales} si además \(\lVert p_n \rVert = 1\).
+  \end{definition}
+  \bigskip
+  \uncover<+->{
+    Pueden construirse de cualquier conjunto de vectores independientes
+    (en nuestro caso,
+     por ejemplo \(\{1, x, x^2, \dotsc\}\))
+    por el proceso de Gram-Schmidt.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Polinomios ortogonales}
+
+  \uncover<+->{
+    Note que si \(p_k(x)\) es un polinomio ortogonal de grado \(k\),
+    todo polinomio \(q(x)\) de grado \(n\) puede expresarse:
+    \begin{equation*}
+      q(x)
+        = a_n p_n(x) + a_{n - 1} p_{n - 1}(x) + \dotsb + a_0 p_0(x)
+    \end{equation*}
+  }
+  \uncover<+->{
+    (Use \(p_n(x)\) para eliminar el término en \(x^n\),
+     y continúe con el siguiente término.)
+   }
+
+   \uncover<+->{
+     En consecuencia:
+   }
+  \begin{align*}
+    \uncover<+->{
+      \int_a^b w(x) p_{n + 1}(x) q(x) \, \mathrm{d} x
+        &= \int_a^b w(x) p_{n + 1}(x)
+                      \left(
+                        a_n p_n(x) + a_{n - 1} p_{n - 1}(x) + \dotsm + a_0 p_0(x)
+                      \right) \, \mathrm{d} x \\
+    }
+    \uncover<+->{
+        &= 0
+    }
+  \end{align*}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ceros de polinomios ortogonales}
+
+  \begin{theorem}
+    Sea \(p(x)\) un polinomio ortogonal de grado~\(n\) sobre \([a, b]\)
+    con función de peso \(w\).
+    Entonces \(p\) tiene \(n\) ceros simples en \([a, b]\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ceros de polinomios ortogonales}
+
+  \begin{proof}
+    Sean \(x_1, x_2, \dotsc, x_r\) los ceros
+    (posiblemente repetidos)
+    de \(p\) en \([a, b]\).
+    Sea \(q(x) = (x - x_1) \dotsm (x - x_r)\),
+    \(\deg(q) = r \le n\).
+    Entonces \(p(x) q(x)\) no cambia de signo en el intervalo:
+    \begin{equation*}
+      \int_a^b w(x) p(x) q(x) \, \mathrm{d} x
+        \ne 0
+    \end{equation*}
+    Esto es imposible si \(\deg(q) < \deg(p)\).
+
+    Supongamos \(x_1\) un cero múltiple de \(p\),
+    consideremos \(g(x) = p(x) / (x - x_1)^2\):
+    \begin{equation*}
+      \int_a^b w(x) p(x) g(x) \, \mathrm{d} x
+        = \int_a^b w(x) \left(\frac{p(x)}{x - x_1}\right)^2 \, \mathrm{d} x
+        > 0
+    \end{equation*}
+    contradicción.
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Cuadratura de Gauß}
+
+  \uncover<+->{
+    Buscamos reglas de cuadratura de la forma:
+    \begin{equation*}
+      \int_a^b w(x) f(x) \, \mathrm{d} x
+         \approx \sum_{0 \le k \le n} A_k f(x_k)
+    \end{equation*}
+  }
+  \uncover<+->{
+    Si es exacta para polinomios de grado hasta \(n\),
+    debe ser:
+    \begin{equation*}
+      A_k
+        = \int_a^b w(x) \ell_k(x) \, \mathrm{d} x
+    \end{equation*}
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cuadratura de Gauß}
+
+  \begin{theorem}
+    Sea \(p(x)\) de grado \(n + 1\),
+    ortogonal a \(\Pi_n\).
+    Si \(x_i\) para \(0 \le i \le n\) son los ceros de \(p\),
+    la regla de cuadratura es exacta para \(f \in \Pi_{2 n + 1}\).
+  \end{theorem}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cuadratura de Gauß}
+
+  \begin{proof}
+    Sea \(f \in \Pi_{2 n + 1}\).
+    Por el algoritmo de división:
+    \begin{equation*}
+      f(x)
+         = q(x) p(x) + r(x)
+    \end{equation*}
+    con \(q, r \in \Pi_n\).
+    Así,
+    es \(f(x_i) = r(x_i)\) para \(0 \le i \le n\)
+    y:
+    \begin{equation*}
+      \int_a^b w(x) f(x) \, \mathrm{d} x
+        = \int_a^b w(x) (p(x) q(x) + r(x)) \, \mathrm{d} x
+        = \int_a^b w(x) r(x) \, \mathrm{d} x
+    \end{equation*}
+    Pero por construcción el método es exacto para \(r \in \Pi_n\):
+    \begin{equation*}
+      \int_a^b w(x) r(x) \, \mathrm{d} x
+        = \sum_{0 \le i \le n} A_i r(x_i)
+        = \sum_{0 \le i \le n} A_i f(x_i)
+    \end{equation*}
+  \end{proof}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cuadratura de Gauß}
+
+  \begin{lemma}
+    En una cuadratura de Gauß
+    los coeficientes son positivos
+    y:
+    \begin{equation*}
+      \sum_{0 \le i \le n} A_i
+        = \int_a^b w(x) \, \mathrm{d} x
+    \end{equation*}
+  \end{lemma}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Cuadratura de Gauß}
+
+  \begin{proof}
+    Fijemos \(n\),
+    y sea \(p(x) \in \Pi_{n + 1}\) \(w\)\nobreakdash-ortogonal a \(\Pi_n\),
+    con lo que \(p(x_i) = 0\) para \(0 \le i \le n\).
+    Elegimos \(j\), y definimos \(q(x) = p(x) / (x - x_j)\),
+    con lo que \(\deg(q^2) = 2 n\) y es exacta:
+    \begin{equation*}
+      \int_a^b w(x) q^2(x) \, \mathrm{d} x
+        = \sum_{0 \le i \le n} A_i q^2(x_i)
+        = A_j q^2(x_j)
+    \end{equation*}
+    O sea,
+    \(A_j > 0\).
+
+    También es exacta:
+    \begin{equation*}
+      \int_a^b w(x) \, \mathrm{d} x
+        = \sum_{0 \le i \le n} A_i
+    \end{equation*}
+  \end{proof}
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Elegir los nodos permite obtener reglas de cuadratura
+    exactas para grado mayor
+  \item
+    Usando polinomios ortogonales
+    podemos obtener fórmulas elegantes para los nodos.
+    Incluso podemos incorporar una función de peso.
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode normado ortonormales

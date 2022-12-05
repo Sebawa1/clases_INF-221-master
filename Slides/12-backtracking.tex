@@ -1,0 +1,698 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage{fourier}
+\usepackage[group-digits = false, copy-decimal-marker = true]{siunitx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{enumitem}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{listings}
+\usepackage{chessboard}
+
+\usefonttheme{professionalfonts}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{Python}
+
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Backtracking}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        tabsize = 4,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Situación general}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema}
+
+  \uncover<+->{
+    Es común buscar un objeto que cumple ciertas condiciones.
+    A falta de una idea mejor,
+    podemos revisar todas las configuraciones posibles.
+  }
+  \uncover<+->{
+    Requerimos entonces alguna forma de generarlas sistemáticamente.
+  }
+  \uncover<+->{
+    En muchos casos podemos irlas generando incrementalmente,
+    y abandonar si vemos que el camino actual no puede completarse al éxito.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Hacer lo anterior recursivamente
+    se llama \emph{\foreignlanguage{english}{backtracking}}
+    (puede traducirse en \textquote{avanzar y retroceder},
+     \textquote{andar y desandar}):
+    se avanza un paso,
+    si estamos en un camino sin salida
+    retrocedemos para intentar la siguiente opción.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Consideraciones}
+
+  \uncover<+->{
+    Si tenemos \(d\) puntos en que debemos decidir,
+    cada uno de ellos con \(m\) opciones,
+    revisar todas las posibilidades es \(m^d\)~casos.
+  }
+  \uncover<+->{
+    Incluso para valores moderados de \(d\) y \(m\)
+    esto es un número astronómico
+    (es crecimiento exponencial en \(d\)).
+  }
+  \uncover<+->{
+    Es imperativo disminuir opciones
+    (\emph{podar} ramas del árbol de búsqueda)
+     para lograr tiempos de ejecución razonables.
+   }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo general}
+
+  \uncover<+->{
+    Es un recorrido en un árbol de objetos construidos a medias,
+    con un único objeto parcial activo.
+    Corresponde a búsqueda en profundidad,
+    efectuada naturalmente mediante recursión
+    (aunque podríamos usar búsqueda en profundidad no recursiva
+     de ser necesario).
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{El algoritmo general}
+
+    \begin{algorithm}[H]
+      \DontPrintSemicolon
+
+      \tcc*[l]{Set up basic object} \;
+
+      \Function{\(\mathrm{backtrack}()\)}{
+        \eIf{\(\mathrm{object}\) is complete}{
+          Process \(\mathrm{object}\) \;
+        }
+        {
+          \(S \leftarrow \text{set of possible next steps}\) \;
+          \ForEach{\(s \in S\)}{
+            Do step \(s\) on \(\mathrm{object}\) \;
+            \(\mathrm{backtrack}()\) \;
+            Undo step \(s\) on \(\mathrm{object}\) \;
+          }
+        }
+      }
+    \end{algorithm}
+\end{frame}
+
+\section{Esquema del algoritmo}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo general}
+
+  \uncover<+->{
+    El orden de los pasos puede estar dado por el problema,
+    o ser completamente artificial.
+  }
+  \uncover<+->{
+    Obviamente es central evitar repeticiones.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Si solo buscamos una solución
+    (o solo interesa saber si hay soluciones),
+    cortamos la recursión temprano.
+  }
+  \uncover<+->{
+    El algoritmo no especifica el orden en que se intentan elementos de \(S\).
+    Si solo interesa una solución
+    (o buscamos algún óptimo),
+    podemos extraerlos en algún orden prometedor.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Receta para \emph{backtracking}}
+
+  \uncover<+->{
+    Resolver un problema usando \emph{\foreignlanguage{english}{backtracking}}
+    significa efectuar los siguientes pasos:
+  }
+  \begin{enumerate}[font = \textbf, label = {(\alph*)}]
+  \item
+    Definir los pasos de la construcción del objeto buscado.
+  \item
+    Diseñar la estructura de datos para objetos parcialmente construidos.
+  \item
+    Definir cómo determinar si se ha llegado a destino.
+  \item
+    Diseñar estructuras auxiliares
+    que ayuden a determinar pasos siguientes.
+  \item
+    Definir cómo hacer y deshacer modificaciones.
+  \item
+    Definir criterios de abortar la búsqueda.
+  \item
+    Definir qué hacer con objetos completos.
+  \end{enumerate}
+\end{frame}
+
+\section{Ejemplos}
+
+\subsection{Generar permutaciones}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Generar permutaciones}
+
+  \uncover<+->{
+    En Python,
+    realmente no hay nada que hacer.
+    La biblioteca \lstinline!itertools! las entrega directamente:
+
+    \lstinputlisting[firstline = 3, lastline = 6]{permutations-library.py}
+  }
+  \bigskip
+  \uncover<+->{
+    Igual interesa ver cómo hacerlo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Generar permutaciones}
+
+  \uncover<+->{
+    En nuestro esquema,
+    si se han elegido \(a_1, \dotsc, a_k\) para las primeras posiciones,
+    para \(a_{k + 1}\) podemos elegir cualquiera de las aún no elegidas.
+  }
+  \uncover<+->{
+    Es natural representar el conjunto de elementos disponibles
+    como un arreglo de \lstinline!boolean!.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Generar permutaciones}
+  \framesubtitle{Definición de variables}
+
+  \lstinputlisting[firstline = 3, lastline = 7]{permutations.py}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Generar permutaciones}
+  \framesubtitle{Funciones auxiliares: ubicar, retractar}
+
+  \lstinputlisting[firstline = 9, lastline = 14]{permutations.py}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Generar permutaciones}
+  \framesubtitle{Funciones auxiliares: mostrar solución}
+
+  \lstinputlisting[firstline = 16, lastline = 19]{permutations.py}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Generar permutaciones}
+  \framesubtitle{Función central}
+
+  \lstinputlisting[firstline = 21, lastline = 29]{permutations.py}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Generar permutaciones}
+  \framesubtitle{Programa principal}
+
+  \lstinputlisting[firstline = 31, lastline = 31]{permutations.py}
+\end{frame}
+
+\subsection{Rotulaciones graciosas}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Rotulación graciosa de un grafo}
+
+  \uncover<+->{
+    Rotulamos los vértices de un grafo de \(n + 1\)~vértices
+    con \(0, \dotsc, n\) sin repeticiones,
+    y el arco \(u v\)
+    con la diferencia absoluta entre los rótulos de \(u\) y \(v\).
+    Si cada diferencia entre \(1\) y \(n\) aparece exactamente una vez,
+    se llama una \emph{rotulación graciosa}.
+  }
+  \\ \bigskip
+  \uncover<+->{
+    Es claro que entre grafos conexos solo árboles
+    pueden tener rotulaciones graciosas
+    (un árbol de \(n + 1\)~vértices tiene \(n\)~arcos).
+  }
+  \uncover<+->{
+    Un problema abierto es si todo árbol admite una rotulación graciosa.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Un camino de largo \(n\) siempre puede rotularse graciosamente
+    como (\(n, 0, n - 1, 1, n - 2, 2, \dotsc, \lceil n / 2 \rceil\)).
+    Interesa cuántas rotulaciones graciosas tiene.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Generar y filtrar}
+
+  \uncover<+->{
+    Una opción es \emph{generar y filtrar}:
+    las rotulaciones graciosas son permutaciones de \(0, \dotsc, n\)
+    con la condición adicional sobre diferencias
+    entre elementos vecinos.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Generar y filtrar}
+  \framesubtitle{Preliminares}
+
+  \lstinputlisting[firstline = 4, lastline = 6]{graceful-generate-filter.py}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Generar y filtrar}
+  \framesubtitle{Filtrar}
+
+  \lstinputlisting[firstline = 8, lastline = 16]{graceful-generate-filter.py}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Generar y filtrar}
+  \framesubtitle{Programa principal}
+
+  \lstinputlisting[firstline = 21, gobble = 4]{graceful-generate-filter.py}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resultados}
+
+  \uncover<+->{
+    El programa precedente
+    dice que hay \num{648} rotulaciones graciosas de \(P_{10}\).
+  }
+  \uncover<+->{
+    Hay un total
+    de \(11! = \num[group-digits = true]{39 916 800}\)~permutaciones
+    de \(0, \dotsc, 10\),
+    las rotulaciones graciosas son una fracción mínima.
+  }
+  \uncover<+->{
+    El tiempo para generar todas las permutaciones,
+    solo para descartar la inmensa mayoría,
+    es enorme.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Planteo vía
+                   \emph{\foreignlanguage{english}{backtracking}}}
+
+  \uncover<+->{
+    Las permutaciones que comienzan (\(0, 1, 2, \dotsc\))
+    no tienen posibilidad alguna
+    (ya se repite la diferencia \(1\)),
+    son una gran fracción del total.
+  }
+
+  \uncover<+->{
+    Usaremos nuestro generador de permutaciones,
+    podando si alguna diferencia se repite.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Rotulaciones graciosas}
+  \framesubtitle{Definición de variables globales}
+
+  \lstinputlisting[firstline = 5, lastline = 10]{graceful.py}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Rotulaciones graciosas}
+  \framesubtitle{Funciones auxiliares: ubicar, retractar}
+
+  \lstinputlisting[firstline = 12, lastline = 19]{graceful.py}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Rotulaciones graciosas}
+  \framesubtitle{Función central}
+
+  \lstinputlisting[firstline = 21, lastline = 31]{graceful.py}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Rotulaciones graciosas}
+  \framesubtitle{Programa principal}
+  \lstinputlisting[firstline = 35, gobble = 4]{graceful.py}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Comparación}
+
+  \uncover<+->{
+    Ambos programas dan \num{648}~rotulaciones graciosas
+    para \(P_{10}\).
+  }
+  \uncover<+->{
+    El programa basado en \emph{\foreignlanguage{english}{backtracking}}
+    toma \SI{2,045}{\second},
+    generar y filtrar toma \SI{98,114}{\second}.
+    Y eso que seguramente la generación de permutaciones
+    está escrita en C nativo,
+    cuidadosamente optimizada.
+  }
+
+  \uncover<+->{
+    Los tiempos aumentan muy rápidamente con \(n\).
+  }
+\end{frame}
+
+\subsection{El problema de ocho reinas}
+
+\begin{frame}
+  \frametitle{Movidas de una reina en ajedrez}
+
+  La reina es la pieza más poderosa del ajedrez.
+  Ataca en vertical,
+  horizontal
+  y ambas diagonales.
+
+  \setchessboard{setpieces = {Qc5}}
+  \begin{center}
+    \chessboard[pgfstyle = {[fill]circle},
+                padding = -1ex,
+                smallboard, showmover = false,
+                backfields  = {a5, b5, d5, e5, f5, g5, h5,
+                               c1, c2, c3, c4, c6, c7, c8,
+                               a3, b4, d6, e7, f8,
+                               a7, b6, d4, e3, f2, g1}
+               ]
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El problema de las 8 reinas}
+
+  \uncover<+->{
+    Un problema antiguo es el de las \emph{ocho reinas}:
+    ¿pueden ubicarse ocho reinas en un tablero de ajedrez
+    de forma que ninguna pueda atacar a otra?
+  }
+  \uncover<+->{
+    Es claro que no pueden ser más de ocho,
+    puede haber a lo más una por fila.
+  }
+  \uncover<+->{
+    La pregunta obvia siguiente es cuántas soluciones hay.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Planteo vía
+                   \emph{\foreignlanguage{english}{backtracking}}}
+
+  \uncover<+->{
+    Es obvio dividir en pasos de ubicar una reina en el tablero.
+  }
+
+  \uncover<+->{
+    Ubicar la reina en cualquiera de los \(64\)~casilleros
+    (o al menos los libres)
+    da \(64^{\underline{8}} = 178\,462\,987\,637\,760\)
+    alternativas a revisar.
+  }
+  \uncover<+->{
+    Queda de ejercicio calcular cuánto tiempo toma
+    suponiendo que nuestro computador
+    revisa un millón de posiciones por segundo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Planteo vía
+                   \emph{\foreignlanguage{english}{backtracking}}}
+
+  \uncover<+->{
+    Observando que puede haber a lo más una reina por columna,
+    podemos definir ocho etapas,
+    una por columna;
+    viendo que cada reina ubicada quita al menos la fila en que está
+    para las siguientes como opción,
+    esto es menos de \(8! = \num[group-digits = true]{40 320}\)~posibilidades.
+    Bastante manejable.
+  }
+  \uncover<+->{
+    Debemos diseñar una estructura auxiliar
+    que nos permita determinar rápidamente si un casillero está libre
+    (no es atacado por las reinas ya posicionadas),
+    que sea rápido de actualizar al posicionar una reina
+    o retirarla.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Planteo vía
+                   \emph{\foreignlanguage{english}{backtracking}}}
+
+  \uncover<+->{
+    Como puede haber a lo más una reina por fila y diagonal,
+    es natural tener un \lstinline!boolean!
+    para cada una que indica si está libre.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Las diagonales son rectas con pendiente \(\pm 1\).
+    Las diagonales que pasan por fila y columna \(r_0, c_0\)
+    tienen \(r \pm c\) fijos.
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Hay \(8\) filas,
+    \(0 \le r \le 7\);
+    \(15\) diagonales en subida,
+    \(- 7 \le r - c \le 7\);
+    \(15\) diagonales en bajada,
+    \(0 \le r + c \le 14\).
+  }
+  \\ \smallskip
+  \uncover<+->{
+    Usamos el arreglo \lstinline[language = Python]{rfree}
+    indexado por \(r\) para las filas libres,
+    el arreglo \lstinline[language = Python]{du}
+    indexado por \(7 + r - c\) para las diagonales en subida
+    y el arreglo \lstinline[language = Python]{dd}
+    indexado por \(r + c\) para las diagonales en bajada.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Solución del problema de 8 reinas}
+  \framesubtitle{Definición de variables}
+
+  \lstinputlisting[firstline = 3, lastline = 12]{8queens}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Solución del problema de 8 reinas}
+  \framesubtitle{Funciones auxiliares: ubicar, retractar}
+
+  \lstinputlisting[firstline = 14, lastline = 19]{8queens}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Solución del problema de 8 reinas}
+  \framesubtitle{Funciones auxiliares: mostrar solución}
+
+  \lstinputlisting[firstline = 21, lastline = 28]{8queens}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Solución del problema de 8 reinas}
+  \framesubtitle{Función central}
+
+  \lstinputlisting[firstline = 30, lastline = 41]{8queens}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Solución del problema de 8 reinas}
+  \framesubtitle{Programa principal}
+
+  \lstinputlisting[firstline = 43, lastline = 45]{8queens}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Soluciones}
+
+  \uncover<+->{
+    El programa arroja \(92\) soluciones.
+  }
+
+  \uncover<+->{Una de ellas es:
+    \begin{center}
+      \setchessboard{setpieces = {Qa1, Qb5, Qc8, Qd6,
+                                  Qe3, Qf7, Qg2, Qh4}}
+      \chessboard[smallboard, showmover = false]
+    \end{center}
+  }
+\end{frame}
+
+\subsection{El algoritmo de Warnsdorf}
+
+\begin{frame}
+  \frametitle{Movidas de un caballo en ajedrez}
+
+  El caballo en ajedrez tiene movidas particulares.
+
+  \begin{center}
+    \setchessboard{setpieces = {Nd5}}
+    \chessboard[pgfstyle = {[fill]circle},
+                padding = -1ex,
+                smallboard, showmover = false,
+                backfields  = {b6, c7, e7, f6, f4, e3, c3, b4}
+               ]
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El algoritmo de Warnsdorf}
+
+  \uncover<+->{
+    Un problema muy antiguo es hallar saltos del caballo
+    que visiten cada casillero exactamente una vez.
+  }
+
+  \uncover<+->{
+    Warnsdorf publicó una solución general en 1823,
+    en cada salto ir a aquel casillero que tiene menos vecinos aún sin visitar.
+    Esto no necesita reconsiderar pasos.
+  }
+
+  \uncover<+->{
+    Corresponde a hallar un camino o ciclo hamiltoniano
+    en el grafo de casilleros unidos por posibles saltos.
+    En el caso general,
+    la idea de Warnsdorf resulta ser una heurística
+    que dirige la búsqueda eficientemente.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Idea general.
+    El algoritmo recursivo genérico.
+  \item
+    Ejemplos:
+    generar permutaciones,
+    rotulaciones graciosas,
+    el problema de las 8~reinas
+  \item
+    El algoritmo de Warnsdorf.
+    Heurística de \textquote{el más restringido primero}.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Continue continue Break Qc
+% LocalWords:  break KwStep step irlas english backtracking setpieces
+% LocalWords:  pgfstyle fill circle padding ex smallboard showmover
+% LocalWords:  false backfields Qa Qb Qd Qe Qf Qg Qh rotularse Loop
+% LocalWords:  loop is solution Process move Undo handout Nd Set up
+% LocalWords:  hamiltoniano basic object on

@@ -1,0 +1,325 @@
+\bibliographystyle{babplain-fl}
+
+\chapter{Espacios normados}
+\label{apx:espacios-normados}
+
+  Nos interesan espacios vectoriales
+  a los cuales les adjuntamos un concepto \emph{producto interno},
+  y también de \emph{norma}.
+  Partiremos con las definiciones del caso,
+  para luego mostrar algunas consecuencias simples que usamos en el texto.
+
+\section{Espacio vectorial}
+\label{sec:espacio-vectorial}
+
+  \begin{definition}
+    \label{def:espacio-vectorial}
+    Un \emph{espacio vectorial} \(V\)
+    sobre un campo \(\mathbb{F}\)
+    (para nosotros casi siempre \(\mathbb{R}\),
+     ocasionalmente \(\mathbb{C}\))
+    es un conjunto de elementos,
+    \(\mathbf{x}, \mathbf{y}, \dotsc \in V\) con una operación de \emph{suma}
+    \(\mathbf{x} + \mathbf{y}\) que entrega un nuevo vector,
+    y una operación de \emph{multiplicación escalar}
+    que dados \(\alpha \in \mathbb{F}\) y \(\mathbf{x} \in V\)
+    retorna un vector \(\alpha \mathbf{x}\),
+    que cumplen los siguientes axiomas:
+    \begin{enumerate}
+    \item
+      La suma es \emph{asociativa}:
+      para todo \(\mathbf{x}, \mathbf{y}, \mathbf{z} \in V\)
+      es \((\mathbf{x} + \mathbf{y}) + \mathbf{z}
+              = \mathbf{x} + (\mathbf{y} + \mathbf{z})\).
+    \item
+      La suma es \emph{conmutativa}:
+      para todo \(\mathbf{x}, \mathbf{y} \in V\)
+      es \(\mathbf{x} + \mathbf{y} = \mathbf{y} + \mathbf{x}\).
+    \item
+      Hay un \emph{elemento neutro} \(\mathbf{0} \in V\)
+      tal que para todo \(\mathbf{x} \in V\)
+      es \(\mathbf{x} + \mathbf{0} = \mathbf{0} + \mathbf{x} = \mathbf{x}\).
+    \item
+      Para cada \(\mathbf{x} \in V\) existe un \emph{inverso aditivo}
+      \(- \mathbf{x} \in V\)
+      tal que \(\mathbf{x} + (- \mathbf{x}) = \mathbf{0}\).
+    \item
+      La multiplicación escalar es \emph{compatible}:
+      para todos \(\alpha, \beta \in \mathbb{F}\)
+      y todo \(\mathbf{x} \in V\)
+      es \(\alpha (\beta \mathbf{x}) = (\alpha \beta) \mathbf{x}\).
+    \item
+      Elemento \emph{identidad} para multiplicación escalar:
+      si \(1 \in \mathbb{F}\) es la identidad multiplicativa,
+      entonces para todo \(\mathbf{x} \in V\) es \(1 \mathbf{x} = \mathbf{x}\).
+    \item
+      La multiplicación escalar distribuye sobre la suma vectorial:
+      para todo \(\alpha \in \mathbb{F}\)
+      y todos \(\mathbf{x}, \mathbf{y} \in V\)
+      es \(\alpha (\mathbf{x} + \mathbf{y})
+             = \alpha \mathbf{x} + \alpha \mathbf{y}\).
+    \item
+      La multiplicación escalar distribuye sobre la suma escalar:
+      para todo \(\alpha, \beta \in \mathbb{F}\)
+      y todo \(\mathbf{x} \in V\)
+      es \((\alpha + \beta) \mathbf{x}
+              = \alpha \mathbf{x} + \beta \mathbf{x}\).
+    \end{enumerate}
+  \end{definition}
+  Comúnmente
+  se abrevia \(\mathbf{x} + (- \mathbf{y}) = \mathbf{x} - \mathbf{y}\),
+  y omitimos paréntesis dadas la asociatividad y la compatibilidad.
+
+  De las anteriores pueden demostrarse consecuencias simples,
+  como las siguientes:
+  \begin{enumerate}
+  \item
+    El elemento neutro \(\mathbf{0} \in V\) es único.
+  \item
+    Para \(\mathbf{x} \in V\),
+    el inverso aditivo \(-\mathbf{x}\) es único.
+  \item
+    Para todo \(\mathbf{x} \in V\),
+    \(0 \mathbf{x} = \mathbf{0}\).
+  \item
+    Si \(\alpha \mathbf{x} = \mathbf{0}\),
+    es \(\alpha = 0\) o \(\mathbf{x} = \mathbf{0}\).
+  \end{enumerate}
+
+\section{Espacios normados}
+\label{sec:espacios-normados}
+
+  \begin{definition}
+    \label{def:norma}
+    Sea \(V\) un espacio vectorial sobre el campo \(\mathbb{F}\)
+    (reales o complejos).
+    Una \emph{norma} en \(V\) es una función
+    \(\lVert \cdot \rVert \colon V \to \mathbb{R}\) que cumple los axiomas:
+    \begin{enumerate}
+    \item
+      Homogeneidad:
+      para todo \(\alpha \in \mathbb{F}\) y todo \(\mathbf{x} \in V\)
+      es \(\lVert \alpha \mathbf{x} \rVert
+             = \lvert \alpha \rvert \lVert \mathbf{x} \rVert\).
+    \item
+      Desigualdad triangular:
+      para todo \(\mathbf{x}, \mathbf{y} \in V\)
+      se cumple
+      \(\lVert \mathbf{x} + \mathbf{y} \rVert
+          \le \lVert \mathbf{x} \rVert + \lVert \mathbf{y} \rVert\)
+    \item
+      Si \(\lVert \mathbf{x} \rVert = 0\) entonces \(\mathbf{x} = \mathbf{0}\).
+    \end{enumerate}
+  \end{definition}
+  De acá se demuestra:
+  \begin{enumerate}
+  \item
+    Identidad triangular reversa:
+    para todo \(\mathbf{x}, \mathbf{y} \in V\) es
+    \(\lvert \lVert \mathbf{x} \rVert - \lVert \mathbf{y} \rVert \rvert
+        \le \lVert \mathbf{x} - \mathbf{y} \rVert\)
+  \end{enumerate}
+  Intuitivamente,
+  interpretamos \(\lVert \mathbf{x} - \mathbf{y} \rVert\)
+  como la \emph{distancia} entre \(\mathbf{x}\) e \(\mathbf{y}\).
+
+\section{Producto interno}
+\label{sec:producto-interno}
+
+  Nos interesan espacios vectoriales sobre el campo escalar \(\mathbb{F}\)
+  (reales o complejos)
+  con la operación de \emph{producto interno} entre vectores.
+  \begin{definition}
+    \label{def:producto-interno-apx}
+    Sea \(V\) un espacio vectorial sobre el campo \(\mathbb{F}\)
+    (reales o complejos).
+    Un \emph{producto interno} en \(V\) es una operación
+    \(\langle \cdot, \cdot \rangle \colon V \times V \to \mathbb{F}\)
+    que cumple los siguientes axiomas:
+    \begin{enumerate}
+    \item
+      Simetría conjugada:
+      para todo \(\mathbf{x}, \mathbf{y} \in V\) es
+      \(\langle \mathbf{x}, \mathbf{y} \rangle
+          = \overline{\langle \mathbf{y}, \mathbf{x} \rangle}\)
+    \item
+      Lineal en el primer argumento:
+      para todo \(\mathbf{x}, \mathbf{y}, \mathbf{z} \in V\)
+      y \(\alpha, \beta \in \mathbb{F}\) es
+      \(\langle \alpha \mathbf{x} + \beta \mathbf{y}, \mathbf{z} \rangle
+         = \alpha \langle \mathbf{x}, \mathbf{z} \rangle
+             + \beta \langle \mathbf{y}, \mathbf{z} \rangle\)
+    \item
+      Positivo definido:
+      para todo \(\mathbf{x} \in V\) es
+      \(\langle \mathbf{x}, \mathbf{x} \rangle \ge 0\)
+      (por simetría conjugada es siempre real)
+      y \(\langle \mathbf{x}, \mathbf{x} \rangle = 0\)
+      si y solo si \(\mathbf{x} = 0\).
+    \end{enumerate}
+  \end{definition}
+  Consecuencias simples son:
+  \begin{enumerate}
+  \item
+    \(\langle \mathbf{x}, \mathbf{y} + \mathbf{z} \rangle
+        = \langle \mathbf{x}, \mathbf{y} \rangle
+            + \langle \mathbf{x}, \mathbf{z} \rangle\)
+  \end{enumerate}
+
+  Vemos que \(\lVert \mathbf{x} \rVert
+                 = \langle \mathbf{x}, \mathbf{x} \rangle^{1/2}\)
+  es una norma en \(V\).
+
+  Podemos interpretar \(\langle \mathbf{x}, \mathbf{y} \rangle\)
+  como indicativo del \textquote{ángulo} entre \(\mathbf{x}\) e \(\mathbf{y}\),
+  si \(\langle \mathbf{x}, \mathbf{y} \rangle = 0\) son ortogonales.
+
+  El teorema siguiente relaciona normas con productos internos.
+  \begin{theorem}[Desigualdad de Cauchy-Schwartz]
+    \label{theo:Cauchy-Schwartz}
+    \begin{equation*}
+      \lvert \langle \mathbf{x}, \mathbf{y} \rangle \lvert
+        \le \lVert \mathbf{x} \rVert \cdot \lVert \mathbf{y} \rVert
+    \end{equation*}
+  \end{theorem}
+  \begin{proof}
+    La demostración en sí es simple,
+    el razonamiento previo
+    es para justificar el \(t\) misterioso empleado en ella.
+
+    Si \(\mathbf{x}\) o \(\mathbf{y}\) son cero,
+    el resultado es trivial.
+    Supongamos \(\mathbf{y} \ne 0\).
+    Por las propiedades del producto interno,
+    para todo escalar \(t\):
+    \begin{align*}
+      0
+        &\le \lVert \mathbf{x} - t \mathbf{y} \rVert^2 \\
+        &=   \langle \mathbf{x} - t \mathbf{y},
+                     \mathbf{x} - t \mathbf{y} \rangle \\
+        &=   \langle \mathbf{x}, \mathbf{x} - t \mathbf{y} \rangle
+                - t \langle \mathbf{y}, \mathbf{x} - t \mathbf{y} \rangle \\
+        &=   \lVert \mathbf{x} \rVert^2
+                - t \left(
+                      \langle \mathbf{x}, \mathbf{y} \rangle
+                        + \overline{\langle \mathbf{x}, \mathbf{y} \rangle}
+                    \right)
+                + t^2 \lVert \mathbf{y} \rVert^2 \\
+        &=   \lVert \mathbf{x} \rVert^2
+                - 2 t \Re \langle \mathbf{x}, \mathbf{y} \rangle
+                + t^2 \lVert \mathbf{y} \rVert^2 \\
+    \end{align*}
+    Se obtiene lo prometido al substituir el valor de \(t\)
+    que minimiza la expresión indicada:
+    \begin{align*}
+      t
+        =   \frac{\Re \langle \mathbf{x}, \mathbf{y} \rangle}
+                 {\lVert \mathbf{y} \rVert^2} \\
+        \le \frac{\lvert \langle \mathbf{x}, \mathbf{y} \rangle \rvert}
+                 {\lVert \mathbf{y} \rVert^2}
+    \end{align*}
+    \qedhere
+  \end{proof}
+  Tenemos el importante corolario:
+  \begin{corollary}[Desigualdad triangular]
+    \label{cor:desigualdad-triangular}
+    \(\lVert \mathbf{x} + \mathbf{y} \rVert
+        \le \lVert \mathbf{x} \rVert + \lVert \mathbf{y} \rVert\)
+  \end{corollary}
+  \begin{proof}
+    \begin{align*}
+      \lVert \mathbf{x} + \mathbf{y} \rVert^2
+        &=   \langle
+               \mathbf{x} + \mathbf{y},
+               \mathbf{x} + \mathbf{y}
+             \rangle \\
+        &=   \lVert \mathbf{x} \rVert^2
+               + \langle \mathbf{x}, \mathbf{y} \rangle
+               + \langle \mathbf{y}, \mathbf{x} \rangle
+               + \lVert \mathbf{y} \rVert^2 \\
+        &\le \lVert \mathbf{x} \rVert^2
+               + 2 \lVert \mathbf{x} \rVert \cdot \lVert \mathbf{y} \rVert
+               + \lVert \mathbf{x} \rVert^2 \\
+        &= ( \lVert \mathbf{x} \rVert + \lVert \mathbf{y} \rVert )^2
+    \end{align*}
+    \qedhere
+  \end{proof}
+
+\section{Construir conjunto de vectores ortogonales}
+\label{sec:construir-vectores-ortogonales}
+
+  Es común querer construir un conjunto de vectores ortogonales
+  dado un conjunto de vectores linealmente independientes.
+  Esto se logra por el proceso de Gram-Schmidt
+  (ver cualquier texto de álgebra lineal,
+   como~%
+     \cite{treil17:_linear_algeb_done_wrong}).
+
+  Supongamos entonces un conjunto de vectores linealmente independientes
+  \(\mathbf{x}_1, \mathbf{x}_2, \mathbf{x}_3, \dotsc\),
+  y queremos construir un conjunto de vectores ortogonales
+  \(\mathbf{y}_1, \mathbf{y}_2, \mathbf{y}_3, \dotsc\).
+  La construcción se basa en la siguiente observación:
+  sean \(\mathbf{x}_1\) y \(\mathbf{x}_2\) linealmente independientes,
+  buscamos un par de vectores ortogonales \(\mathbf{y}_1\) y \(\mathbf{y}_2\)
+  que abarca el espacio definido por \(\mathbf{x}_1\) y \(\mathbf{x}_2\).
+  Vale decir,
+  \(\mathbf{y}_1\) y \(\mathbf{y}_2\)
+  se pueden describir como combinaciones lineales
+  de \(\mathbf{x}_1\) y \(\mathbf{x}_2\).
+  Podemos arbitrariamente elegir \(\mathbf{y}_1 = \mathbf{x}_1\),
+  queda por hallar un posible \(\mathbf{y}_2\).
+  Por ejemplo,
+  buscamos expresar:
+  \begin{equation*}
+    \mathbf{y}_2
+      = \mathbf{x}_2 + \alpha \mathbf{y}_1
+  \end{equation*}
+  tal que:
+  \begin{equation*}
+    \langle \mathbf{y}_1, \mathbf{y}_2 \rangle
+      = 0
+  \end{equation*}
+  Vale decir:
+  \begin{align*}
+    \langle \mathbf{y}_1, \mathbf{y}_2 \rangle
+      &= \langle \mathbf{y}_1, \mathbf{x}_2 + \alpha_2 \mathbf{y}_1 \rangle \\
+      &= \langle \mathbf{y}_1, \mathbf{x}_2 \rangle
+           + \langle \mathbf{y}_1, \alpha_2 \mathbf{y}_1 \rangle \\
+      &= \langle \mathbf{y}_1, \mathbf{x}_2 \rangle
+           + \alpha_2 \langle \mathbf{y}_1, \mathbf{y}_1 \rangle
+  \end{align*}
+  Igualando a cero,
+  despejamos:
+  \begin{equation*}
+    \alpha_2
+      = - \frac{\langle \mathbf{y}_1, \mathbf{x}_2 \rangle}
+               {\langle \mathbf{y}_1, \mathbf{y}_1 \rangle}
+  \end{equation*}
+  Así:
+  \begin{equation*}
+    \mathbf{y}_2
+      = \mathbf{x}_2
+          - \frac{\langle \mathbf{y}_1, \mathbf{x}_2 \rangle}
+                 {\langle \mathbf{y}_1, \mathbf{y}_1 \rangle} \mathbf{y}_1
+  \end{equation*}
+  Podemos usar esta misma técnica
+  para eliminar los componentes a lo largo de los anteriores \(\mathbf{y}_k\)
+  de los demás vectores.
+  En resumen,
+  calculamos sucesivamente para \(i = 1, 2, \dotsc\):
+  \begin{equation*}
+    \mathbf{y}_i
+      = \mathbf{x}_i
+          - \sum_{1 \le k < i}
+              \frac{\langle \mathbf{y}_k, \mathbf{x}_i \rangle}
+                   {\langle \mathbf{y}_k, \mathbf{y}_k \rangle} \mathbf{y}_k
+  \end{equation*}
+
+\bibliography{../referencias}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "../INF-221_notas"
+%%% ispell-local-dictionary: "spanish"
+%%% End:

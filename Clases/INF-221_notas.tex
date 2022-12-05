@@ -1,0 +1,596 @@
+% INF-221_notas.tex
+%
+% Copyright (c) 2016-2018, 2022 Horst H. von Brand
+% Derechos reservados. Vea COPYRIGHT para detalles
+
+% Documento maestro de las clases de Algoritmos y Complejidad
+% No cambiar formato.
+
+\documentclass[czech, english, german, french, latin, spanish, fleqn]
+              {memoir}
+
+% Last language is fallback for babelbib
+% Fonts
+\usepackage{fourier, bm}
+\usepackage{mathrsfs}
+\usepackage[group-digits = false]{siunitx}
+\usepackage{icomma}
+% Languages
+\usepackage{babel}
+\usepackage{babelbib, cite}
+\usepackage{chapterbib}
+\setbtxfallbacklanguage{english}
+% General LaTeX settings
+%\usepackage{fixltx2e}
+\usepackage{tikz}
+\usepackage{afterpage}
+\usepackage{pdflscape}
+\usepackage{subfig}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{dcolumn}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{calc}
+\usepackage[autostyle]{csquotes}
+%\usepackage{fnpct}
+   % See http://es.wikipedia.org/wiki/Wikipedia_discusión:Temas_recurrentes/Posición_de_las_referencias
+\usepackage[makeroom]{cancel} % Permite usar xcancel en equaciones (tachar en fo% Index, glossary
+\usepackage{makeidx}
+\newcommand*{\textbfhy}[1]{\textbf{\hyperpage{#1}}}
+% Math stuff
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{systeme}
+\usepackage[all]{xy}
+\usepackage{xfrac}
+\usepackage{centernot}
+\usepackage{scalerel}
+\usepackage{mathtools} % Permite el uso del entorno rcases
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+% Chess stuff
+\usepackage{chessboard}
+% General Computer Science
+\usepackage[algochapter, ruled, noline, nofillcomment]{algorithm2e}
+\usepackage{listings}
+\usepackage[basic]{complexity}
+\newcommand\cplusplus{C\nolinebreak[4]\hspace{-.03em}%
+                      \raisebox{.3ex}{\relsize{-0.75}{\textbf{++}}}}
+% microtype should come after fonts and languages, and most packages
+\usepackage[babel = true, stretch = 10]{microtype}
+% Hyperref (PDF output settings), should be last
+\usepackage[colorlinks, urlcolor = blue]{hyperref}
+
+%%%
+%%% From Herbert Voß' Mathmode
+%%%
+
+\def\mathllap{\mathpalette\mathllapinternal}
+\def\mathllapinternal#1#2{%
+        \llap{$\mathsurround=0pt#1{#2}$}% $
+}
+\def\clap#1{\hbox to 0pt{\hss#1\hss}}
+\def\mathclap{\mathpalette\mathclapinternal}
+\def\mathclapinternal#1#2{%
+        \clap{$\mathsurround=0pt#1{#2}$}%
+}
+\def\mathrlap{\mathpalette\mathrlapinternal}
+\def\mathrlapinternal#1#2{%
+        \rlap{$\mathsurround=0pt#1{#2}$}% $
+}
+
+%%%
+%%% Italic blockquotes (TeX.SE 442547)
+%%%
+
+\makeatletter
+\patchcmd{\csq@bquote@i}{{#6}}{{\emph{#6}}}{}{}
+\makeatother
+
+
+%%%
+%%% siunitx
+%%%
+
+\sisetup{output-decimal-marker = {,}}
+
+%%%
+%%% PDF information settings
+%%%
+
+\hypersetup{pdftitle = {Algoritmos y Complejidad},
+            pdfauthor = {Horst H. von Brand},
+            pdfcreator = {pdflatex},
+            pdfproducer = {LaTeXe with hyperref},
+            unicode,
+            pdfdisplaydoctitle
+           }
+
+%%%
+%%% For memoir
+%%%
+
+\setsecnumdepth{subsubsection}
+\settocdepth{subsection}
+
+\cftsetindents{section}{1.5em}{3.0em}
+\cftsetindents{subsection}{4.5em}{3.3em}
+
+\cftsetindents{figure}{0pt}{3.0em}
+\cftsetindents{table}{0pt}{3.0em}
+
+% Page layout
+
+\semiisopage
+\checkandfixthelayout
+
+% Chapter style
+
+\chapterstyle{ger}
+\makeatletter
+\renewcommand{\@chapapp}{Clase}
+\makeatother
+
+%%%
+%%% TikZ stuff
+%%%
+
+\usepackage{pgfplots}
+\pgfplotsset{compat = 1.18}
+\usetikzlibrary{automata, positioning, babel}
+\usetikzlibrary{shapes, arrows, arrows.meta}
+\usetikzlibrary{fit}
+\tikzset{shorten >= 1pt,
+         node distance = 1.8cm, on grid,
+         >= stealth,
+         every initial
+           by arrow/.style = -{Straight Barb[length = 1.1ex]},
+         initial text = {},
+         initial distance = 0.05,
+         every state/.style = {draw = navyblue!50,
+                               very thick, fill=navyblue!20,
+                               minimum size = 5mm},
+         bend angle = 35,
+         every loop/.style = {looseness = 13}}
+
+\usetikzlibrary{calc, patterns}
+     % Permite colocar underbrace en tikz y las flechas curvas
+\usetikzlibrary{decorations.pathmorphing}
+\usetikzlibrary{decorations.text}
+
+\definecolor{navyblue}{RGB}{0,148,222}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{[60]Algol, [ANSI]C, [ANSI]C++, Python, sh}
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = lines, numbers = none,
+        showstringspaces = false,
+        float, floatplacement = ht, captionpos = b,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\lstset{literate={á}{{\'a}}1
+                 {é}{{\'e}}1
+                 {í}{{\'\i}}1
+                 {ó}{{\'o}}1
+                 {ú}{{\'u}}1
+                 {ü}{{\"u}}1
+                 {ñ}{{\~n}}1
+                 {Á}{{\'A}}1
+                 {É}{{\'E}}1
+                 {Í}{{\'I}}1
+                 {Ó}{{\'O}}1
+                 {Ú}{{\'U}}1
+                 {Ü}{{\"U}}1
+                 {Ñ}{{\~N}}1
+                 {¿}{{?`\hspace{-2.5pt}}}1
+                 {¡}{{!`\hspace{-2.5pt}}}1
+% For Algol
+                 {×}{\(\times\)}1
+                 {÷}{\(\div\)}1
+                 {↑}{\(\uparrow\)}1
+                 {≤}{\(\le\)}1
+                 {≥}{\(\ge\)}1
+                 {≠}{\(\ne\)}1
+                 {≡}{\(\equiv\)}1
+                 {⊃}{\(\supset\)}1
+                 {∧}{\(\wedge\)}1
+                 {∨}{\(\vee\)}1
+                 {¬}{\(\lnot\)}1
+        }
+
+% Pilfered from https://tex.stackexchange.com/a/27648/21275
+\renewcommand{\lstlistingname}{Listado}
+\renewcommand{\lstlistlistingname}{Índice de listados}
+\begingroup\makeatletter
+\let\newcounter\@gobble\let\setcounter\@gobbletwo
+  \globaldefs\@ne \let\c@loldepth\@ne
+  \newlistof{listings}{lol}{\lstlistlistingname}
+  \newlistentry{lstlisting}{lol}{0}
+\endgroup
+\setlength{\cftlstlistingnumwidth}{4em}
+
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+\newlistof{listofalgorithms}{loa}{\listalgorithmcfname}
+\makeatletter
+\renewcommand{\l@algocf}{\@dottedtocline{1}{1em}{3.5em}}
+\makeatother
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+%%%
+%%% AMS-LaTeX theorem stuff
+%%%
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Teorema}[chapter]
+\newtheorem{lemma}[theorem]{Lema}
+\newtheorem{corollary}[theorem]{Corolario}
+\newtheorem{proposition}{Proposición}[chapter]
+\newtheorem{conjecture}{Conjetura}[chapter]
+\newtheorem*{axiom}{Axioma}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definición}[chapter]
+\newtheorem{example}{Ejemplo}[chapter]
+
+\newtheorem{ejemplo}{Ejemplo}[chapter]
+\newtheorem{ejercicio}{Ejercicio}[chapter]
+
+\theoremstyle{remark}
+\newtheorem{remark}{Nota}
+
+\newenvironment{solution}[1][Solución]{\begin{trivlist}
+\item[\hskip \labelsep {\bfseries #1}]}{\end{trivlist}}
+
+\DeclareMathOperator{\chr}{chr}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator{\ord}{ord}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\val}{val}
+
+\DeclareMathOperator{\var}{var}
+
+\DeclareMathOperator{\Arg}{Arg}
+\DeclareMathOperator{\Log}{Log}
+\DeclareMathOperator{\res}{res}
+\DeclareMathOperator{\pp}{pp}
+
+\DeclareMathOperator{\inflow}{inflow}
+\DeclareMathOperator{\outflow}{outflow}
+
+\DeclareMathOperator{\Seq}{\textsc{Seq}}
+\DeclareMathOperator{\Cyc}{\textsc{Cyc}}
+\DeclareMathOperator{\Set}{\textsc{Set}}
+\DeclareMathOperator{\MSet}{\textsc{MSet}}
+
+\DeclareMathOperator{\ogf}{\stackrel{\text{ogf}}{\longleftrightarrow}}
+\DeclareMathOperator{\egf}{\stackrel{\text{egf}}{\longleftrightarrow}}
+
+\DeclareMathOperator{\Exp}{\mathbb{E}}
+
+\newcommand{\cycle}[2]{\genfrac{[}{]}{0pt}{}{#1}{#2}}	 % Stirling 1a especie
+\newcommand{\classes}[2]{\genfrac{\{}{\}}{0pt}{}{#1}{#2}} % Stirling 2a especie
+\newcommand{\lah}[2]{\genfrac{\lfloor}{\rfloor}{0pt}{}{#1}{#2}}	 % Lah
+
+\newcommand{\multiset}[2]{\left( \!\! \binom{#1}{#2} \!\! \right)}
+
+\newcommand{\Circle}{\raisebox{-1pt}{\scalerel*{\bullet}{\bigodot}}}
+
+%%%
+%%% Index, glossary
+%%%
+
+\makeindex
+\makeglossary
+
+%%%
+%%% End of preamble
+%%%
+
+\begin{document}
+\selectlanguage{spanish}
+\bibliographystyle{babplain-fl}
+
+\frontmatter
+
+%% Bastard title page
+
+\thispagestyle{empty}
+\vspace*{\fill}
+{\fontsize{24}{26}\sffamily\bfseries
+  Algoritmos y Complejidad \\
+}
+\vspace*{\fill}
+
+\cleardoublepage
+
+%% Title page
+
+\thispagestyle{empty}
+\vspace*{0.5cm}
+\begin{center}
+  {
+    \fontsize{45}{47}\sffamily\bfseries
+    Algoritmos y Complejidad
+    \par
+  }
+  \vspace*{1em}
+  {
+    \fontsize{35}{37}\sffamily\bfseries
+    INF-221
+    \par
+  }
+\end{center}
+\vfill
+\vfill
+\noindent
+\begin{center}
+  \huge\sffamily
+    \href{mailto:vonbrand@inf.utfsm.cl}{Horst H. von Brand}
+\end{center}
+\vfill
+\begin{center}
+  \begin{tikzpicture}
+    \fill[color = red]
+           (45- 12.5:2.5)
+              arc[radius = 2.5,
+                  start angle = 45 - 12.5, end angle = 135 - 12.5]
+           -- (135- 12.5:1.5)
+                 arc[radius = 1.5,
+                     start angle = 135 - 12.5, end angle = 45 - 12.5]
+           -- cycle;
+    \fill[color = blue]
+           (135- 12.5:2.5)
+              arc[radius = 2.5,
+                  start angle = 135 - 12.5, end angle = 225 - 12.5]
+           -- (225- 12.5:1.5)
+                 arc[radius = 1.5,
+                     start angle = 225 - 12.5, end angle = 135 - 12.5]
+           -- cycle;
+    \fill[color = yellow!50!red]
+           (225 - 12.5:2.5)
+              arc[radius = 2.5,
+                  start angle = 225 - 12.5, end angle = 315 - 12.5]
+           -- (315- 12.5:1.5)
+                 arc[radius = 1.5,
+                     start angle = 315 - 12.5, end angle = 225 - 12.5]
+           -- cycle;
+    \fill[color = green]
+           (315 - 12.5:2.5)
+              arc[radius = 2.5,
+                  start angle = 315 - 12.5, end angle = 405 - 12.5]
+           -- (405- 12.5:1.5)
+                 arc[radius = 1.5,
+                     start angle = 405 -12.5, end angle = 315 - 12.5]
+           -- cycle;
+
+    \fill[color = red]
+           (135 - 12.5:1.25) -- (135 - 12.5:2.75) -- (135 + 25 - 12.5:2.05)
+              -- cycle;
+    \fill[color = blue]
+           (225 - 12.5:1.25) -- (225 - 12.5:2.75) -- (225 + 25 - 12.5:2.05)
+              -- cycle;
+    \fill[color = yellow!50!red]
+           (315 - 12.5:1.25) -- (315 - 12.5:2.75) -- (315 + 25 - 12.5:2.05)
+              -- cycle;
+    \fill[color = green]
+           (405 - 12.5:1.25) -- (405 - 12.5:2.75) -- (405 + 25 - 12.5:2.05)
+              -- cycle;
+
+    \path[postaction = {decorate,
+          decoration = {text along path,
+                        text align = center,
+                        text = {|\color{white}\sffamily\Large|Dise{\~n}o}}}]
+          (135:1.75) arc[radius = 1.75, start angle = 135, end angle = 45];
+    \path[postaction = {decorate,
+          decoration = {text along path,
+                        text align = center,
+                        text = {|\color{white}\sffamily\Large|An{\'a}lisis}}}]
+          (225:1.75) arc[radius = 1.75, start angle = 225, end angle = 135];
+    \path[postaction = {decorate,
+          decoration = {text along path,
+                        text align = center,
+                        text = {|\color{white}\sffamily\Large|Programa}}}]
+          (225:2.1) arc[radius = 2.1, start angle = 225, end angle = 315];
+    \path[postaction = {decorate,
+          decoration = {text along path,
+                        text align = center,
+                        text = {|\color{white}\sffamily\Large|Medir}}}]
+          (315:2.1) arc[radius = 2.1, start angle = 315, end angle = 405];
+  \end{tikzpicture}
+  \vspace*{5em}
+
+  \today
+  \vspace*{2\baselineskip}
+
+  {\large\sffamily
+   Departamento de Informática\\
+   Universidad Técnica Federico Santa María
+  }
+\end{center}
+
+\clearpage
+
+%% Copyright page
+\input{class-version}
+
+\thispagestyle{empty}
+\vspace*{2ex}
+\begin{small}
+  \noindent
+  \textcopyright\,2016-\the\year\ Horst H. von Brand \\
+  Todos los derechos reservados.\\[1.2em]
+  Compuesto por el autor en \LaTeXe{} con Utopia para textos
+  y Fourier-GUTenberg para matemáticas.\\[2em]
+  Versión {\classversion} del {\classdate} \\[0.7em]
+  Se autoriza el uso de esta versión preliminar
+  para cualquier fin educacional
+  en una institución de enseñanza superior,
+  en cuyo caso solo se permite
+  el cobro de una tarifa razonable de reproducción.
+  Se prohíbe todo uso comercial.
+\end{small}
+
+\cleardoublepage
+
+%% Dedication page
+
+\thispagestyle{empty}
+\vspace*{\fill}
+\vspace*{\fill}
+\noindent
+  Agradezco a mi familia,
+  a quienes he descuidado
+  durante el desarrollo del presente texto.
+
+\noindent
+  Agradezco a mis estudiantes,
+  quienes sufrieron versiones preliminares.
+
+\vspace*{\baselineskip}
+\noindent
+  El Departamento de Informática
+  de la Universidad Técnica Federico Santa María
+  provee el ambiente ideal de trabajo.
+
+\vspace*{\baselineskip}
+\noindent
+  Este documento presenta
+  la materia del curso \textquote{Algoritmos y Complejidad} (INF-221)
+  como dictado en la Casa Central de Universidad Técnica Federico Santa María
+  por el autor.
+  Se iniciaron con el esfuerzo de Aldo Berríos,
+  quien se dio el trabajo de transcribir las
+  (a veces muy desorganizadas)
+  clases a \LaTeX,
+  ligeramente editadas por el autor,
+  incorporando comentarios y correcciones de estudiantes,
+  y llevadas al formato actual.
+  El resultado fue creciendo con extensiones posteriores
+  y extensas reorganizaciones.
+\vspace*{\baselineskip}
+\noindent
+  Especial reconocimiento a Claudio Torres,
+  quien leyó y comentó el apunte,
+  particularmente la primera parte.
+\vspace*{\fill}
+
+\cleardoublepage
+
+\tableofcontents
+
+\clearpage
+
+\listoffigures
+
+\clearpage
+
+\listoftables
+
+\clearpage
+
+\lstlistoflistings
+
+\clearpage
+
+\listofalgorithms
+
+\cleardoublepage
+
+\thispagestyle{plain}
+%\include{prefacio}
+
+\mainmatter
+
+\part{Análisis Numérico}
+\thispagestyle{empty}
+
+\include{numerical-analysis/numerical-analysis}
+\include{zero-finding/zero-finding}
+\include{convergence-analysis/convergence-analysis}
+\include{other-zero-finding/other-zero-finding}
+\include{non-linear-systems/non-linear-systems}
+\include{interpolation/interpolation}
+\include{interpolation-error/interpolation-error}
+\include{quadrature/quadrature}
+\include{gaussian-quadrature/gaussian-quadrature}
+
+\part{Algoritmos Combinatorios}
+\thispagestyle{empty}
+
+\include{discrete-algorithms/discrete-algorithms}
+\include{program-performance/program-performance}
+\include{adversary/adversary}
+\include{recursion/recursion}
+\include{graph-traversal/graph-traversal}
+\include{graph-search/graph-search}
+\include{backtracking/backtracking}
+\include{divide-and-conquer/divide-and-conquer}
+\include{divide-and-conquer-exact/divide-and-conquer-exact}
+\include{stable-marriages/stable-marriages}
+\include{greedy-algorithms/greedy-algorithms}
+\include{Huffman-code/Huffman-code}
+\include{matroids/matroids}
+\include{dynamic-programming/dynamic-programming}
+\include{more-dynamic-programming/more-dynamic-programming}
+\include{LCS-more/LCS-more}
+\include{algorithm-design/algorithm-design}
+\include{linear-programming/linear-programming}
+\include{simple-sorting/simple-sorting}
+\include{quicksort/quicksort}
+\include{amortized-analysis/amortized-analysis}
+\include{amortized-analysis-examples/amortized-analysis-examples}
+\include{Kruskal/Kruskal}
+\include{union-find/union-find}
+\include{hashing/hashing}
+\include{randomized-algorithms/randomized-algorithms}
+\include{approximate-algorithms/approximate-algorithms}
+\include{submodular-optimization/submodular-optimization}
+
+\part*{Apéndices}
+\thispagestyle{empty}
+
+\appendix
+
+\include{analysis/analysis}
+\include{generating-functions/generating-functions}
+\include{recurrences/recurrences}
+\include{asymptotics/asymptotics}
+\include{program-performance-apx/program-performance-apx}
+\include{normed-spaces/normed-spaces}
+\include{symbolic-method/symbolic-method}
+\include{probabilities/probabilities}
+
+\backmatter
+
+%\printindex
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  lstlisting lol chapter listofalgorithms mdseries end H
+% LocalWords:  Function function Procedure procedure Downto downto em
+% LocalWords:  Loop loop Continue continue Break break KwStep step
+% LocalWords:  INF Horst von Brand Federico Utopia Fourier GUTenberg
+% LocalWords:  Aldo Berríos Claudio empty plain María

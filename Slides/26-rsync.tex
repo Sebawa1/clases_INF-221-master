@@ -1,0 +1,340 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{listings}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+% Overlay aware \sout
+% Filched from TeX.SE 35767, update to answer by Roelof Spijker
+% https://tex.stackexchange.com/a/35769/21275
+
+\renewcommand<>{\sout}[1]{
+  \only#2{\beameroriginal{\sout}{#1}}
+  \invisible#2{#1}
+}
+
+%%%
+%%% For listings
+%%%
+
+\lstloadlanguages{[ANSI]C, sh}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{El programa rsync}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For listings
+%%%
+
+\lstset{basicstyle = \sffamily, commentstyle = \slshape,
+        frame = none, numbers = none,
+        tabsize = 4,
+        showstringspaces = false,
+        xleftmargin = 1em, xrightmargin = 1em
+       }
+\renewcommand{\lstlistingname}{Listado}
+
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{Problema a resolver}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Sincronizar archivos}
+
+  \uncover<+->{
+    En situaciones como administrar repositorios de software
+    o respaldos,
+    y también al mantener sincronizados
+    computadores personales diversos,
+    aparece el problema de copiar grandes archivos,
+    que solo han cambiado un poco.
+  }
+  \uncover<+->{
+    La solución de copiar todo es ineficiente,
+    y era enfurecedora cuando los enlaces muy rápidos
+    eran de unos pocos megabit por segundo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Solución}
+
+  \uncover<1->{
+    Se requiere algún método de comparar archivos remotos
+    (para saber qué partes transferir)
+    \emph{sin copiarlos completos}.
+  }
+  \\ \medskip
+  \uncover<2->{
+    \mode<beamer>{
+      \sout<3->{
+        \alert<2>{
+          \textbf<2>{¡Imposible!}
+        }
+      }
+    }
+    \mode<handout>{
+      Parece imposible\ldots
+    }
+  }
+  \medskip
+  \uncover<3->{
+    Es lo que hace \lstinline[language = sh]!rsync(1)!.
+  }
+\end{frame}
+
+\section{Huellas digitales}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Buscar un patrón fijo en una palabra}
+
+  \uncover<+->{
+    El problema es buscar un patrón fijo
+    (le llaman \emph{\foreignlanguage{english}{needle}}, aguja)
+    en una palabra
+    (\emph{\foreignlanguage{english}{haystack}}, pajar).
+  }
+
+  \uncover<+->{
+    La idea obvia de ir comparando
+    partiendo en cada posición
+    es ineficiente.
+  }
+
+  \uncover<+->{
+    Los algoritmos tradicionales más eficientes
+    (\href{https://en.wikipedia.org/wiki/Knuth\%E2\%80\%93Morris\%E2\%80\%93Pratt_algorithm}
+          {Knuth-Morris-Pratt},
+     \href{https://en.wikipedia.org/wiki/Boyer\%E2\%80\%93Moore_string-search_algorithm}
+          {Boyer-Moore})
+    son bastante complicados.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmo de Karp y Rabin}
+
+  \uncover<+->{
+    Un algoritmo aleatorizado muy simple es calcular una huella de la aguja,
+    y luego calcular la huella partiendo en cada posición del pajar.
+  }
+  \uncover<+->{
+    Suena muy ineficiente calcular una función \foreignlanguage{english}{hash}
+    para cada posición,
+    pero tenemos la libertad de elegir la función.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{\foreignlanguage{english}{Rolling hash}}}
+
+  \uncover<+->{
+    Hay funciones \foreignlanguage{english}{hash} fáciles de actualizar.
+  }
+
+  \uncover<+->{
+    Sea una palabra \(\sigma = x_0 x_1 \ldots x_{k - 1}\) de largo \(k\)
+    (los \(x_i\) son los caracteres)
+    y definamos:
+    \begin{equation*}
+      h(\sigma)
+        = \left( \sum_{0 \le i < k} a^i x_i \right) \bmod m
+    \end{equation*}
+  }
+  \uncover<+->{
+   Podemos actualizar \(h\) para mover el rango fácilmente.
+   Si tenemos \(u = h(x_0 \ldots x_{k - 1})\),
+    podemos calcular:
+    \begin{equation*}
+      h(x_1 \ldots x_k)
+        = ((u - x_0) \cdot a^{-1} + x_k \cdot a^{k - 1}) \bmod m
+     \end{equation*}
+  }
+  \uncover<+->{
+    Solo si \(a\) es relativamente primo con \(m\)
+    tiene inverso,
+    claro está.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{\emph{\foreignlanguage{english}{Rolling hash}}}
+
+  \uncover<+->{
+    Consideraciones similares
+    a las para parámetros de generadores de números aleatorios
+    de la forma \(x_{n + 1} = (a x_n + c) \bmod m\)
+    sugieren usar \(m\) un número primo grande
+    (interesante resulta \(2^{31} - 1\),
+     cerca del máximo entero que se puede representar en \(32\)~bits)
+    y \(a\) una raíz primitiva módulo \(m\)
+    (por suerte son bastante numerosas,
+     una búsqueda al azar rápidamente da con una).
+  }
+  \uncover<+->{
+    Otra opción interesante es usar \(m\) una potencia de \(2\)
+    (la operación módulo es manipular bits,
+     si \(m\) es el tamaño de palabra del computador
+     simplemente ignorar rebalses),
+    en cuyo caso debe ser \(a \equiv 3\) o \(a \equiv 5 \pmod{8}\).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmo de Karp y Rabin}
+
+  \uncover<+->{
+    El algoritmo de Karp y Rabin usa la idea anterior
+    (claro que la función que usan es diferente,
+     en vez de calcular módulo \(m\)
+     trabaja sobre \(\mathrm{GF}(2^k)\)).
+  }
+  \uncover<+->{
+    Hay una probabilidad de falso positivo,
+    para confirmar un hallazgo compara caracter a caracter.
+  }
+\end{frame}
+
+\section{El programa \texttt{rsync}}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{El programa \texttt{rsync(1)}}
+
+  \uncover<+->{
+    El programa \lstinline[language = sh]!rsync(1)!
+    usa la idea del algoritmo de Karp-Rabin:
+    divide el archivo origen en bloques
+    y calcula un \foreignlanguage{english}{hash}
+    (usa una variante \emph{\foreignlanguage{english}{rolling hash}}
+     del algoritmo Adler32)
+    para cada uno de ellos,
+    y los envía al destino.
+    El destino hace lo propio,
+    y considera sin modificar bloques
+    con el mismo \foreignlanguage{english}{hash}.
+  }
+  \uncover<+->{
+    En caso de que no coincida,
+    considera correr el bloque
+    (así maneja el caso común de inserciones en el origen)
+    usando el \emph{\foreignlanguage{english}{rolling hash}},
+    solo si tampoco encuentra un calce transfiere el nuevo bloque.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Debilidades}
+
+  \uncover<+->{
+    Los \emph{\foreignlanguage{english}{rolling hash}} discutidos
+    son susceptibles de ataques
+    (colisiones).
+  }
+
+  \uncover<+->{
+    Mitigación en el caso de Karp-Rabin es elegir los parámetros al azar,
+    aunque no es demasiado relevante
+    (confirmar un posible calce es simple).
+  }
+
+  \uncover<+->{
+    El programa \lstinline[language = sh]!rsync(1)!
+    usa un \foreignlanguage{english}{hash} fijo,
+    puede engañarse fácilmente.
+  }
+  \uncover<+->{
+    Soluciones serían usar una función elegida al azar,
+    acordada al comienzo de la transacción;
+    incluso usar varias funciones independientes en paralelo.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Vimos dos aplicaciones de la idea de huellas digitales:
+    El algoritmo de Karp-Rabin
+    y el popular \lstinline[language = sh]!rsync(1)!.
+  \end{itemize}
+
+\end{frame}
+
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step enfurecedora megabit english
+% LocalWords:  needle haystack aleatorizado hash Rolling caracter
+% LocalWords:  rsync rolling beamer handout

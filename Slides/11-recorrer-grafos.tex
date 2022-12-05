@@ -1,0 +1,648 @@
+\input glyphtounicode%
+\pdfgentounicode=1
+\documentclass[english, spanish, fleqn,%
+hyperref = {colorlinks, urlcolor = blue}%
+%, handout%
+]{beamer}
+
+%% ]{article}
+%% \usepackage{beamerarticle}
+
+\usepackage{beamerthemesplit}
+
+\usepackage{fourier}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage[es-noquoting]{babel}
+\usepackage{csquotes}
+\usepackage[noline, noend]{algorithm2e}
+\usepackage{tikz}
+
+\ifdefined\HCode
+  \def\pgfsysdriver{pgfsys-dvisvgm4ht.def}
+\fi
+
+\usefonttheme{professionalfonts}
+
+\usetikzlibrary{positioning}
+
+\beamerdefaultoverlayspecification{<+->}
+
+\title{Recorrer grafos}
+
+\author[Horst H. von Brand]{Horst H. von Brand\\
+  \href{mailto:vonbrand@inf.utfsm.cl}{vonbrand@inf.utfsm.cl}}
+
+\institute[DI UTFSM]{Departamento de Informática\\
+                     Universidad Técnica Federico Santa María}
+\date{}
+
+\begin{document}
+%%%
+%%% For algorithm2e
+%%%
+
+\SetAlgorithmName{Algoritmo}{Algoritmo}{Índice de algoritmos}
+
+\SetAlCapSty{mdseries}
+\SetKwProg{Function}{function}{}{end}
+\SetKwProg{Procedure}{procedure}{}{end}
+\SetKw{Variables}{variables}
+\SetKw{Downto}{downto}
+\SetKwBlock{Loop}{loop}{end}
+\SetKw{Continue}{continue}
+\SetKw{Break}{break}
+\SetKw{KwStep}{step}
+
+\frame{\maketitle}
+
+\begin{frame}<handout>
+  \frametitle{Contenido}
+
+  \tableofcontents
+\end{frame}
+
+\section{El problema}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Grafos}
+
+  \uncover<+->{
+    Un grafo describe las conexiones entre objetos
+    (vértices).
+    Como tal,
+    es una estructura cómoda para describir una gran variedad de situaciones,
+    manipular estas estructuras es una tarea común.
+  }
+  \uncover<+->{
+    Un requerimiento común es visitar todos los vértices
+    alcanzables desde alguno en particular,
+    lo que se conoce como \emph{recorrer el grafo}.
+  }
+  \uncover<+->{
+    Ejemplos típicos son los recorridos estándar
+    (preorden, postorden, inorden)
+    de árboles binarios
+    (que en realidad no son grafos).
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Representaciones de grafos}
+
+  \uncover<+->{
+    Tradicionalmente se representan grafos
+    mediante \emph{matrices de adyacencia}
+    (una matriz de booleanos indexada por vértices,
+     verdadero indica que los vértices son vecinos)
+    o \emph{listas de adyacencia}
+    (se asocia una lista de vecinos a cada vértice).
+  }
+
+  \uncover<+->{
+    Otra opción es representar vértices como nodos
+    y los arcos como punteros entre nodos.
+    Es la representación común de árboles binarios
+    (que,
+     repetimos,
+     no son grafos).
+  }
+
+  \uncover<+->{
+    Muchos de los grafos de interés práctico son demasiado grandes
+    para generar completamente
+    (más aún si solo se explorará una fracción mínima),
+    en tal caso suelen representarse mediante una rutina
+    que entrega los vecinos del nodo actual.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Representación de grafos}
+
+  \uncover<+->{
+    Para uniformidad,
+    supondremos un grafo \(G = (V, E)\)
+    de vértices \(V\) y arcos \(E\).
+    Para referirnos a los vértices de \(G\) anotamos \(V_G\),
+    para sus arcos usaremos \(E_G\).
+    Los vecinos de \(v \in V_G\) los anotaremos:
+    \begin{equation*}
+      N_G(v)
+        = \{ u \in V_G \colon u v \in E_G \}
+    \end{equation*}
+  }
+
+  \uncover<+->{
+    Usaremos conjuntos (\emph{\foreignlanguage{english}{set}}),
+    pilas (\emph{\foreignlanguage{english}{stack}}) y
+    colas (\emph{\foreignlanguage{english}{queue}})
+    como estructuras de datos.
+  }
+  \uncover<+->{
+    Bibliotecas proveen estas estructuras básicas para muchos lenguajes,
+    es fácil armar al menos versiones rudimentarias
+    (ineficientes o limitadas)
+     si no están disponibles.
+  }
+\end{frame}
+
+\section{Métodos de búsqueda}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Métodos de búsqueda}
+
+  \uncover<+->{
+    Desarrollaremos los métodos tradicionales
+    para visitar todos los vértices alcanzables en el grafo
+    desde un vértice dado.
+  }
+  \uncover<+->{
+    Las estructuras básicas son aplicables también a grafos dirigidos
+    (digrafos)
+    y a estructuras que no son grafos
+    (como árboles binarios o árboles ordenados).
+  }
+
+  \uncover<+->{
+    Usaremos un conjunto \(C\),
+    comúnmente llamado \emph{cerrado}
+    (\emph{\foreignlanguage{english}{closed}} en inglés)
+    para registrar los vértices ya considerados
+    de forma de evitar caer en ciclos.
+    Si sabemos que la estructura es acíclica,
+    podemos obviar el conjunto de vértices ya visitados.
+  }
+  \uncover<+->{
+    Una variante más o menos obvia es abandonar el recorrido
+    en cuanto se halla el vértice buscado.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Reportar soluciones}
+
+  \uncover<+->{
+    Generalmente no basta con dar con un vértice particular,
+    se requiere el camino que lleva a él.
+  }
+  \uncover<+->{
+    La técnica general para acomodar esto
+    es almacenar los vértices visitados,
+    y a cada uno de ellos asociar el vértice padre
+    (desde el cual llegamos a él).
+    Recorriendo estas listas obtenemos el camino a la meta
+    en reversa.
+  }
+\end{frame}
+
+\subsection{Búsqueda en profundidad}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Búsqueda en profundidad}
+
+  \uncover<+->{
+    En inglés,
+    se le conoce como \emph{\foreignlanguage{english}{depth first search}},
+    abreviado DFS.
+  }
+
+  \uncover<+->{
+    Es recorrer un camino del grafo hasta el final
+    (llegar a un vértice que no tenga vecinos no visitados aún),
+    para devolverse al vértice anterior e continuar desde allí.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Búsqueda en profundidad}
+  \framesubtitle{Versión recursiva}
+
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \(C \leftarrow \varnothing\) \;
+
+    \Procedure{\(\mathrm{DFS}(G, s)\)}{
+        \(C \leftarrow C \cup \{ s \}\) \;
+        \(\mathrm{process}(s)\) \;
+        \ForEach{\(v \in N_G(s)\)}{
+          \If{\(v \notin C\)}{
+            \(\mathrm{DFS}(G, v)\) \;
+        }
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Clasificar arcos}
+
+  \uncover<+->{
+    Es claro que los arcos que sigue búsqueda en profundidad
+    forman un árbol recubridor de \(G\) si este es conexo.
+    A sus arcos los llamamos \emph{arcos de árbol}
+    o \emph{arcos hacia adelante}
+    (en inglés \emph{\foreignlanguage{english}{forward edges}}).
+  }
+  \uncover<+->{
+    A los demás arcos de \(G\)
+    (que llevan a vértices ya visitados)
+    los llamamos \emph{arcos reversos}
+    (en inglés \emph{\foreignlanguage{english}{back edges}}).
+  }
+  \\ \medskip
+  \uncover<+->{
+    Note que esta clasificación depende de las elecciones del algoritmo,
+    no son realmente propiedades del grafo.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Búsqueda en profundidad}
+  \framesubtitle{Versión iterativa}
+
+  \uncover<+->{
+    Notando que lo que hacemos es dejar pendientes los vértices no visitados
+    para profundizar la búsqueda desde el actual,
+    podemos evitar la recursión explícita
+    manejando la pila de pendientes manualmente.
+  }
+  \uncover<+->{
+    Elementos de la pila son los vértices pendientes de visitar.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Búsqueda en profundidad}
+  \framesubtitle{Versión iterativa}
+
+  \small
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Procedure{\(\mathrm{DFS}(G, s)\)}{
+      \(S \leftarrow \mathrm{Stack}\);
+      \(\mathrm{push}(S, s)\);
+      \(C \leftarrow \varnothing\) \;
+      \While{\(\neg \mathrm{empty}(S)\)}{
+        \(s \leftarrow \mathrm{pop}(S)\) \;
+        \If{\(s \notin C\)}{
+          \(C \leftarrow C \cup \{ s \}\) \;
+          \(\mathrm{process}(s)\) \;
+          \ForEach{\(v \in N_G(s)\)}{
+            \If{\(v \notin C\)}{
+              \(\mathrm{push}(S, v)\) \;
+            }
+          }
+        }
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\subsection{Búsqueda a lo ancho}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Búsqueda a lo ancho}
+
+  \uncover<+->{
+    En inglés,
+    se le conoce como \emph{\foreignlanguage{english}{breadth first search}},
+    abreviado BFS.
+  }
+
+  \uncover<+->{
+    La idea acá es visitar los vecinos de \(s\),
+    luego de haberlos visitado todos
+    comenzamos a revisar los vecinos de los vecinos de \(s\),
+    y así sucesivamente.
+  }
+  \uncover<+->{
+    Sorprendentemente es un cambio menor:
+    cambiar la pila por una cola de vértices pendientes.
+  }
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{Búsqueda a lo ancho}
+
+  \small
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Procedure{\(\mathrm{BFS}(G, s)\)}{
+      \(Q \leftarrow \mathrm{Queue}\);
+      \(\mathrm{enqueue}(Q, s)\);
+      \(C \leftarrow \varnothing\) \;
+      \While{\(\neg \mathrm{empty}(Q)\)}{
+        \(s \leftarrow \mathrm{dequeue}(Q)\) \;
+        \If{\(s \notin C\)}{
+          \(C \leftarrow C \cup \{ s \}\) \;
+          \(\mathrm{process}(s)\) \;
+          \ForEach{\(v \in N_G(s)\)}{
+            \If{\(v \notin C\)}{
+              \(\mathrm{enqueue}(Q, v)\) \;
+            }
+          }
+        }
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Comentarios}
+  \framesubtitle{Búsqueda en profundidad}
+
+  \uncover<+->{
+    El programa más simple es búsqueda en profundidad recursiva.
+  }
+  \uncover<+->{
+    Vemos que nuestro planteo de \emph{\foreignlanguage{english}{backtracking}}
+    en su corazón es búsqueda en profundidad recursiva.
+    Es claro que podemos reformularlo en forma iterativa,
+    y adosarle evitar ciclos de ser necesario.
+  }
+
+  \uncover<+->{
+    Búsqueda en profundidad tiene la virtud de solo usar espacio
+    (en la pila explícita en la versión iterativa,
+     o en la pila implícita usada para recursión)
+    proporcional a la profundidad máxima.
+  }
+  \uncover<+->{
+    Para aplicaciones tipo \emph{\foreignlanguage{english}{backtracking}}
+    podemos usar una única estructura global que se manipula.
+  }
+
+  \uncover<+->{
+    Puede perderse en un largo camino,
+    sin hallar soluciones vecinas.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Comentarios}
+  \framesubtitle{Búsqueda a lo ancho}
+
+  \uncover<+->{
+    Búsqueda a lo ancho garantiza hallar el vértice más cercano,
+    al ir desarrollando el grafo en oleadas.
+  }
+  \uncover<+->{
+    Requiere almacenar gran parte del árbol sobre los nodos considerados.
+  }
+\end{frame}
+
+\subsection{Búsqueda mejor primero}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Heurísticas}
+
+  \uncover<+->{
+    Los métodos precedentes se llaman \emph{ciegos}.
+    Solo consideran la estructura del grafo,
+    no los vértices.
+  }
+  \uncover<+->{
+    Una variación obvia es \emph{búsqueda heurística},
+    que a cada vértice \(v\) le asocia un valor \(h(v)\),
+    tal que un vértice de menor valor de \(h\) es más prometedor
+    (sospechamos es más cercano a la solución).
+  }
+  \uncover<+->{
+    Si supiéramos cuál expandir para llegar al destino,
+    bastaría elegir ese.
+    Generalmente solo contamos con alguna estimación,
+    una \emph{heurística}
+    (del griego para \textquote{descubrir})
+    que guíe la búsqueda.
+  }
+  \uncover<+->{
+    Cambia la cola por una \emph{cola de prioridad},
+    y vamos extrayendo y considerando los vértices en ella
+    en orden de \(h\) creciente.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Búsqueda mejor primero}
+
+  \uncover<+->{
+    Juntamos las observaciones precedentes,
+    añadiendo una \emph{heurística} \(h \colon V \to \mathbb{R}\),
+    tal que menor valor de \(h\) significa más prometedor de expandir.
+  }
+  \uncover<+->{
+    La llamamos \emph{búsqueda de mejor primero},
+    en inglés \emph{\foreignlanguage{english}{Best First Search}},
+    confusamente también abreviado BFS.
+  }
+  \\ \medskip
+  \uncover<+->{
+    En vez de una cola,
+    usamos una cola de prioridad.
+  }
+  \uncover<+->{
+    El resto del algoritmo de búsqueda a lo ancho queda casi idéntico.
+  }
+\end{frame}
+
+\begin{frame}
+  \frametitle{Búsqueda mejor primero}
+
+  \small
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+
+    \Procedure{\(\mathrm{BFS}(G, h, s)\)}{
+      \(Q \leftarrow \mathrm{PriorityQueue}\);
+      \(\mathrm{insert}(Q, s, h(s))\);
+      \(C \leftarrow \varnothing\) \;
+      \While{\(\neg \mathrm{empty}(Q)\)}{
+        \(s \leftarrow \mathrm{deletemin}(Q)\) \;
+        \If{\(s \notin C\)}{
+          \(C \leftarrow C \cup \{ s \}\) \;
+          \(\mathrm{process}(s)\) \;
+          \ForEach{\(v \in N_G(s)\)}{
+            \If{\(v \notin C\)}{
+              \(\mathrm{insert}(Q, v, h(v))\) \;
+            }
+          }
+        }
+      }
+    }
+  \end{algorithm}
+\end{frame}
+
+\section{Aplicaciones}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Aplicaciones de recorridos de grafos}
+
+  \uncover<+->{
+    Una aplicación obvia es determinar si un grafo es conexo:
+    si una búsqueda alcanza todos los vértices,
+    es conexo.
+  }
+  \uncover<+->{
+    Para determinar componentes conexos,
+    basta comenzar nuevamente la búsqueda
+    las veces que sea necesario iniciando con un vértice no visitado.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Puntos de articulación}
+
+  \uncover<+->{
+    Un \emph{punto de articulación} de un grafo conexo
+    es un vértice tal que si se elimina del grafo
+    el resultado no es conexo.
+  }
+  \uncover<+->{
+    El vértice \(C\) es un punto de articulación del grafo:
+    \\ \medskip
+    \begin{center}
+      \begin{tikzpicture}[node distance = 1.8cm, on grid]
+        \node[circle, draw] at (0, 3)		(A) {\(A\)};
+        \node[circle, draw] at (0, 0)		(B) {\(B\)};
+        \node[circle, draw] at (2, 1.5)		(C) {\(C\)};
+        \node[circle, draw] at (4, 3)		(D) {\(D\)};
+        \node[circle, draw] at (4, 0)		(E) {\(E\)};
+        \node[circle, draw] at (6, 1.5)		(F) {\(F\)};
+        \node[circle, draw] at (2, -0.6)	(G) {\(G\)};
+
+        \draw (C) -- (A) -- (B) -- (C) -- (D) -- (F) -- (E) -- (C) -- (G);
+      \end{tikzpicture}
+    \end{center}
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Puntos de articulación}
+
+  \uncover<+->{
+    Un vértice \(v\) es punto de articulación de \(G\) si:
+  }
+  \begin{itemize}
+  \item
+    \(v\) es raíz del árbol DFS
+    y tiene al menos dos hijos
+  \item
+    \(v\) no es raíz del árbol DFS
+    y tiene un hijo \(u\)
+    tal que ninguno de los descendientes de \(u\)
+    tiene un arco reverso a un ancestro de \(v\)
+  \end{itemize}
+  \medskip
+  \uncover<+->{
+    Hallar puntos de articulación es buscar vértices con estas condiciones.
+  }
+  \\ \medskip
+  \uncover<+->{
+    Acá DFS es central:
+    halla todos los vértices alcanzables desde un hijo de la raíz
+    antes de procesar los demás vecinos de ésta.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Determinar si un grafo es bipartito}
+
+  \uncover<+->{
+    Grafos bipartitos
+    (o sea, grafos \(G = (X \cup Y, E)\)
+     tales que solo hay arcos entre vértices \(X\) e \(Y\))
+    son importantes en aplicaciones.
+  }
+  \uncover<+->{
+    Determinar si \(G\) es bipartito
+    (e identificar \(X\) e \(Y\))
+    es elegir un vértice de partida y colorearlo de rojo,
+    recorrer el grafo,
+    cada vez que se encuentra un nuevo vértice
+    colorearlo del color opuesto a su padre.
+    En caso de arcos reversos
+    verificar que el color del otro vértice es opuesto al actual.
+  }
+  \uncover<+->{
+    Si se agota una componente conexa,
+    procesar las demás de la misma forma.
+  }
+  \uncover<+->{
+    Finalmente,
+    designar \(X\) e \(Y\) como los conjuntos de vértices de ambos colores.
+  }
+\end{frame}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Algoritmos en teoría de lenguajes}
+
+  \uncover<+->{
+    Varios de nuestros algoritmos en teoría de autómatas y lenguajes
+    (como construir un DFA dado un NFA,
+     determinar símbolos inútiles de una gramática)
+    son recorridos de grafos.
+  }
+\end{frame}
+
+\section{Resumen}
+
+\begin{frame}
+  \setcounter{beamerpauses}{2}
+  \frametitle{Resumen}
+
+  \begin{itemize}
+  \item
+    Discutimos las técnicas de recorrido de grafos más comunes:
+    en profundidad y a lo ancho.
+  \item
+    Algoritmos afines son aplicables a estructuras que no son grafos:
+    árboles binarios,
+    árboles ordenados,
+    digrafos,
+    multigrafos.
+  \item
+    Contrastamos ventajas y desventajas de búsqueda en profundidad
+    y a lo ancho.
+  \item
+    Discutimos la variante \emph{mejor primero}
+  \item
+    Describimos algunas aplicaciones.
+  \end{itemize}
+\end{frame}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% ispell-local-dictionary: "spanish"
+%%% End:
+
+% LocalWords:  glyphtounicode mdseries Function function end Downto
+% LocalWords:  Procedure procedure downto Loop loop Continue continue
+% LocalWords:  Break break KwStep step preorden postorden inorden set
+% LocalWords:  english stack queue closed depth first search DFS BFS
+% LocalWords:  breadth backtracking reformularlo Best recubridor back
+% LocalWords:  forward edges DFA NFA multigrafos
